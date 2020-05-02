@@ -7,15 +7,15 @@ Notes:
 - mostly untested for compileability so far; optimized for the interpreted use
 
 **Navigate by category:**
-    + [General purpose](#general-purpose)
-    + [Series-related](#series-related)
-    + [Loops](#loops)
-    + [Debugging](#debugging)
-    + [Profiling](#profiling)
-    + [Formatting](#formatting)
-    + [String interpolation](#string-interpolation)
-    + [Filesystem scanning](#filesystem-scanning)
-    + [Graphics & Reactivity](#graphics-reactivity)
+* [General purpose](#general-purpose)
+* [Series-related](#series-related)
+* [Loops](#loops)
+* [Debugging](#debugging)
+* [Profiling](#profiling)
+* [Formatting](#formatting)
+* [String interpolation](#string-interpolation)
+* [Filesystem scanning](#filesystem-scanning)
+* [Graphics & Reactivity](#graphics-reactivity)
 
 
 ## By category:
