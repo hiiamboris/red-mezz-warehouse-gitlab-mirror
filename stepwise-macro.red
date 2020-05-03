@@ -22,8 +22,7 @@ Red [
 
 #macro [#stepwise set code block!] func [[manual] s e] [
 	while [not empty? code] [
-		insert code [.:]
-		code: preprocessor/fetch-next code
+		code: preprocessor/fetch-next insert code [.:]
 	]
 	remove/part s e
 	insert s head code
