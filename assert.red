@@ -71,7 +71,7 @@ Red [
 
 #macro [#assert 'on]  func [s e] [assertions: on  []]
 #macro [#assert 'off] func [s e] [assertions: off []]
-#assert on
+#do [unless value? 'assertions [assertions: on]]
 
 #macro [#assert block!] func [[manual] s e] [			;-- allow macros within assert block!
 	either assertions [
