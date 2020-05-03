@@ -1,5 +1,6 @@
 Red [
 	title:   "GLOB mezzanine"
+	purpose: "Recursively list all files"
 	author:  @hiiamboris
 	version: 0.3.1
 	license: 'BSD-3
