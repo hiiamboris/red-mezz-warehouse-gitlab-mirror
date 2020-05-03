@@ -5,6 +5,7 @@ Some of these are trivial. Some may look simple in code, but are a result long d
 Notes:
 - most scripts are standalone, I tried to keep dependencies at minimum
 - mostly untested for compileability so far; optimized for the interpreted use
+- use `#include %everything.red` to include all the scripts at once and play
 
 **Navigate by category:**
 * [General purpose](#general-purpose)
