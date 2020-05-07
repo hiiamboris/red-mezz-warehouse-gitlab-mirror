@@ -18,7 +18,6 @@ Red [
 #include %apply.red
 #include %keep-type.red
 
-#include %xyloop.red
 ; #include %selective-catch.red							;-- included by forparse.red
 #include %forparse.red
 ; #include %composite.red								;-- included by error-macro.red
@@ -26,6 +25,9 @@ Red [
 ; #include %bind-only.red								;-- included by for-each.red
 ; #include %for-each.red								;-- included by map-each.red
 #include %map-each.red
+; #include %xyloop.red									;-- included by explore.red
+; #include %relativity.red								;-- included by explore.red
+#include %explore.red
 
 #include %clock.red
 ; #include %trace.red									;-- included by clock-each.red & show-trace.red & stepwise-func.red
@@ -47,4 +49,3 @@ Red [
 #include %do-queued-events.red
 #include %contrast-with.red
 
-#include %relativity.red
