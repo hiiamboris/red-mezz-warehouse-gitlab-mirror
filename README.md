@@ -93,3 +93,4 @@ These two functions will serve as a great playground for such an experiment.
 | [contrast-with](contrast-with.red)       | Pick a color that would contrast with the given one |
 | [do-queued-events](do-queued-events.red) | Flush the View event queue |
 | [do-atomic](do-atomic.red)               | Atomically execute a piece of code that triggers reactions |
+| [explore](explore.red)                   | Show UI to explore an image in detail (TODO: support any Red value) |
