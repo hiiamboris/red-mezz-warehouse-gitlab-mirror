@@ -34,6 +34,7 @@ Notes:
 | [trace-deep](trace-deep.red)           | Step-by-step evaluation of each sub-expression with a callback |
 | [selective-catch](selective-catch.red) | Catch `break`/`continue`/etc. - for use in building custom loops |
 | [prettify](prettify.red)               | Automatically fill some (possibly flat) code with new-line markers for readability |
+| [reshape](reshape.red)                 | Advanced code construction dialect to replace `compose` and `build`. [Read more](reshape.md) |
 
 ### Series-related
 | Source file                                | Description |
