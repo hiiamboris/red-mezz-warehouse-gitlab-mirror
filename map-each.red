@@ -97,8 +97,8 @@ context [
 		call: as path! compose [for-each ('case when case) ('same when same)]	;@@ TODO: use `apply` once it's a native
 		keep: pick [ [append/only tgt] [append tgt] ] only						;@@ TODO: use `apply` once it's a native
 		do-code: compose pick [													;-- /eval mode requires an extra reduce call
-			[ either block? set/any 'r (to paren! code) [r: reduce r][:r] ]
-			[ (to paren! code) ]												;-- can't just `do code` or will not be bound to `advance`
+			[ either block? set/any 'r (as paren! code) [r: reduce r][:r] ]
+			[ (as paren! code) ]												;-- can't just `do code` or will not be bound to `advance`
 		] eval
 
 		tgt: make block! system/words/case [									;-- where to collect into
