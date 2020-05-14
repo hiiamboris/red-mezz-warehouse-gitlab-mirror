@@ -247,10 +247,10 @@ context [
 		;; set up the series pointer & decide what code is needed to fill fake series for ranges
 		either range? [
 			where: append/dup copy [] 0 size							;-- generate a fake series to fill the items with
-			refill: compose [											;-- spec filling code for ranges
-				(pick [fill-int-range fill-pair-range] integer? series)
-				where index (either integer? series [length][series])
-			]
+			refill: compose pick [										;-- spec filling code for ranges
+				[fill-int-range  where index (length)]
+				[fill-pair-range where index (series)]
+			] integer? series
 		][
 			where: at series index
 		]
@@ -287,7 +287,7 @@ context [
 		advance: does compose/deep [
 			while [not (end-cond)] [
 				old: where												;-- save current (already moved) position for returning it
-				(move-idxs)												;-- advanced further
+				(move-idxs)												;-- advance further
 				(test when filtered?)									;-- `continue` if no match
 				return old
 			]
