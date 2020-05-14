@@ -1,6 +1,6 @@
 # #composite macro
 
-`composite` is an implementation of string interpolation. It's (probably sole) **advantage** over `rejoin` is **readability**. Compare:
+[`composite`](composite.red) is an implementation of string interpolation. It's (probably sole) **advantage** over `rejoin` is **readability**. Compare:
 ```
 cmd: #composite {red(flags) -o "(to-local-file exe-file)" "(to-local-file src-file)"}
 cmd: rejoin ["red" flags { -o "} to-local-file exe-file {" "} to-local-file src-file {"}]
