@@ -12,6 +12,7 @@ Red [
 #include %setters.red
 #include %extremi.red
 #include %prettify.red
+#include %reshape.red
 
 #include %count.red
 #include %collect-set-words.red
