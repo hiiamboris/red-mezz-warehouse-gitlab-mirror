@@ -32,7 +32,7 @@ form build/with [
 ]
 ```
 
-And these snippets build a test function used in [FOR-EACH](for-each.md) that checks if values ahead conform to the constraints in the spec. <br>Spec may have type & value constraints, or none of these. <br> Result will look like `unless ..checks.. [continue]` if checks are required, and empty `[]` otherwise.
+And these snippets build a test function used in [FOR-EACH](for-each.red) that checks if values ahead conform to the constraints in the spec. <br>Spec may have type & value constraints, or none of these. <br> Result will look like `unless ..checks.. [continue]` if checks are required, and empty `[]` otherwise.
 ```
 test: reshape [                                         /if filtered?
     /do test: reshape [
