@@ -164,7 +164,6 @@ upscale: function [
 		]
 	]
 
-	#assert [tuple? cache/1]
 	i: 3
 	xyloop xy size [								;-- fill it with the colors
 		cache/:i: any [image/(from + xy) white]		;-- make absent pixels white
