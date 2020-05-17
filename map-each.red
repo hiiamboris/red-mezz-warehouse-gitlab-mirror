@@ -55,6 +55,7 @@ context [
 	ranges!:   make typeset! [integer! pair!]			;-- supported non-series types
 
 	;@@ TODO: /reverse? how will it work though? 
+	;@@ TODO: /group sep ? to delimit values
 	set 'map-each function [
 		"Map SERIES into a new one and return it"
 		'spec  [word! block!]                "Words & index to set, values/types to match"
@@ -177,6 +178,12 @@ context [
 #assert [[1x1 1x2        ] = b: map-each [i j] 2x2 [i] 'b]
 #assert [[1 2 3 4        ] = b: map-each  i    4   [i] 'b]
 #assert [[1 3 5 7 9      ] = b: map-each [i j] 10  [i] 'b]				;-- unfold length into integers
+#assert [[               ] = b: map-each  i    0   [i] 'b]				;-- zero length
+#assert [[               ] = b: map-each  i    -10 [i] 'b]				;-- negative length
+#assert [[               ] = b: map-each  i    0x0 [i] 'b]				;-- zero length
+#assert [[               ] = b: map-each  i    0x5 [i] 'b]				;-- zero length
+#assert [[               ] = b: map-each  i    5x0 [i] 'b]				;-- zero length
+#assert [[               ] = b: map-each  i  -5x-5 [i] 'b]				;-- negative length
 
 ;; maps support
 #assert [error? e: try [map-each [p: x] #(1 2 3 4) []] 'e]								;-- no indexes for maps allowed
