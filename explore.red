@@ -28,12 +28,7 @@ Red [
 			logic! 
 			char! 
 			integer! 
-			word! 
-			set-word! 
-			lit-word! 
-			get-word! 
 			issue! 
-			refinement! 
 			path! 
 			lit-path! 
 			set-path! 
@@ -42,6 +37,16 @@ Red [
 			time! 
 			money! 
 			date! 
+
+		Word is not just a symbol, it's also a binding
+		it should be possible to see (on hover) and follow (on click) it's binding
+		thus being able to deeply inspect function bodies, blocks
+			word! 
+			set-word! 
+			lit-word! 
+			get-word! 
+			refinement! 
+			? not sure if issue! deserves to be here - probably not
 
 		Floats may require formatting? Or maybe not; then also molded (mold/all)
 			float! 
@@ -70,8 +75,11 @@ Red [
 		then if it's a known native/whatever - just display it's name
 		and when hovered/clicked - open it's source
 		When unknown - show summary - num of args, code length, last expression(?)
-		then when hovered/clicked - open it's source (for natives - use nsource)
+		then when hovered/clicked - open it's source (for natives - use nsource? but this opens up a question of R/S codebase exploration..)
 		Function bodies should be explorable as code
+		also it makes sense to highlight differently bound words in different colors: one for global, one for func-local, others grouped by context
+		e.g. `?? help-string` will output a body with lot of references to other functions
+		to understand the code, how can you find out what those functions are? it's a total hell to do in console
 			op! 
 			function! 
 			routine! 
@@ -93,6 +101,7 @@ Red [
 			hash! 
 
 		Paren is CODE; a small expression, but may contain explorable values - this is the hard part
+		like functions, should highlight binding of words
 			paren! 
 
 		Vector is not explorable and not a table - arrange in 1 or 10 columns?
@@ -130,12 +139,19 @@ Red [
 ]
 
 
+#include %setters.red
+#include %with.red
 #include %xyloop.red
 #include %relativity.red
 #include %contrast-with.red
 
+#include %clock.red
+#include %clock-each.red
+#include %do-queued-events.red
+#include %..\red-elasticity\elasticity.red
 
-;@@ TODO: make a routine out of this
+
+;@@ TODO: make a routine out of this, or wait for `draw` to get nearest-neighbor scale method (will need a grid though)
 ;@@ should this be globally exported?
 upscale: function [
 	"Upscale an IMAGE by a ratio BY so that each pixel is identifiable"
@@ -152,9 +168,9 @@ upscale: function [
 	box/5: by * 1x1
 	unless only [from: 0x0 size: image/size]
 
-	cache: [0x0]										;-- somewhat faster having cache
-	if cache/1 <> size [								;-- build the skeleton
-		clear change cache size
+	cache: [0x0 1]										;-- somewhat faster having cache
+	if any [cache/1 <> size cache/2 <> by] [			;-- build the skeleton
+		repend clear cache [size by]
 		xyloop xy size [
 			append cache reduce [
 				'fill-pen 0.0.0
@@ -164,24 +180,203 @@ upscale: function [
 		]
 	]
 
-	i: 3
-	xyloop xy size [								;-- fill it with the colors
-		cache/:i: any [image/(from + xy) white]		;-- make absent pixels white
+	i: 4
+	xyloop xy size [									;-- fill it with the colors
+		cache/:i: any [image/(from + xy) white]			;-- make absent pixels white
 		i: i + 5
 	]
 
-	draw any [tgt size * by + 1] next head cache
+	draw any [tgt size * by + 1] skip cache 2
 ]
 
+context [
+	by: make op! :as-pair
 
-zoom-factor?: function [
-	"Determine the maximum zoom factor that allows to fit SRC-SIZE within DST-SIZE"
-	src-size [pair!]
-	dst-size [pair!]
-][
-	min 												;-- use the narrowest dimension
-		1.0 * dst-size/x / max 1 src-size/x
-		1.0 * dst-size/y / max 1 src-size/y
+	curly: charset "{}"
+	color-to-hex: func [c [tuple! none!]] [
+		if c [replace/all form to binary! c curly ""]
+	]
+
+	zoom-factor?: function [
+		"Determine the maximum zoom factor that allows to fit SRC-SIZE within DST-SIZE"
+		src-size [pair!] dst-size [pair!]
+	][
+		min 1.0 * dst-size/x / max 1 src-size/x			;-- use the narrowest dimension
+			1.0 * dst-size/y / max 1 src-size/y
+	]
+
+	fit-entirely: function [src-size [pair!] dst-size [pair!]] [
+		src-size * zoom-factor? src-size dst-size
+	]
+
+	lens-zoom-factor: 5													;-- lower values generate too much latency
+	max-zoomed-size: system/view/screens/1/size							;-- for zooming up to full screen; reduce to lessen RAM footprint
+	calc-sizes: function [p [object!]] [
+		unless im: p/data [return [0x0 0x0 1 1]]						;-- no image assigned? return dummy defaults
+		min-zoom: 4														;-- if can't be zoomed to this ratio - needs a separate magnifier
+		max-zoom: 20													;-- do not scale single pixel to the whole screen
+		max-whole-size: min p/size max-zoomed-size
+		fully-fit?: within? im/size * min-zoom 0x0 max-whole-size		;-- does the zoomed image fully fit?
+
+		either fully-fit? [												;-- determine the final zoom ratio and "whole image" size
+			zoom: min max-zoom to integer! zoom-factor? im/size max-whole-size
+			#assert [zoom >= min-zoom]
+			lens-sz: zoom * im/size + 1
+			whole-sz: 0x0
+		][
+			zoom: lens-zoom-factor
+			whole-sz: p/size * 2x1 / 3x1 - 0x35							;-- 35 for label + padding, otherwise 2/3 of width
+			whole-sz: min im/size fit-entirely im/size whole-sz			;-- reduce `whole` to free the unused space and provide uniform scaling
+			lens-sz: (p/size/x - whole-sz/x - 8) by whole-sz/y			;-- 8 for padding (can be 8-12 after rounding)
+			lens-sz: (min lens-sz / zoom im/size) * zoom + 1			;-- align to full pixel boxes, but don't exceed the image dimensions
+		]
+		lens-sz: min lens-sz max-zoomed-size							;-- don't let +1 borders exceed max allowed size
+		reduce [lens-sz whole-sz zoom]
+	]
+
+	resize: function [p [object!] /local lens-sz whole-sz zoom] [
+		set [lens-sz whole-sz zoom] calc-sizes p
+		if fit?: 0x0 = whole-sz [
+			if lens-sz <> p/lens/size [									;-- if magnifier was hidden and whole image now fits into the lens
+				upscale/into p/data zoom p/canvas						;-- populate the lens with whole image's pixels
+			]
+			p/frame/offset: 0x0											;-- coordinates are relative to the image 0x0
+		]
+		maybe p/fit?: fit?
+		maybe p/label/size/x: p/size/x
+		do with p/lens [
+			maybe size:  lens-sz
+			maybe extra: zoom
+		]
+		do with p/whole [
+			; maybe offset/x: lens-sz/x + 10							;@@ BUG #4454 :(
+			maybe offset: (lens-sz/x + 10) by offset/y					;@@ workaround
+			maybe size:  whole-sz
+		]
+		do with p/overlay [
+			maybe extra: 1.0 * whole-sz/x / p/data/size/x
+		]
+		unless fit? with p/frame [										;-- re-aim the lens after resize, as frame size may change
+			size: lens-sz / zoom
+			aim-at p p/overlay size / 2 + offset * p/overlay/extra
+		]
+	]
+
+	fnt: make font! [name: system/view/fonts/fixed size: 7 style: 'bold]		;-- font for coordinates in `draw`
+	aim-at: function [panel [object!] fa [object!] "Lens or Overlay" ofs [pair!] "Pointer coordinate"] [
+		old: system/view/auto-sync?
+		system/view/auto-sync?: no
+		lens?:   fa =? panel/lens
+		zoom:    fa/extra
+		frame:   panel/frame
+		img-ofs: ofs / zoom + 1 + either lens? [frame/offset][0x0]		;-- lens coords are relative to the frame
+		dpi-ofs: pixels-to-units img-ofs								;-- face coords, useful in case image is a face shot
+		txt-ofs: max 0x0 ofs - 60x12									;-- don't put text outside of the canvas
+		txt-ofs: min txt-ofs fa/size - 60x40
+		color-str: color-to-hex color: panel/data/:img-ofs
+
+		box: []
+		unless lens? [
+			box: compose/deep [
+				scale (zoom) (zoom) [
+					box (frame/offset) (frame/offset + frame/size)
+				]
+			]
+		]
+		draw: compose [
+			pen (magenta + contrast-with any [color white])
+			fill-pen off  font fnt
+			line (ofs * 1x0) (ofs/x by fa/size/y)						;-- draw the crosshair
+			line (ofs * 0x1) (fa/size/x by ofs/y)
+			(box)														;-- the box outline
+			text (txt-ofs)        (form img-ofs)						;-- and the coordinates
+			text (txt-ofs + 0x16) (form dpi-ofs)
+			text (txt-ofs + 0x30) (any [color-str ""])
+		]
+		change/only next fa/draw draw
+
+		panel/label/data: compose [										;-- duplicate the text in case it's invisible
+			"offset:"       (img-ofs) 
+			"  offset/dpi:" (dpi-ofs)
+			"  color:"      (color)
+		]
+		unless lens? [													;-- if aiming at the whole...
+			attempt [show panel/overlay]								;-- update the overlay first, so it's less laggy!
+			project panel												;-- update the lens
+		]
+		attempt [show panel]											;-- update the rest of the panel (`show` fails before on-created)
+		system/view/auto-sync?: old
+	]
+
+	move-frame: function [panel [object!] center [pair!]] [
+		panel/frame/offset: center - (panel/frame/size / 2)
+	]
+
+	aim: function [fa ev] [
+		case/all [
+			none? p: fa/parent           [exit]
+			all [fa =? p/lens  ev/away?] [change/only next fa/draw [] exit]	;-- remove crosshair from the lens when away
+			fa =? p/overlay [
+				unless ev/down? [exit]									;-- no action on overlay with LMB up
+				move-frame p ev/offset / fa/extra
+			]
+		]
+		aim-at p fa ev/offset
+	]
+
+	project: function [panel [object!]] [
+		do with panel [
+			unless fit? [
+				upscale/into/only data lens/extra panel/canvas frame/offset frame/size
+				lens/draw: lens/draw									;-- force redraw
+			]
+		]
+	]
+
+	extend system/view/VID/styles [
+		image-explorer: [
+			default-actor: 'on-down
+			template: [
+				type:   'panel
+				size:   600x300
+				pane:   []
+				frame:  object [offset: 0x0 size: 1x1]
+				canvas: make image! max-zoomed-size		;-- where to project the zoomed image into
+				fit?:   no								;-- true when no separate lens is visible
+				label: lens: overlay: whole: none
+			]
+			init: [
+				context with face copy/deep [
+					panel: face
+					do [
+						label: make-face/offset 'text 0x0
+						lens:  make-face/offset/spec 'base 0x25 [
+							all-over on-over :aim
+							draw [[image canvas 0x0]]
+							extra 1												;-- holds zoom factor of the lens
+						]
+						overlay: make-face/spec 'base compose [
+							(0.0.0.1 xor glass)									;-- not fully transparent - to receive mouse events
+							all-over on-over :aim on-down :aim
+							draw [[]]											;-- empty block helps `aim`
+							extra 1												;-- holds zoom factor of the whole image
+						]
+						whole: make-face/offset 'base 0x25						;-- holds a static image that dramatically lowers the redraw time of the panel
+						pane: reduce [label lens whole overlay]
+
+						react [
+							[panel/size panel/data]
+							whole/image: panel/data
+							resize panel										;-- image choice affects the size for we need to scale it uniformly
+						]
+						react [overlay/offset: whole/offset]
+						react [overlay/size:   whole/size]
+						size/y: lens/size/y + lens/offset/y						;@@ autoadjust the height for VID or not??
+					]
+				]
+			]
+		]
+	]
 ]
 
 
@@ -190,77 +385,10 @@ explore: function [
 	im [image!]
 ][
 	window-sz: system/view/screens/1/size * 0.8					;-- do not make the window too big
-	min-scale: 4												;-- if can't be zoomed to this ratio - needs a separate magnifier
-	fit?: within? im/size * min-scale 0x0 window-sz				;-- does the zoomed image fully fit?
-
-	either fit? [												;-- determine the final zoom ratio and "whole image" size
-		scale: to integer! zoom-factor? im/size window-sz
-		#assert [scale >= min-scale]
-		whole-sz: im/size * scale							;-- window size will adapt to the image dimensions
-		magn-im: upscale im scale
-		piece-sz: 0x0
-		magnifier: []
-		canvas: [canvas: image magn-im]
-	][
-		whole-sz: window-sz * 2x1 / 3x1							;-- allocate 2/3 of the window for the original image
-		scale: min 1 zoom-factor? im/size whole-sz				;-- don't upscale by a small factor
-		whole-sz: im/size * scale + 1
-		
-		zoom: 5													;-- low values generate too much latency
-		magn-sz: as-pair										;-- size of the magnified image
-			min 500 window-sz/x - whole-sz/x					;-- window without the whole part, but not too wide
-			max 500 whole-sz/y									;-- not too slim
-		piece-sz: magn-sz / zoom								;-- size of fragment that will be zoomed
-		magn-sz: piece-sz * zoom + 1x1
-		magn-im: make image! magn-sz							;-- magnified image
-		magnifier: [magnifier: image magn-im all-over on-over :aim]
-		canvas: [canvas: image im whole-sz]
-	]
-
-	curly: charset "{}"
-	aim: func [fa ev] [
-		if either fa =? canvas [not any [fit? ev/down?]][ev/away?] [exit]	;-- no action on zoomed canvas with LMB up
-		ofs: ev/offset
-		img-ofs: 1x1 + either fa =? canvas [ofs / scale][ofs / zoom + box-ofs]
-		dpi-ofs: pixels-to-units img-ofs									;-- face coords, useful in case image is a face shot
-		txt-ofs: max 0x0 ofs - 60x12										;-- don't put text outside of the canvas
-		txt-ofs: min txt-ofs fa/size - 60x40
-		color: attempt [replace/all form to binary! im/:img-ofs curly ""]	;-- pixel color in text form
-		fa/draw: compose [
-			pen (magenta + contrast-with any [im/:img-ofs white])  fill-pen off  font fnt
-			line (ofs * 1x0) (as-pair ofs/x fa/size/y)						;-- draw the cross
-			line (ofs * 0x1) (as-pair fa/size/x ofs/y)
-			(either all [fa =? canvas not fit?] [
-				compose/deep [
-					scale (scale) (scale) [
-						box  (box-ofs: img-ofs - (piece-sz / 2) - 1)		;-- draw the box outline
-						     (box-ofs + piece-sz)
-					]
-				]
-			][ [] ])
-			text (txt-ofs)        (form img-ofs)							;-- show the coords
-			text (txt-ofs + 0x16) (form dpi-ofs)
-			text (txt-ofs + 0x30) (any [color ""])
-		]
-		info/data: compose [												;-- duplicate the text in case it's invisible
-			"offset:"       (img-ofs) 
-			"  offset/dpi:" (dpi-ofs)
-			"  color:"      (color)
-		]
-		unless any [fit? fa =? magnifier] [														;-- update the magnifier
-			magnifier/image: upscale/into/only im zoom magn-im box-ofs piece-sz
-		]
-	]
-
-	fnt: make font! [name: system/view/fonts/fixed size: 7 style: 'bold]		;-- font for coordinates
-	view compose [
-		info: text font fnt 300 "" return
-		(magnifier)
-		(canvas)
-		on-down :aim
-		on-over :aim all-over
-		on-created [aim face object [offset: 1x1 down?: yes away?: no]]
-	]
+	view/flags either function? :elastic
+		[elastic compose [image-explorer (window-sz) data im #scale]]
+		[compose [image-explorer (window-sz) data im]]
+		'resize
 ]
 
-; explore load %../red-view-test/old/buggy-image.png
+explore img: to image! system/view/screens/1

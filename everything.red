@@ -28,7 +28,7 @@ Red [
 #include %map-each.red
 ; #include %xyloop.red									;-- included by explore.red
 ; #include %relativity.red								;-- included by explore.red
-#include %explore.red
+; #include %explore.red									;@@ temporary
 
 #include %clock.red
 ; #include %trace.red									;-- included by clock-each.red & show-trace.red & stepwise-func.red
