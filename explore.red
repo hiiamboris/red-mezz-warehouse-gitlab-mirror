@@ -148,7 +148,8 @@ Red [
 #include %clock.red
 #include %clock-each.red
 #include %do-queued-events.red
-#include %..\red-elasticity\elasticity.red
+do https://gitlab.com/hiiamboris/red-elastic-ui/-/raw/master/elasticity.red
+; #include %..\red-elasticity\elasticity.red
 
 
 ;@@ TODO: make a routine out of this, or wait for `draw` to get nearest-neighbor scale method (will need a grid though)
