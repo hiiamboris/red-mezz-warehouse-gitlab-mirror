@@ -14,6 +14,18 @@ context [
 	empty-types: make typeset! [none! unset!]
 	check: func [x [any-type!]] [either find empty-types type? :x [[]][:x]]
 
+	;; do/next (paren) evaluates whole paren
+	;; parse requires series type to be unchanged
+	;; so this function mediates these issues
+	do-next: function ['p [word!]] [
+		either block? s: get p [
+			do/next s p
+		][
+			also do/next as block! s p
+				set p as paren! get p
+		]
+	]
+
 	set 'reshape function [
 		"Deeply replace construction patterns in the BLOCK"
 		block [block! paren!] "Will not be copied if does not contain any patterns"
@@ -50,21 +62,21 @@ context [
 		=global-conditions=: [
 			while [
 				=line-end= break
-			|	/if   p: [if (include?: global-test: do/next p 'p) :p =update-end=]
+			|	/if   p: [if (include?: global-test: do-next p) :p =update-end=]
 			|	/else    [if (include?: not :global-test)]
-			|	/do   p: [(do/next p 'p) :p =update-end=]
+			|	/do   p: [(do-next p) :p =update-end=]
 			|	ahead [/if | /else] :line-end break
-			|	=bad-syntax=
+			|	(print "GLOBAL") =bad-syntax=
 			]
 		]
 		=line-conditions=: [
 			while [															;-- `any` has a bad habit of stopping halfway, so using `while`
-				/if   p: [if (last-test: do/next p 'p) :p]					;-- not using set/any by design: conditions should not return unset
+				/if   p: t: [if (last-test: do-next p) :p]					;-- not using set/any by design: conditions should not return unset
 			|	/else p: [if (not :last-test)]
-			|	/do   p: [(do/next p 'p) :p]
+			|	/do   p: [(do-next p) :p]
 			|	=line-end= =expand+include-line= break
 			|	ahead [/if | /else] break									;-- condition failed, skip to the next line
-			|	=bad-syntax=
+			|	(print "LOCAL") =bad-syntax=
 			]
 			:line-end
 		]
@@ -180,3 +192,11 @@ context [
 		2
 	])
 ] 'r]
+
+;; one-liners should work
+#assert [[(1)     ] = r: reshape [ (1 /if yes)] 'r]
+#assert [[( )     ] = r: reshape [ (1 /if no )] 'r]
+#assert [[ 1      ] = r: reshape [@(1 /if yes)] 'r]
+#assert [[        ] = r: reshape [@(1 /if no )] 'r]
+#assert [[ 1      ] = r: reshape [!(1 /if yes)] 'r]
+#assert [unset? first r: reshape [!(1 /if no )] 'r]
