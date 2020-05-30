@@ -3,6 +3,15 @@ Red [
 	purpose: "Find minimum and maximum points over a series"
 	author:  @hiiamboris
 	license: 'BSD-3
+	notes: {
+		There's a subtle distinction between "brute" versions and sort-based:
+		- former will evaluate literal functions and use their result values, while latter won't
+		- former will error out on incompatible types for min/max, while latter will group by type
+		- former will mix pairs and tuples with integers, producing a complex scalar, latter will group by type
+		- once NaN PR gets merged, former will return NaN if single NaN is present, latter will glitch
+		
+		But I guess the performance win is worth using sort (until these become routines)
+	}
 ]
 
 minmax-of: function [
