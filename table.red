@@ -47,7 +47,8 @@ recycle/off
 #include %clock-each.red
 #include %do-unseen.red
 #include %show-trace.red
-#include %../red-view-test/elasticity.red
+; #include %../red-view-test/elasticity.red
+do https://gitlab.com/hiiamboris/red-elastic-ui/-/raw/master/elasticity.red
 #include %scrollpanel.red
 #include %reshape.red
 #include %relativity.red
