@@ -753,8 +753,18 @@ table: context [
 		]
 	]
 
+	image-cmp: func [a b] [				;@@ workaround for #4502
+		any [
+			a/size < b/size
+			all [
+				a/size == b/size
+				a/argb <= b/argb
+			]
+		]
+	]
+
 	;@@ TODO: reverse sorting
-	sort-by: function [table [object!] column [object! integer!] /local i c v1] [
+	sort-by: function [table [object!] column [object! integer!] /local i c v1 v2] [
 		report "SORTING TABLE"
 		columns: table/pane
 		either integer? icol: column [
@@ -781,11 +791,17 @@ table: context [
 			forall s [
 				change/only change/only buf	
 					set/any 'v1 pick values s/-1
-					pick values s/1
-				sort buf							;-- we're sorting generic unknown data, so `<` doesn't work here
+					set/any 'v2 pick values s/1
+				either all [image? :v1 image? :v2] [
+					;@@ workaround for #4502
+					sort/compare buf :image-cmp
+				][
+					sort buf							;-- we're sorting generic unknown data, so `<` doesn't work here
+				]
 				unless :buf/1 =? :v1 [
 					sorted?: no
 					move back s s
+					; insert/only back s take s
 				]
 			]
 			sorted?
