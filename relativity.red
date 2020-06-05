@@ -18,8 +18,9 @@ Red [
 			screen-to-face/real point face		;) = same, but takes point in real screen pixels
 			face-to-face point face1 face2		;) = point belonging to face1, in face2 CS
 
-		Helper:
-			window-of face  -- returns owning window face
+		Helpers:
+			window-of face          -- returns owning window face
+			parent parent-of? face  -- checks if face belongs to parent
 	}
 	limitations: {
 		`screen-to-face` and `face-to-screen` return wrong coordinates,
@@ -63,6 +64,15 @@ context [
 	][
 		while [all [face  'window <> face/type]] [face: face/parent]
 		face
+	]
+
+	set 'parent-of? make op! func [
+		"Checks if PA is a (probably deep) parent of FA"
+		pa [object!]
+		fa [object!]
+	][
+		while [fa: select fa 'parent] [if pa =? fa [return yes]]
+		no
 	]
 
 	translate: func [
