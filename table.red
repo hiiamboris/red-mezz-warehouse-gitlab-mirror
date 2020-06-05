@@ -649,8 +649,8 @@ table: context [
 			]
 			if modified? [
 				foreach column columns [~column/autosize column]
-				; autosize table							;-- expand/contract the table height  ;@@ BUG: disables scrolling wtf
-				; attempt [show table]
+				autosize table							;-- expand/contract the table height  ;@@ BUG: disables scrolling wtf
+				attempt [show table]
 			]
 		]
 	]
@@ -850,13 +850,11 @@ table: context [
 					on-time: func [fa ev] [if fa/balance-rows? [flush fa]]
 					;@@ this could have all worked in `on-create`, but it doesn't - see #4473
 					on-create: func [fa] [
-						react/link func [table _] [
-							map-to table table/data		;@@ TODO: block of blocks too ;@@ also see #4471
-						] [fa fa]
 					]
 					on-created: func [fa] [
 						context [
 							table: fa
+							react [map-to table table/data]		;@@ TODO: block of blocks too ;@@ also see #4471
 							react [[table/pane] autosize table]
 							react [[table/size] adjust-width table]
 							react [[table/read-only?] update-read-only table]
