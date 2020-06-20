@@ -74,6 +74,7 @@ These two functions will serve as a great playground for such an experiment.
 ### Formatting
 | Source file                        | Description |
 | ---                                | --- |
+| [entab & detab](tabs.red)          | Tabs to spaces conversion and back |
 | [format-number](format-number.red) | Simple number formatter with the ability to control integer & fractional parts size |
 
 ### String interpolation
