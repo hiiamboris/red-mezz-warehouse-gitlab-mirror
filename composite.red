@@ -17,7 +17,6 @@ Red [
 	}
 ]
 
-
 ;@@ TODO: make an escape mechanism? although, it's already there: ("(") (")") (")))((()()("), but can be shorter perhaps?
 ;@@ TODO: support comments? e.g. `(;-- comments)` in multiline strings, if so - how should it count braces?
 ;@@ TODO: expand "(#macros)" ?
@@ -68,10 +67,11 @@ Red [
 			]
 		]
 
+		marker: to char! 40								;@@ = #"(": workaround for #4534
 		do compose [
 			(pick [parse/all parse] object? rebol) s [
 				any [
-					s: to #"(" e: (keep copy/part s e)
+					s: to marker e: (keep copy/part s e)
 					s: (keep wrap load-expr) :e
 				]
 				s: to end (keep copy s)
