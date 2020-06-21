@@ -29,7 +29,7 @@ Red [
 	set/any 'error try [								;-- display errors rather than cryptic "error in macro!"
 		r: copy []
 		type: type? s
-		s: as string! s									;-- use "string": load %file/url:// does something else entirely, <tags> get appended with <>
+		s: to string! s									;-- use "string": load %file/url:// does something else entirely, <tags> get appended with <>
 
 		;; loads "(expression)..and leaves the rest untouched"
 		load-expr: has [rest val] [						;-- s should be at "("
@@ -63,13 +63,13 @@ Red [
 				not any-string? x
 				not empty? x
 			][
-				if empty? r [x: as type x]				;-- make rejoin's result of the same type as the template
+				if empty? r [x: to type x]				;-- make rejoin's result of the same type as the template
 				append/only r x
 			]
 		]
 
 		do compose [
-			(pick [parse/all parse] rebol) s [
+			(pick [parse/all parse] value? rebol) s [
 				any [
 					s: to #"(" e: (keep copy/part s e)
 					s: (keep wrap load-expr) :e
