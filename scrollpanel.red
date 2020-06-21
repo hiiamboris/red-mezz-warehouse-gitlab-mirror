@@ -15,6 +15,7 @@ Red [
 #include %do-atomic.red
 #include %do-unseen.red
 #include %relativity.red
+#include %show-trace.red
 
 context [
 	by: make op! :as-pair
@@ -32,7 +33,8 @@ context [
 			]
 		]
 		if e/x < s/x [e: s]
-		maybe panel/total: e - s + 1					;-- +1 for possible rounding errors during scrollbar positioning
+		maybe panel/total: e - s
+		; maybe panel/total: e - s + 1					;-- +1 for possible rounding errors during scrollbar positioning
 		maybe panel/origin: 0x0 - s
 	]
 
@@ -49,9 +51,10 @@ context [
 		unless vsc =? last pane [
 			move find/same pane vsc tail pane
 		]
-
 		;; now create reactions
 		foreach face any [pane []] [
+			#assert [object? face]
+			if face/type = 'scroller [continue]			;-- don't watch the scrollers
 			unless pos: watched? face [pos: tail watched]
 			if pos/2 =? panel [continue]				;-- don't make 2 reactions for 1 face!
 			modified?: yes
@@ -59,7 +62,7 @@ context [
 			react/link/later func [panel face] [		;-- don't do update-total for each face, do it only once
 				[face/offset face/size]
 				;@@ TODO: use react/unlink to remove reactions from the old panel when face moves from one into another
-				if panel =? face/parent [
+				if panel =? select face 'parent [
 					update-total panel
 					; check-size panel
 				]
@@ -76,9 +79,9 @@ context [
 		; ?? total ?? psize
 		hsize: psize * 1x0
 		vsize: psize * 0x1
-		if total/y >=  psize/y            [vsize/x: 16]
-		if total/x >= (psize/x - vsize/x) [hsize/y: 16]
-		if total/y >= (psize/y - hsize/y) [vsize/x: 16]
+		if total/y >  psize/y            [vsize/x: 16]
+		if total/x > (psize/x - vsize/x) [hsize/y: 16]
+		if total/y > (psize/y - hsize/y) [vsize/x: 16]
 		maybe hsc/offset: psize - hsize
 		maybe vsc/offset: psize - vsize
 		hsize/x: hsize/x - vsize/x
