@@ -69,7 +69,7 @@ Red [
 		]
 
 		do compose [
-			(pick [parse/all parse] value? rebol) s [
+			(pick [parse/all parse] object? rebol) s [
 				any [
 					s: to #"(" e: (keep copy/part s e)
 					s: (keep wrap load-expr) :e
