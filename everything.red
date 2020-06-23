@@ -43,6 +43,7 @@ Red [
 ; #include %format-number.red							;-- included by timestamp.red
 ; #include %stepwise-macro.red							;-- included by timestamp.red
 #include %timestamp.red
+#include %tabs.red
 
 #include %glob.red
 
