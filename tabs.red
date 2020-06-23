@@ -3,6 +3,7 @@ Red [
 	purpose: "Tabs to spaces conversion and back"
 	author:  @hiiamboris
 	license: 'BSD-3
+	notes:   {Supports multi-line text}
 ]
 
 ; #include %clock.red
@@ -10,7 +11,7 @@ Red [
 
 
 context [
-	spaces: insert/dup "" #"^(20)" 32					;-- 32 spaces max are supported
+	spaces: insert/dup "" #"^(20)" 32					;-- 32 spaces max are supported per tab
 	set 'detab function [
 		"Expand tabs in string STR"
 		str       [string! binary!]
@@ -20,15 +21,20 @@ context [
 		buf: any [buf  make str length? str]
 		tab: any [tab 8]
 		#assert [tab > 0]
-		parse/case str [
+		#assert [tail? spaces]
+		ok: parse/case s1: str [
 			collect into buf [
 				any [
-					s1: keep to #"^-" s2: skip
-					keep (skip spaces (offset? s1 s2) % tab - tab)
+					keep any [#"^/" s1: | not #"^-" skip]
+					any [
+						s2: #"^-" 
+						keep (skip spaces (offset? s1 s2) % tab - tab)
+						s1:
+					]
 				]
-				keep s1
 			]
 		]
+		#assert [ok]
 		buf
 	]
 
@@ -40,15 +46,22 @@ context [
 		/size tab [integer!]         "Specify Tab size (default: 8)"
 	][
 		buf: any [buf  make str length? str]
-		p: any [find/case str nonspace  tail str]
-		either head? p [
-			buf: copy str
-		][
-			tab: any [tab 8]
-			#assert [tab > 0]
-			n: to integer! (-1 + index? p) / tab
-			append  append/dup buf #"^-" n  skip str n * tab
+		tab: any [tab 8]  tab-1: tab - 1
+		#assert [tab > 0]
+		#assert [tail? spaces]
+		ok: parse/case str [
+			collect into buf [
+				any [
+					s1: #" " [
+						s2: tab-1 [#" " s2:] keep (#"^-")
+					|	:s1 keep :s2
+					]
+				|	keep #"^-"
+				|	keep thru [#"^/" | end]
+				]
+			]
 		]
+		#assert [ok]
 		buf
 	]
 ]
@@ -127,6 +140,7 @@ comment [
 #assert ["123456789       " = r: detab "123456789^-" 'r]
 #assert ["123456789012345 " = r: detab "123456789012345^-" 'r]
 #assert ["        1234567 " = r: detab "^-1234567^-" 'r]
+#assert ["1   ^/    2   ^/    ^/" = r: detab/size "1^-^/^-2^-^/^-^/" 4 'r]
 
 #assert [""                 = r: entab ""                 'r]
 #assert ["1"                = r: entab "1"                'r]
@@ -142,31 +156,34 @@ comment [
 #assert ["^-12345678"       = r: entab "        12345678" 'r]
 #assert ["       123456789" = r: entab "       123456789" 'r]
 #assert ["1234567890123456" = r: entab "1234567890123456" 'r]
+#assert ["^-^-  1^/^-2"     = r: entab/size "^-      1^/    2" 4 'r]			;-- allows mixing tabs and spaces; resets at newlines
 
 
-#assert [""                 = r: to string! detab to binary! ""            'r]
-#assert ["        "         = r: to string! detab to binary! "^-"          'r]
-#assert ["                " = r: to string! detab to binary! "^-^-"        'r]
-#assert ["1               " = r: to string! detab to binary! "1^-^-"       'r]
-#assert ["1       1       " = r: to string! detab to binary! "1^-1^-"      'r]
-#assert ["        1       " = r: to string! detab to binary! "^-1^-"       'r]
-#assert ["1234567         " = r: to string! detab to binary! "1234567^-^-" 'r]
-#assert ["12345678        " = r: to string! detab to binary! "12345678^-"  'r]
-#assert ["123456789       " = r: to string! detab to binary! "123456789^-" 'r]
-#assert ["123456789012345 " = r: to string! detab to binary! "123456789012345^-" 'r]
-#assert ["        1234567 " = r: to string! detab to binary! "^-1234567^-" 'r]
+#assert [""                 = r: to "" detab to #{} ""            'r]
+#assert ["        "         = r: to "" detab to #{} "^-"          'r]
+#assert ["                " = r: to "" detab to #{} "^-^-"        'r]
+#assert ["1               " = r: to "" detab to #{} "1^-^-"       'r]
+#assert ["1       1       " = r: to "" detab to #{} "1^-1^-"      'r]
+#assert ["        1       " = r: to "" detab to #{} "^-1^-"       'r]
+#assert ["1234567         " = r: to "" detab to #{} "1234567^-^-" 'r]
+#assert ["12345678        " = r: to "" detab to #{} "12345678^-"  'r]
+#assert ["123456789       " = r: to "" detab to #{} "123456789^-" 'r]
+#assert ["123456789012345 " = r: to "" detab to #{} "123456789012345^-" 'r]
+#assert ["        1234567 " = r: to "" detab to #{} "^-1234567^-" 'r]
+#assert ["1   ^/    2   ^/    ^/" = r: to "" detab/size to #{} "1^-^/^-2^-^/^-^/" 4 'r]
 
-#assert [""                 = r: to string! entab to binary! ""                 'r]
-#assert ["1"                = r: to string! entab to binary! "1"                'r]
-#assert ["^-"               = r: to string! entab to binary! "        "         'r]
-#assert ["^-^-"             = r: to string! entab to binary! "                " 'r]
-#assert ["       1"         = r: to string! entab to binary! "       1"         'r]
-#assert ["       1        " = r: to string! entab to binary! "       1        " 'r]
-#assert ["^-1       "       = r: to string! entab to binary! "        1       " 'r]
-#assert ["1               " = r: to string! entab to binary! "1               " 'r]
-#assert ["^-       1"       = r: to string! entab to binary! "               1" 'r]
-#assert ["^-      12"       = r: to string! entab to binary! "              12" 'r]
-#assert ["^- 1234567"       = r: to string! entab to binary! "         1234567" 'r]
-#assert ["^-12345678"       = r: to string! entab to binary! "        12345678" 'r]
-#assert ["       123456789" = r: to string! entab to binary! "       123456789" 'r]
-#assert ["1234567890123456" = r: to string! entab to binary! "1234567890123456" 'r]
+#assert [""                 = r: to "" entab to #{} ""                 'r]
+#assert ["1"                = r: to "" entab to #{} "1"                'r]
+#assert ["^-"               = r: to "" entab to #{} "        "         'r]
+#assert ["^-^-"             = r: to "" entab to #{} "                " 'r]
+#assert ["       1"         = r: to "" entab to #{} "       1"         'r]
+#assert ["       1        " = r: to "" entab to #{} "       1        " 'r]
+#assert ["^-1       "       = r: to "" entab to #{} "        1       " 'r]
+#assert ["1               " = r: to "" entab to #{} "1               " 'r]
+#assert ["^-       1"       = r: to "" entab to #{} "               1" 'r]
+#assert ["^-      12"       = r: to "" entab to #{} "              12" 'r]
+#assert ["^- 1234567"       = r: to "" entab to #{} "         1234567" 'r]
+#assert ["^-12345678"       = r: to "" entab to #{} "        12345678" 'r]
+#assert ["       123456789" = r: to "" entab to #{} "       123456789" 'r]
+#assert ["1234567890123456" = r: to "" entab to #{} "1234567890123456" 'r]
+#assert ["^-^-  1^/^-2"     = r: to "" entab/size to #{} "^-      1^/    2" 4 'r]			;-- allows mixing tabs and spaces; resets at newlines
