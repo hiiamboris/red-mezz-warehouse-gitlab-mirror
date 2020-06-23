@@ -18,99 +18,64 @@ Red [
 ; #include https://gitlab.com/hiiamboris/red-mezz-warehouse/-/raw/master/tabs.red
 ; #include https://gitlab.com/hiiamboris/red-mezz-warehouse/-/raw/master/composite.red
 
-context [
-	non-space: charset [not " "]
-	tag-1st:   charset [not " ^-=><[](){};^""]
+bmatch: function [
+	"Detect unmatched brackets based on indentation"
+	source [string! binary!]
+	/origin    script [file! url! string!] "Filename where the data comes from"
+	/tabsize   tab [integer!] "Override tab size (default: 4)"
+	/tolerance tol [integer!] "Min. indentation mismatch to report (default: 0)"
+	/into      tgt [string!]  "Buffer to output messages into (otherwise prints)"
+	/throw "Throw the lexer error if any (otherwise ignores)"
+][
+	tol: max 0 any [tol 0]
+	tab: max 0 any [tab 4]
+	script: any [script "(unknown)"]
+	report: either into [ func [s][repend tgt [s #"^/"]] ][ :print ]
 
-	match-data!: object [
-		script: none
-		tab: 4
-		tol: 0
-		line: indent: 0x0
-		pos: []
-		report: :print
-
-		extract-brackets: function [text [block!] /extern pos] [
-			repeat iline length? text [							;-- build a map of brackets: [line-number indent-size brackets.. ...]
-				line: detab/size text/:iline tab
-
-				indent1: offset? line any [find line non-space  tail line]
-				replace line "|" " "							;-- special case for parse's `| [...` pattern: ignore `|`
-				indent2: offset? line any [find line non-space  tail line]
-				indent: as-pair indent1 indent2					;-- allow 2 indent variants
-
-				if indent = length? line [continue]				;-- empty line
-				pos: insert insert pos iline indent
-
-				stack: clear []									;-- deep strings (for curly braces which count opened/closing markers)
-				parse line [collect after pos any [
-					if (empty? stack) [							;-- inside a block
-						keep copy _ ["}" | "[" | "]" | "(" | ")"]
-					|	s: any "%" e: keep copy _ "{"
-						(append stack level: offset? s e)
-					|	";" to end
-					|	{"} any [{^^^^} | {^^"} | not {"} skip]
-						[{"} | (report #composite "(script): Open string literal at line (iline)")]
-					|	{<} tag-1st
-						[thru {>} | (report #composite "(script): Open tag at line (iline)")]
-					]
-
-				|	[											;-- inside a string
-						if (level = 0) [						;-- inside normal curly
-							"^^^^" | "^^}" | "^^{"				;-- allow escape chars
-						|	keep copy _ "{" (append stack 0)	;-- allow reentry
-						]
-					|	copy _ "}" level "%" keep (_) (level: take/last stack)
-					]
-
-				|	skip
-				]]
-			]
-			pos: head pos
+	source: detab/size/into source tab clear #{}		;-- using binary because transcode works with binary internally
+	remove-each c source [c = #"^M"]					;@@ otherwise each CR counts as a line!!
+	indents: clear []
+	parse source [collect into indents any [			;-- list possible indentations for all lines
+		s1: any #" " s2: opt [some #"|" any #" "] s3:	;-- special case for parse's `   | [` pattern - accept both indents
+		keep (as-pair offset? s1 s2  offset? s1 s3)
+		thru [#"^/" | end]
+	]]
+	types: reduce [block! paren! string! map!]
+	opened: clear []
+	finish: [
+		foreach [line type] opened [
+			report #composite "(script): No ending (type) marker after opening at line (line)"
 		]
-
-		read-until: function [end-marker [string! block!] /extern pos] [
-			indent1: indent  line1: line						;-- remember coordinates of the opening bracket
-			parse pos [
-				while [
-					set line integer! set indent pair!
-				|	"[" pos: (read-until "]") :pos
-				|	"(" pos: (read-until ")") :pos
-				|	"{" pos: (read-until "}") :pos
-				|	end-marker pos:
-					(
-						found?: yes								;@@ workaround for #4202 - can't `exit`
-						dist: min absolute indent/1 - indent1
-						          absolute indent/2 - indent1
-						if tol < min dist/1 dist/2 [			;-- compare both opening idents to both closing to find the best match
-							report #composite "(script): Unbalanced (end-marker) indentation between lines (line1) and (line)"
-						]
-					)
-					break
-				|	pos: skip (report #composite "(script): Unexpected occurrence of (pos/1) on line (line)")
+	]
+	transcode/into/trace source clear [] function [event input type line token] [
+		[open close error]
+		unless find types type [return true]
+		switch event [
+			open [reduce/into [line type] tail opened]
+			close [
+				take/last opened
+				line1: take/last opened
+				either line1 [
+					i1: indents/:line1  i2: indents/:line
+					dist: max i1/1 - i2  i1/2 - i2		;-- find the closest indentation variant
+					if tol < max dist/1 dist/2 [
+						report #composite "(script): Unbalanced (type) markers between lines (line1) and (line)"
+					]
+				][
+					report #composite "(script): Unexpected closing (type) marker at line (line)"
 				]
-				(unless found? [report #composite "(script): No ending (end-marker) after line (line1)"])
+			]
+			error [
+				unless throw [
+					input: next input					;-- advance input or it deadlocks
+					return false
+				]
+				do finish
 			]
 		]
+		true
 	]
-
-	set 'bmatch func [
-		"Detect unmatched brackets based on indentation"
-		source [string! binary!]
-		/origin    script [file! url! string!] "Filename where the data comes from"
-		/tabsize   tab [integer!] "Override tab size (default: 4)"
-		/tolerance tol [integer!] "Min. indentation mismatch to report (default: 0)"
-		/into      tgt [string!]  "Buffer to output messages into (otherwise prints)"
-	][
-		if binary? source [source: to string! source]
-		data: make match-data! []
-		data/tol: max 0 any [tol 0]
-		data/tab: max 0 any [tab 4]
-		data/script: any [script "(unknown)"]
-		data/report: either into [ func [s][repend tgt [s #"^/"]] ][ :print ]
-
-		data/extract-brackets split source #"^/"
-		data/read-until [end]
-		tgt
-	]
+	do finish
+	tgt
 ]
+
