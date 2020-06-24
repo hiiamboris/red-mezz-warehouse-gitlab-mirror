@@ -105,8 +105,8 @@ context [
 		hidden: max 0x0 panel/total - panel/size + (vsc/size/x by hsc/size/y)
 		; ?? hidden
 		;@@ BUG: for some reasons scroller/data + selected goes out of [0..1] segment
-		origin: (hidden/x * max 0 min 1 hsc/data / (1 - hsc/selected))
-		     by (hidden/y * max 0 min 1 vsc/data / (1 - vsc/selected))
+		origin: (hidden/x * max 0.0 min 1.0 hsc/data / (1.0 - hsc/selected))
+		     by (hidden/y * max 0.0 min 1.0 vsc/data / (1.0 - vsc/selected))
 		if 0x0 <> shift: origin - panel/origin [
 			do-unseen [
 				foreach face panel/pane [
@@ -139,8 +139,8 @@ context [
 		dx: 1.0 * shift/x / hidden/x * (1 - hsc/selected)
 		dy: 1.0 * shift/y / hidden/y * (1 - vsc/selected)
 		do-atomic [
-			maybe hsc/data: max 0 min 1 hsc/data - dx
-			maybe vsc/data: max 0 min 1 vsc/data - dy
+			maybe hsc/data: max 0.0 min 1.0 hsc/data - dx		;@@ BUG: scroller/data won't work with `0`, only `0.0`
+			maybe vsc/data: max 0.0 min 1.0 vsc/data - dy
 			scroll panel
 		]
 	]
@@ -155,6 +155,8 @@ context [
 			check-scrollers face/parent
 		]		;@@ BUG workaround: scrollers don't remember `selected` facet set before their creation
 	]
+
+	sp-list: make hash! []								;-- registry of all scrollpanels - for faster event funcs
 
 	extend system/view/VID/styles [
 		scrollpanel: [
@@ -172,6 +174,7 @@ context [
 				hsc: make-face/spec/size 'scroller scroller-actors 2x1	;-- initial size to ensure the proper direction
 				vsc: make-face/spec/size 'scroller scroller-actors 1x2
 				repend pane [hsc vsc]
+				append sp-list self
 			]
 			init: [
 				context copy/deep [
@@ -184,21 +187,52 @@ context [
 		]
 	]
 
+	wrapping-panel-of: func [fa [object! none!]] [		;-- find the parent panel of the face
+		while [fa] [
+			if scrollpanel? fa [return fa]
+			fa: fa/parent
+		]
+		none
+	]
+
 	;; scrolls to the face that received focus
 	on-focus-handler: function [fa ev] [
-		unless ev/type = 'focus [return none]			;-- skip other events
-		
-		panel: fa										;-- find the parent panel of the face
-		until [
-			unless panel: panel/parent [exit]
-			scrollpanel? panel
-		]
+		unless all [
+			ev/type = 'focus							;-- skip other events
+			panel: wrapping-panel-of fa/parent			;-- no related to scrollpanel
+		] [return none]
 		scroll-to-face panel fa
 		'done
 	]
 
 	unless find/same system/view/handlers :on-focus-handler [
 		insert-event-func :on-focus-handler
+	]
+
+	wheel-handler: function [fa ev] [
+		unless ev/type = 'wheel [return none]			;-- skip other events
+
+		f2s: :face-to-screen
+		ofs: f2s ev/offset fa
+		foreach panel sp-list [							;-- find if offset is above any scrollpanel
+			if within? ofs  f2s 0x0 panel  panel/size [found?: yes  break]
+		]
+		unless found? [return none]
+
+		vsc: panel/vsc
+		new: max 0.0
+		     min 1.0 - vsc/selected
+		     ev/picked * vsc/selected * -0.5 + vsc/data		;-- scroll by half-pages - good enough?
+		if vsc/data <> new [
+			vsc/data: new
+			scroll panel
+			show panel
+		]
+		'done
+	]
+
+	unless find/same system/view/handlers :wheel-handler [
+		insert-event-func :wheel-handler
 	]
 ]
 
