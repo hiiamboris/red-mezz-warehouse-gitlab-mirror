@@ -1,4 +1,4 @@
-# SCROLLPANEL STYLE
+# [SCROLLPANEL STYLE](scrollpanel.red)
 
 Usage: as you would use normal `panel` face.
 
@@ -14,5 +14,4 @@ view [
 	]
 ]
 ```
-That produces:
-![](https://i.gyazo.com/00abe772d3dcd4ca6778dbf21f36fe64.gif)
+[Follow this link to open the GIF and see it](https://i.gyazo.com/00abe772d3dcd4ca6778dbf21f36fe64.gif)
