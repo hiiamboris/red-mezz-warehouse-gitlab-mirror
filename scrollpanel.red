@@ -179,9 +179,8 @@ context [
 			init: [
 				context copy/deep [
 					panel: face
-					react       [[panel/pane]  check-pane panel]
-					react/later [[panel/size]  check-size panel]		;-- size change may trigger scrollers update
-					react/later [[panel/total] check-size panel]		;-- total change may trigger scrollers update
+					react [[panel/pane]            check-pane panel]
+					react [[panel/size panel/size] check-size panel]		;-- size & total change may trigger scrollers update
 				]
 			]
 		]
