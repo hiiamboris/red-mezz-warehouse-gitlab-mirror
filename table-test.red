@@ -23,7 +23,7 @@ test-object: object [		;@@ reactor doesn't work - ownership limitation
 	a8: b8: c8: d8: e8: f8: g8: h8: i8: j8: k8: l8: m8: none
 	a9: b9: c9: d9: e9: f9: g9: h9: i9: j9: k9: l9: m9: none
 	a0: b0: c0: d0: e0: f0: g0: h0: i0: j0: k0: l0: m0: none
-
+	
 	; a11: b11: c11: d11: e11: f11: g11: h11: i11: j11: k11: l11: m11: none
 	; a12: b12: c12: d12: e12: f12: g12: h12: i12: j12: k12: l12: m12: none
 	; a13: b13: c13: d13: e13: f13: g13: h13: i13: j13: k13: l13: m13: none

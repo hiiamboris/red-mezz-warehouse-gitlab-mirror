@@ -409,7 +409,7 @@ table: context [
 
 		arrange: function [column [object!]] [
 			report "ARRANGING CELLS"
-			do-unseen [
+			; do-unseen [								;@@ THIS DOESN'T WORK (even when do-unseen = do) - SEE #4549
 				pos: 0x2									;-- 2px upper margin
 				pane: column/pane
 				foreach cell pane [
@@ -421,7 +421,7 @@ table: context [
 				]
 				maybe column/extent: pos
 				; maybe column/size/y: pos/y					;-- auto adjust height only -- done by the table!
-			]
+			; ]
 		]
 
 		on-header-down: function [fa ev] [
