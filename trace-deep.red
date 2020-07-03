@@ -70,10 +70,14 @@ context [
 	
 	;; fully reduces a single value, triggering a callback
 	rewrite-atom: function [code inspect] [
-		if find eval-types type? :code/1 [
+		if find eval-types type: type? :code/1 [
 			to-eval:   copy/part      code 1			;-- have to separate it from the rest, to stop ops from being evaluated
 			to-report: copy/deep/part code 1			;-- report an unchanged (by evaluation) expr to `inspect` (here: can be a paren with blocks inside)
-			change/only code wrap inspect to-report do to-eval
+			change/only code
+				either type == paren! [
+					as paren! rewrite as block! code/1 :inspect
+				][	wrap inspect to-report do to-eval
+				]
 		]
 	]
 
