@@ -148,9 +148,9 @@ Red [
 #include %clock.red
 #include %clock-each.red
 #include %do-queued-events.red
-do https://gitlab.com/hiiamboris/red-elastic-ui/-/raw/master/elasticity.red
+; do https://gitlab.com/hiiamboris/red-elastic-ui/-/raw/master/elasticity.red
 ; #include %..\red-elasticity\elasticity.red
-
+; recycle/off
 
 ;@@ TODO: make a routine out of this, or wait for `draw` to get nearest-neighbor scale method (will need a grid though)
 ;@@ should this be globally exported?
@@ -229,7 +229,8 @@ context [
 			whole-sz: p/size * 2x1 / 3x1 - 0x35							;-- 35 for label + padding, otherwise 2/3 of width
 			whole-sz: min im/size fit-entirely im/size whole-sz			;-- reduce `whole` to free the unused space and provide uniform scaling
 			lens-sz: (p/size/x - whole-sz/x - 8) by whole-sz/y			;-- 8 for padding (can be 8-12 after rounding)
-			lens-sz: (min lens-sz / zoom im/size) * zoom + 1			;-- align to full pixel boxes, but don't exceed the image dimensions
+			lens-sz: max 0x200 lens-sz									;-- don't make the window too slim
+			lens-sz: (min lens-sz / zoom im/size + 10x10) * zoom + 1	;-- align to full pixel boxes, but don't exceed the image dimensions (+ convenience margins)
 		]
 		lens-sz: min lens-sz max-zoomed-size							;-- don't let +1 borders exceed max allowed size
 		reduce [lens-sz whole-sz zoom]
@@ -392,4 +393,4 @@ explore: function [
 		'resize
 ]
 
-explore img: to image! system/view/screens/1
+; explore to image! system/view/screens/1
