@@ -33,7 +33,7 @@ expect: function [
 		'ok
 	]
 
-	if all [err = 'ok  value? 'r  :r] [					;-- `ok` is no error, `value?` if not unset, `:r` if not false/none
+	if all [value? 'r  :r] [							;-- `value?` if not unset, `:r` if not false/none (or error=none)
 		return yes
 	]
 
