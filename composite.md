@@ -60,7 +60,7 @@ Because the preprocessor may easily fail to expand the macro (just look how many
 
 In my opinion, `#composite` will have a **big role to play when localization** work starts. Suppose we write a macro that replaces every string in the script with a local version. It's a piece of cake when `#composite` is used:
 `#composite "A (type) message with (this value) and (another value) and more"` can get replaced by the translator as:
-`#composite "Localized (another value) and (this value) and more message"` - the order of things depends on the language/culture.
+`#composite "Localized (another value) and (this value) and more (type) message"` - the order of things depends on the language/culture.
 
 And imagine translator's dizziness when he sees:
 ```
