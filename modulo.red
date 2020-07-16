@@ -53,6 +53,15 @@ context [
 
 		r
 	]
+
+	set '// make op! func [
+		"Returns a modulo R of A divided by B, following Euclidean definition of it (R >= 0)"
+		a [number! char! pair! tuple! vector! time!]
+		b [number! char! pair! tuple! vector! time!]
+		; return: [number! char! pair! tuple! vector! time!] "Same type as A"
+	][
+		modulo a b
+	]
 ]
 
 ;; need a few values defined
