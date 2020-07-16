@@ -44,6 +44,7 @@ Red [
 ; #include %stepwise-macro.red							;-- included by timestamp.red
 #include %timestamp.red
 #include %tabs.red
+#include %modulo.red
 
 #include %glob.red
 
