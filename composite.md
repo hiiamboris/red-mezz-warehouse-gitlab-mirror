@@ -56,3 +56,22 @@ Because the preprocessor may easily fail to expand the macro (just look how many
 	ERROR "Images are expected to be of equal size, got (im1/size) and (im2/size)"
 ```
 
+# Localization
+
+In my opinion, `#composite` will have a **big role to play when localization** work starts. Suppose we write a macro that replaces every string in the script with a local version. It's a piece of cake when `#composite` is used:
+`#composite "A (type) message with (this value) and (another value) and more"` can get replaced by the translator as:
+`#composite "Localized (another value) and (this value) and more (type) message"` - the order of things depends on the language/culture.
+
+And imagine translator's dizziness when he sees:
+```
+"A "
+" message with "
+" and "
+" and more"
+```
+coming from `rejoin ["A " type " message with " this value " and " another value " and more"]`
+
+Not only `rejoin` leaves no option to reword the phrase properly, it also blocks any attempt to get the meaning of the message.
+
+That's why I believe **`#composite` should be a part of Red runtime** and should be used for formatting values in error messages.
+

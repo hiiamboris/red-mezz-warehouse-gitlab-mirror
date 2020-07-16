@@ -1,4 +1,4 @@
-# GLOB
+# [GLOB](glob.red)
 
 Allows you to recursively list files.
 
