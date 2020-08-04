@@ -29,7 +29,10 @@ context [
 			find positives! type? a [
 				#assert [any [							;-- check allowed divisor combinations
 					(type? a) = type? b					;-- tuple+tuple, char+char
-					all [integer? b  b > 0]				;-- char+integer>0, tuple+integer>0
+					all [
+						integer? b    					;-- require integer divisor otherwise
+					    any [b > 0  not floor]			;-- >0 in case of Floor (R cannot be negative)
+					]									;-- (=0 case triggers error on the 1st line)
 				]]
 			]
 			trunc   []									;@@ TODO: move this check up when #4576 gets fixed
@@ -315,6 +318,8 @@ context [
 #assert [#"^A" = r: modulo       #"^I" 4 'r]
 #assert [#"^A" = r: modulo/floor #"^I" 4 'r]
 #assert [#"^A" = r: modulo/trunc #"^I" 4 'r]
+#assert [#"^A" = r: modulo       #"^I" -4 'r]	;-- allow negative divisor when result will be positive
+#assert [#"^A" = r: modulo/trunc #"^I" -4 'r]
 #assert [   1  = r: modulo       9 #"^D" 'r]
 #assert [   1  = r: modulo/floor 9 #"^D" 'r]
 #assert [   1  = r: modulo/trunc 9 #"^D" 'r]
