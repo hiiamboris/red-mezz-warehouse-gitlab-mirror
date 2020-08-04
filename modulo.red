@@ -6,7 +6,7 @@ Red [
 ]
 
 
-#include %assert.red
+; #include %assert.red
 
 context [
 	abs: :absolute
