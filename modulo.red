@@ -307,6 +307,8 @@ context [
 #assert [23.34.56.7 = r: modulo       123.234.56.7 100 'r]
 #assert [23.34.56.7 = r: modulo/floor 123.234.56.7 100 'r]
 #assert [23.34.56.7 = r: modulo/trunc 123.234.56.7 100 'r]
+#assert [23.34.56.7 = r: modulo       123.234.56.7 -100 'r]	;-- allow negative divisor when result will be positive
+#assert [23.34.56.7 = r: modulo/trunc 123.234.56.7 -100 'r]
 
 #assert [23.34.56.7 = r: modulo       123.234.56.7 50.100.200.250 'r]
 #assert [23.34.56.7 = r: modulo/floor 123.234.56.7 50.100.200.250 'r]
