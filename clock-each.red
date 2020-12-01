@@ -64,7 +64,7 @@ clock-each: function [
 	clear skip tail times -2							;-- hide the baseline code
 	times: insert times 1
 	forall times [										;-- display the results
-		set [p1 dt p2] back times
+		set [p1: dt: p2:] back times
 		dt: 1e3 / n * to float! dt - baseline				;-- into millisecs
 		unit: either dt < 1 [dt: dt * 1e3 "μs^-"]["ms^-"]	;-- switch to microsecs?
 		parse form dt [										;-- save 3 significant digits max

@@ -11,9 +11,10 @@ Red [
 ]
 
 clock: function [
-	"Display execution time of CODE"
+	"Display execution time of CODE, returning result of it's evaluation"
 	code [block!]
 	/times n [integer!] "Repeat N times (default: once); displayed time is per iteration"
+	/delta "Don't print the result, return time delta (ms)"
 	/local r
 ][
 	n: max 1 any [n 1]
@@ -22,11 +23,14 @@ clock: function [
 	set/any 'r loop n code
 	t2: now/precise
 	dt: 1e3 / n * to float! difference t2 t1
-	unit: either dt < 1 [dt: dt * 1e3 "μs^-"]["ms^-"]
-	parse form dt [										;-- save 3 significant digits max
-		0 3 [opt #"." skip] opt [to #"."] dt: (dt: head clear dt)
+	either delta [
+		dt
+	][
+		unit: either dt < 1 [dt: dt * 1e3 "μs^-"]["ms^-"]
+		parse form dt [									;-- save 3 significant digits max
+			0 3 [opt #"." skip] opt [to #"."] dt: (dt: head clear dt)
+		]
+		print [dt unit text]
+		:r
 	]
-	print [dt unit text]
-	:r
 ]
-

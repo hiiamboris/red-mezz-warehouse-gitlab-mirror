@@ -236,8 +236,8 @@ context [
 		reduce [lens-sz whole-sz zoom]
 	]
 
-	resize: function [p [object!] /local lens-sz whole-sz zoom] [
-		set [lens-sz whole-sz zoom] calc-sizes p
+	resize: function [p [object!]] [
+		set [lens-sz: whole-sz: zoom:] calc-sizes p
 		if fit?: 0x0 = whole-sz [
 			if lens-sz <> p/lens/size [									;-- if magnifier was hidden and whole image now fits into the lens
 				upscale/into p/data zoom p/canvas						;-- populate the lens with whole image's pixels
@@ -385,12 +385,14 @@ context [
 explore: function [
 	"Opens up a window to explore an image in detail (TODO: other types)"
 	im [image!]
+	/title txt [string!]
 ][
 	window-sz: system/view/screens/1/size * 0.8					;-- do not make the window too big
-	view/flags either function? :elastic
+	view/flags/options either function? :elastic
 		[elastic compose [image-explorer (window-sz) data im #scale]]
 		[compose [image-explorer (window-sz) data im]]
 		'resize
+		[text: any [txt rejoin ["Image size=" im/size]]]
 ]
 
 ; explore to image! system/view/screens/1

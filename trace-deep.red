@@ -97,7 +97,7 @@ context [
 	]
 
 	;; deeply reduces a single expression, recursing into subexpressions
-	rewrite-next: function [code inspect /no-op /local r _ v1 end'] [
+	rewrite-next: function [code inspect /no-op /local end' r] [
 		;; determine expression bounds & skip set-words/set-paths - not interested in them
 		start: code
 		while [any [set-path? :start/1 set-word? :start/1]] [start: next start]		;@@ optimally this needs `find` to support typesets
@@ -105,7 +105,7 @@ context [
 		end: preprocessor/fetch-next start
 		no-op: all [no-op  start =? code]				;-- reset no-op flag if we encounter set-words/set-paths, as those ops form a new chain
 
-		set/any [v1 v2] start							;-- analyze first 2 values
+		set/any [v1: v2:] start							;-- analyze first 2 values
 		rewrite?: yes									;-- `yes` to rewrite the current expression and call a callback
 		case [											;-- priority order: op (v2), any-func (v1), everything else (v1)
 			all [											;-- operator - recurse into it's right part
@@ -123,7 +123,7 @@ context [
 					word? :v1
 					all [									;-- get the path in objects/blocks.. without refinements
 						path? :v1
-						set [v1 _] preprocessor/value-path? v1
+						set [v1: _:] preprocessor/value-path? v1
 					]
 				]
 				find [native! action! function! routine!] type?/word get/any v1
