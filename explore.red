@@ -236,7 +236,7 @@ context [
 		reduce [lens-sz whole-sz zoom]
 	]
 
-	resize: function [p [object!]] [
+	resize: function [p [object!] "panel"] [
 		set [lens-sz: whole-sz: zoom:] calc-sizes p
 		if fit?: 0x0 = whole-sz [
 			if lens-sz <> p/lens/size [									;-- if magnifier was hidden and whole image now fits into the lens
@@ -245,7 +245,6 @@ context [
 			p/frame/offset: 0x0											;-- coordinates are relative to the image 0x0
 		]
 		maybe p/fit?: fit?
-		maybe p/label/size/x: p/size/x
 		do with p/lens [
 			maybe size:  lens-sz
 			maybe extra: zoom
@@ -286,27 +285,34 @@ context [
 			]
 		]
 		draw: compose [
-			pen (magenta + contrast-with any [color white])
+			pen (contrast-with any [color white])
 			fill-pen off  font fnt
-			line (ofs * 1x0) (ofs/x by fa/size/y)						;-- draw the crosshair
+			line (ofs * 1x0) (ofs/x by fa/size/y)		;-- draw the crosshair
 			line (ofs * 0x1) (fa/size/x by ofs/y)
-			(box)														;-- the box outline
-			text (txt-ofs)        (form img-ofs)						;-- and the coordinates
+			(box)										;-- the box outline
+			pen violet
+			fill-pen 255.255.255.50
+			box (txt-ofs) (txt-ofs + 50x40)				;-- background for the text
+			text (txt-ofs)        (form img-ofs)		;-- and the coordinates
 			text (txt-ofs + 0x16) (form dpi-ofs)
 			text (txt-ofs + 0x30) (any [color-str ""])
 		]
 		change/only next fa/draw draw
 
-		panel/label/data: compose [										;-- duplicate the text in case it's invisible
+		pl: panel/label
+		pl/data: compose [								;-- duplicate the text in case it's invisible
 			"offset:"       (img-ofs) 
 			"  offset/dpi:" (dpi-ofs)
 			"  color:"      (color)
 		]
-		unless lens? [													;-- if aiming at the whole...
-			attempt [show panel/overlay]								;-- update the overlay first, so it's less laggy!
-			project panel												;-- update the lens
+		;@@ BUG: #4778 - too much flicker! have to use static face
+		; pl/size: 500x25  show pl							;-- enlarge before measuring! or will never be big enough
+		; pl/size: size-text pl
+		unless lens? [									;-- if aiming at the whole...
+			attempt [show panel/overlay]				;-- update the overlay first, so it's less laggy!
+			project panel								;-- update the lens
 		]
-		attempt [show panel]											;-- update the rest of the panel (`show` fails before on-created)
+		attempt [show panel]							;-- update the rest of the panel (`show` fails before on-created)
 		system/view/auto-sync?: old
 	]
 
@@ -351,7 +357,7 @@ context [
 				context with face copy/deep [
 					panel: face
 					do [
-						label: make-face/offset 'text 0x0
+						label: make-face/offset/spec 'text 0x0 [500 no-wrap]	;@@ should be big enough until #4778 is fixed
 						lens:  make-face/offset/spec 'base 0x25 [
 							all-over on-over :aim
 							draw [[image canvas 0x0]]
@@ -373,7 +379,9 @@ context [
 						]
 						react [overlay/offset: whole/offset]
 						react [overlay/size:   whole/size]
-						size/y: lens/size/y + lens/offset/y						;@@ autoadjust the height for VID or not??
+						size: as-pair
+							max label/size/x whole/size/x + lens/size/x + 30
+							lens/size/y + lens/offset/y						;@@ autoadjust the height for VID or not??
 					]
 				]
 			]
@@ -388,11 +396,19 @@ explore: function [
 	/title txt [string!]
 ][
 	window-sz: system/view/screens/1/size * 0.8					;-- do not make the window too big
-	view/flags/options either function? :elastic
-		[elastic compose [image-explorer (window-sz) data im #scale]]
-		[compose [image-explorer (window-sz) data im]]
+	view/flags/options
+		either function? :elastic
+			[elastic compose [image-explorer (window-sz) data im #scale]]
+			[compose [image-explorer (window-sz) data im]]
 		'resize
-		[text: any [txt rejoin ["Image size=" im/size]]]
+		[
+			text: any [txt rejoin ["Image size=" im/size]]
+			actors: object [
+				on-key-up: func [fa ev] [if ev/key = #"^[" [unview/only fa]]	;-- make it ESC-closable
+			]
+		]
 ]
 
-; explore to image! system/view/screens/1
+; print 1
+explore to image! system/view/screens/1
+; explore make image! 5x5 halt
