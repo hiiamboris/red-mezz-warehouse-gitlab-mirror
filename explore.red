@@ -410,5 +410,5 @@ explore: function [
 ]
 
 ; print 1
-explore to image! system/view/screens/1
+; explore to image! system/view/screens/1
 ; explore make image! 5x5 halt
