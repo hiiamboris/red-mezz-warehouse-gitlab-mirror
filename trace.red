@@ -19,7 +19,7 @@ trace: func [
 	code	[block!]	"If empty, still evaluated once (resulting in unset)"
 	/local r
 ][
-	#assert [parse spec-of :inspect [thru word! quote [any-type!] thru word! not to word! end]]
+	#assert [parse spec-of :inspect [thru word! quote [any-type!] thru word! not to word! to end]]	;@@ affects clock-each
 	until [
 		set/any 'r do/next code 'code					;-- eval at least once - to pass unset from an empty block
 		inspect :r code

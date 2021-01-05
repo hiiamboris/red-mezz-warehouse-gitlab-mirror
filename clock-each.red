@@ -42,7 +42,7 @@ clock-each: function [
 	/times n [integer!] "Repeat the whole CODE N times (default: once); displayed time is per iteration"
 ][
 	orig: copy/deep code								;-- preserve the original code in case it changes during execution
-	code: append copy code none							;-- need a no-op to establish a baseline
+	code: compose [none none (code)]					;-- need 2 no-ops to: (1) establish a baseline, (2) negate startup time of `trace`
 	times: make block! 64
 
 	timer: func [x [any-type!] pos [block!]] [			;-- collects timing of each expression
@@ -60,9 +60,8 @@ clock-each: function [
 		times: head times
 	]
 
-	baseline: first sort extract times 2				;-- use the minimal timing as baseline
-	clear skip tail times -2							;-- hide the baseline code
-	times: insert times 1
+	baseline: first sort extract times 2				;-- use the minimal timing as baseline (should be `none`)
+	times: skip times 4									;-- hide startup time and baseline code
 	forall times [										;-- display the results
 		set [p1: dt: p2:] back times
 		dt: 1e3 / n * to float! dt - baseline				;-- into millisecs
@@ -70,7 +69,7 @@ clock-each: function [
 		parse form dt [										;-- save 3 significant digits max
 			0 3 [opt #"." skip] opt [to #"."] dt: (dt: head clear dt)
 		]
-		code: copy/part at orig p1 p2 - p1
+		code: copy/part at orig p1 - 2 p2 - p1
 		print [dt unit mold/flat/part code 70]
 		times: next times
 	]
