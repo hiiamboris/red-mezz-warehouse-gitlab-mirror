@@ -29,6 +29,13 @@ Red [
 					put cache x x * factorial x - 1
 				]
 			]
+
+		;; anonymize words used during initialization of the program:
+
+			do with [x: 1 y: 2] [
+				z: x * y
+				... other code that uses x or y ...
+			]
 	}
 	notes: {
 		Design question here is - if we allow block! for `ctx`, how should we treat it?
