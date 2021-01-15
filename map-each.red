@@ -40,11 +40,18 @@ Red [
 		All limitations of FOR-EACH apply.
 
 		See also https://github.com/greggirwin/red-hof/tree/master/code-analysis#map-each
+
+		
+		Quirks:
+
+		Currently /only vs non-/only follows the logic of `append`,
+		so if body returns a path, it will be unpacked unless /only is provided
+		not completely sure if it's a desired behavior or not
 	}
 ]
 
 
-; #include %assert.red
+#include %assert.red
 #include %error-macro.red
 #include %for-each.red
 
@@ -264,3 +271,6 @@ context [
 #assert [[2.0 #"3" 6   ] = b: map-each [x [number!] ] [1 2.0 #"3" 4 'e 6] [set [x] advance x] 'b]
 #assert [[1 'e 6       ] = b: map-each [x [integer!]] [1 2.0 #"3" 4 'e 6] [advance x] 'b]
 
+;; confirm that there's no leakage
+#assert [(x: 1     map-each x     [2 3 4]   [x: x * x]  x = 1) 'x]
+#assert [(x: y: 1  map-each [x y] [2 3 4 5] [x: y * x]  all [x = 1 y = 1]) 'x]

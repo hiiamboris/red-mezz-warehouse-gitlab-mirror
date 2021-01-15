@@ -84,10 +84,11 @@ Red [
 		- ADVANCE is provided to the code block, see https://github.com/greggirwin/red-hof/tree/master/code-analysis#on-demand-advancement
 		  keep in mind: when using filters, advance will jump to the next *match*!
 		  also, when iterating on ranges, the spec returned by it is fake - it will be changed in place with each new `advance` call
+		- words in the spec are now contained to the body, so no /local ado required
 	}
 ]
 
-; #include %assert.red
+#include %assert.red
 #include %error-macro.red
 #include %bind-only.red
 
@@ -157,7 +158,7 @@ context [
 		/stride  "Lock step at 1 (or -1 for reverse), while setting all SPEC words"
 		/case    "For get-words only: use strict comparison"
 		/same    "For get-words only: use sameness comparison"
-		/local _ x r index-word
+		/local _ w x r index-word
 	][
 		val-cmp-op: get pick pick [[=? =?] [== =]] same case
 		case: :system/words/case
@@ -255,6 +256,9 @@ context [
 			where: at series index
 		]
 
+		;; before we're gonna use spec, stop spec words from leaking out and contain them within for-each's body
+		bind spec object parse spec [collect [some [set w word! keep (to set-word! w)] keep ('none)]]
+
 		;; build code that sets the spec on each iteration
 		prefix: pick [ [old:] [] ] filtered?							;-- `old:` is required for checks as they come after index advancement
 		spec-fill: compose/deep pick [
@@ -293,7 +297,9 @@ context [
 			]
 			none														;-- return none when at the end
 		]
-		bind-only code 'advance											;-- should be okay to bind it in place
+		
+		;; expose 'advance' and contain the spec words
+		bind-only code compose [advance (spec)]							;-- should be okay to bind it in place
 
 		unset 'r														;-- return unset if never entered
 		do compose/deep [
@@ -437,3 +443,6 @@ context [
 #assert [[2.0 6        ] = b: collect [for-each [x [number!] ] [1 2.0 #"3" 4 'e 6] [set [x] advance keep x]] 'b]
 #assert [[1 6          ] = b: collect [for-each [x [integer!]] [1 2.0 #"3" 4 'e 6] [advance keep x]] 'b]			;-- does not affect the `x`
 
+;; confirm that there's no leakage
+#assert [(x: 1     for-each x     [2 3 4] [x: x * x]  x = 1) 'x]
+#assert [(x: y: 1  for-each [x y] [2 3 4] [x: y: 0]   all [x = 1 y = 1]) 'x]
