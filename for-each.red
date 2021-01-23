@@ -88,7 +88,7 @@ Red [
 	}
 ]
 
-#include %assert.red
+; #include %assert.red
 #include %error-macro.red
 #include %bind-only.red
 
@@ -304,7 +304,7 @@ context [
 		]
 		
 		;; expose 'advance' and contain the spec words
-		bind-only code probe compose [									;-- should be okay to bind it in place
+		bind-only code compose [										;-- should be okay to bind it in place
 			advance (spec) (index-word-bound when index-word)
 		]
 
