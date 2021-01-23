@@ -234,6 +234,14 @@ context [
 			use-values? [while [none? last values-mask] [take/last values take/last values-mask]]
 		]
 
+		;; before we're gonna use spec & index, stop spec words from leaking out and contain them within for-each's body
+		bind spec ctx: context parse spec [collect [
+			some [set w word! keep (to set-word! w)]
+			opt [if (index-word) keep (to set-word! index-word)]
+			keep ('none)
+		]]
+		if index-word [index-word-bound: bind to word! index-word ctx]
+
 		;; build user-provided index assignment code
 		upd-idx: []														;-- empty if no index requested
 		if index-word [
@@ -242,7 +250,7 @@ context [
 				not image? series    ['index]							;-- integer index
 				'image [ compose [int2pair index (series/size/x)] ]		;-- images receive special pair! index instead of integer!
 			]
-			upd-idx: compose [(to set-word! index-word) (upd-idx)]
+			upd-idx: compose [(to set-word! index-word-bound) (upd-idx)]
 		]
 
 		;; set up the series pointer & decide what code is needed to fill fake series for ranges
@@ -255,9 +263,6 @@ context [
 		][
 			where: at series index
 		]
-
-		;; before we're gonna use spec, stop spec words from leaking out and contain them within for-each's body
-		bind spec object parse spec [collect [some [set w word! keep (to set-word! w)] keep ('none)]]
 
 		;; build code that sets the spec on each iteration
 		prefix: pick [ [old:] [] ] filtered?							;-- `old:` is required for checks as they come after index advancement
@@ -299,7 +304,9 @@ context [
 		]
 		
 		;; expose 'advance' and contain the spec words
-		bind-only code compose [advance (spec)]							;-- should be okay to bind it in place
+		bind-only code probe compose [									;-- should be okay to bind it in place
+			advance (spec) (index-word-bound when index-word)
+		]
 
 		unset 'r														;-- return unset if never entered
 		do compose/deep [
