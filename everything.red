@@ -51,4 +51,5 @@ Red [
 #include %do-atomic.red
 #include %do-queued-events.red
 #include %contrast-with.red
+#include %is-face.red
 
