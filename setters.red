@@ -59,6 +59,14 @@ Red [
 
 			This is sometimes useful in debugging, when you have multiple internal functions in some context,
 			and you wanna play with those functions in console until you're satisfied with their results.
+
+		EXPORT
+			Syntax:
+				export [my-func1 my-func2 ...]
+			Is similar to `import`, but should be called from inside a context, and takes a list of words.
+
+			This is handy when you want to define a word in the context, but also want it globally available.
+			You can't write `set 'my-func my-func: ...` because 'my-func will be bound to the context itself.
 	}
 ]
 
@@ -92,10 +100,17 @@ maybe: func [
 	:val
 ]
 
-import: func [
+import: function [
 	"Import words from context CTX into the global namespace"
 	ctx [object!]
 ][
-	set  bind words-of ctx system/words  values-of ctx
+	set/any  bind words-of ctx system/words  values-of ctx
+]
+
+export: function [
+	"Export a set of bound words into the global namespace"
+	words [block!]
+][
+	foreach w words [set/any 'system/words/:w get/any :w]
 ]
 
