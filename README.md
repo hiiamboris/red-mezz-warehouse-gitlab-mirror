@@ -24,7 +24,7 @@ Notes:
 ### General purpose
 | Source file                            | Description |
 | ---                                    | --- |
-| [setters](setters.red)                 | Contains ONCE, DEFAULT, MAYBE value assignment wrappers, and IMPORT to expose some object's words globally |
+| [setters](setters.red)                 | Contains ONCE, DEFAULT, MAYBE value assignment wrappers, and IMPORT/EXPORT to expose some object's words globally |
 | [with](with.red)                       | A convenient/readable BIND variant |
 | [bind-only](bind-only.red)             | Selectively bind a word or a few only |
 | [apply](apply.red)                     | Call a function with arguments specified as key-value pairs |
@@ -94,6 +94,7 @@ These two functions will serve as a great playground for such an experiment.
 | ---                                      | --- |
 | [relativity](relativity.red)             | Face coordinate systems translation mezzanines |
 | [contrast-with](contrast-with.red)       | Pick a color that would contrast with the given one |
+| [is-face?](is-face.red)                  | Reliable replacement for FACE? which doesn't work on user-defined faces |
 | [do-queued-events](do-queued-events.red) | Flush the View event queue |
 | [do-atomic](do-atomic.red)               | Atomically execute a piece of code that triggers reactions |
 | [do-unseen](do-unseen.red)               | Disable View redraws from triggering during given code evaluation |
