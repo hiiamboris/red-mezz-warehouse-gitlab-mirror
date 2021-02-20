@@ -45,7 +45,7 @@ context [
 		;; scrollers should be on top, so should always be the last
 		hsc: panel/hsc  vsc: panel/vsc
 		pane: panel/pane
-		unless hsc =? pick pane -2 [
+		unless hsc =? pick tail pane -2 [
 			move find/same pane hsc tail pane
 		]
 		unless vsc =? last pane [
