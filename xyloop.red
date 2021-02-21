@@ -37,7 +37,7 @@ Red [
 ;@@ BUG: diverts return and exit
 xyloop: function [
 	"Iterate over 2D series or size"
-	'word	[word!]
+	'word	[word! set-word!]
 	srs		[pair! image!]
 	code	[block!]
 ][
