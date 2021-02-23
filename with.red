@@ -3,7 +3,14 @@ Red [
 	author:  @hiiamboris
 	license: 'BSD-3
 	usage: {
-		USAGE
+		USAGE SUMMARY
+			with x  [..]          == bind [..] x
+			with 'x [..]          == bind [..] 'x
+			with :fun [..]        == bind [..] :fun
+			with [x y 'z] [..]    == bind bind bind [..] 'z y x
+			with [x: 1 y: 2] [..] == bind [..] context [x: 1 y: 2]
+
+		EXAMPLES
 		;; omit the path to an object, but work inside it's context:
 
 			do with face/parent/pane/1 [
