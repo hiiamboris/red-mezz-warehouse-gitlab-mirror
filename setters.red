@@ -67,8 +67,20 @@ Red [
 
 			This is handy when you want to define a word in the context, but also want it globally available.
 			You can't write `set 'my-func my-func: ...` because 'my-func will be bound to the context itself.
+
+		ANONYMIZE
+			Syntax:
+				anonymize 'my-word my-value
+			It returns 'my-word set to my-value in an anonymous context.
+
+			Useful when you want to have a collection of similarly spelled words with different values.
+			It intentionally accepts word!-s only (not set-word!-s),
+			because returned word does not belong to the wrapping function's context and should not be /local-ized.
 	}
 ]
+
+
+; #include %assert.red
 
 
 once: func [
@@ -114,3 +126,25 @@ export: function [
 	foreach w words [set/any 'system/words/:w get/any :w]
 ]
 
+anonymize: function [
+	"Return WORD bound in an anonymous context and set to VALUE"
+	word [word!] value [any-type!]
+][
+	o: construct change [] to set-word! word
+	set/any/only o :value
+	bind word o
+]
+
+
+;-- there's a lot of ways this function can be written carelessly...
+#assert ['w     == anonymize 'w 0]
+#assert ['value  = get anonymize 'value 'value]
+#assert [true    = get anonymize 'value true]
+#assert ['true   = get anonymize 'value 'true]
+#assert ['none   = get anonymize 'value 'none]
+#assert [unset?    get/any anonymize 'value ()]
+#assert [[1 2]   = get/any anonymize 'value [1 2]]
+#assert [#(a: 1) = get/any anonymize 'value #(a: 1)]
+#assert [(object [a: 1]) = get/any anonymize 'value object [a: 1]]
+#assert [set-word? get/any anonymize 'value quote value:]
+#assert [lit-word? get/any anonymize 'value quote 'value]
