@@ -24,7 +24,7 @@ Notes:
 ### General purpose
 | Source file                            | Description |
 | ---                                    | --- |
-| [setters](setters.red)                 | Contains ONCE, DEFAULT, MAYBE value assignment wrappers, and IMPORT/EXPORT to expose some object's words globally |
+| [setters](setters.red)                 | Contains ONCE, DEFAULT, MAYBE, ANONYMIZE value assignment wrappers, and IMPORT/EXPORT to expose some object's words globally |
 | [with](with.red)                       | A convenient/readable BIND variant |
 | [bind-only](bind-only.red)             | Selectively bind a word or a few only |
 | [apply](apply.red)                     | Call a function with arguments specified as key-value pairs |
