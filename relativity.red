@@ -32,7 +32,8 @@ Red [
 ]
 
 context [
-	ppd: system/view/metrics/dpi / 96.0         		;-- pixels per (logical) dot = display scaling factor / 100%
+	dpi: any [system/view/metrics/dpi 96]         		;@@ temporary workaround for #4740
+	ppd: dpi / 96.0	 						       		;-- pixels per (logical) dot = display scaling factor / 100%
 	u2p: func [x] [round/to x * ppd 1]					;-- units to pixels, one-dimensional
 	p2u: func [x] [round/to x / ppd 1]					;-- pixels to units, one-dimensional
 
