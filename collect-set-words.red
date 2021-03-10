@@ -20,7 +20,7 @@ collect-set-words: function [
 ]
 
 comment {
-	;-- this version is 4x slower
+	;-- this version is 4x slower, but uses 10x less RAM
 	collect-set-words: function [
 		"Deeply collect set-words from a block of code"
 		code [block!]
