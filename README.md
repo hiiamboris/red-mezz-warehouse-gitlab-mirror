@@ -98,6 +98,7 @@ These two functions will serve as a great playground for such an experiment.
 | [do-queued-events](do-queued-events.red) | Flush the View event queue |
 | [do-atomic](do-atomic.red)               | Atomically execute a piece of code that triggers reactions |
 | [do-unseen](do-unseen.red)               | Disable View redraws from triggering during given code evaluation |
+| [embed-image](embed-image.red)           | Macro to compile images into exe |
 | [explore & image-explorer style](explore.red) | Show UI to explore an image in detail (TODO: support any Red value) |
 | [scrollpanel style](scrollpanel.red)     | Automatic scrolling capability to a panel, until such is available out of the box. [Read more](scrollpanel.md) |
 | [table style](table.red)                 | WIP experiment on VID-based table construction |
