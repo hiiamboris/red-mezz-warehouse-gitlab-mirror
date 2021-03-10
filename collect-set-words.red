@@ -3,6 +3,10 @@ Red [
 	purpose: "Helpful in localizing a piece of code"
 	author:  @hiiamboris
 	license: 'BSD-3
+	notes: {
+		- function-based version also collects word!-s from `foreach`, `remove-each`, `repeat` (side effect)
+		- parse-based version's result may require a call to `unique` (depending on your needs)
+	}
 ]
 
 
