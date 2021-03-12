@@ -98,7 +98,7 @@ As can be seen, RESHAPE shows the intent behind the code more clearly in complex
     compose [x (?+y) + z]
   ```
 - It uses parens, so if one wants to also **use parens** in the code, code gets **uglified**.<br>
-  E.g. `parse compose [skip p: if ([((index? p)) = i])]` -- seeing this immediately induces headache ;)<br>
+  E.g. `parse compose [skip p: if ([((index? p) = i)])]` -- seeing this immediately induces headache ;)<br>
   Plus it's a **source of bugs** when one forgets to uglify a paren, especially in big code nested with blocks.
 - There's no way to **conditionally include/exclude** whole blocks of code without an inner COMPOSE call<br>
   E.g. `compose [some code (either flag? [compose [include (this code) too]][])]` -- `compose/deep` won't help here<br>
