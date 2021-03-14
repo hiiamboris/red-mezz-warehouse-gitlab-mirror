@@ -81,7 +81,7 @@ These two functions will serve as a great playground for such an experiment.
 ### String interpolation
 | Source file                        | Description |
 | ---                                | --- |
-| [composite](composite.red)         | String interpolation using the preprocessor. [Read more](composite.md) |
+| [composite macro & mezz](composite.red) | String interpolation both at run-time and load-time. [Read more](composite.md) |
 | [error-macro](error-macro.red)     | Shortcut for raising an error using string interpolation for the message |
 
 ### Filesystem scanning
