@@ -17,10 +17,36 @@ Red [
 	}
 ]
 
+
+; #include %assert.red
+#include %with.red
+
+
+context [
+	non-paren: charset [not #"("]
+	
+	;@@ TODO: error inlining
+	set 'composite function [ctx [block!] str [any-string!]] [
+		s: as string! str				;-- use "string": load %file/url:// does something else entirely, <tags> get appended with <>
+		b: parse s [collect [
+			any [
+				keep copy some non-paren
+			|	s: (set [v: e:] transcode/next s) :e keep (:v)
+			]
+		]]
+		as str rejoin with ctx b
+	]
+]
+
+
+#assert [%" - 3 - <abc)))> - func1" == composite[] %"()() - (1 + 2) - (<abc)))>) - ('func)(1)()()"]
+#assert [<tag flag=3/> == composite[] <tag flag=(mold 1 + 2)/>]
+
+
+
 ;@@ TODO: make an escape mechanism? although, it's already there: ("(") (")") (")))((()()("), but can be shorter perhaps?
 ;@@ TODO: support comments? e.g. `(;-- comments)` in multiline strings, if so - how should it count braces?
 ;@@ TODO: expand "(#macros)" ?
-;@@ TODO: function version for runtime composition
 ;; has to be both Red & R2-compatible
 ;; any-string! for composing files, urls, tags
 ;; load errors are reported at expand time by design
@@ -85,6 +111,7 @@ Red [
 	print ["***** ERROR in #COMPOSITE *****^/" :error]
 	ee
 ]
+
 
 #assert [
 	(b: [#composite %"()() - (1 + 2) - (<abc)))>) - (func)(1)()()"]) == [
