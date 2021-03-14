@@ -82,7 +82,7 @@ These two functions will serve as a great playground for such an experiment.
 | Source file                        | Description |
 | ---                                | --- |
 | [composite macro & mezz](composite.red) | String interpolation both at run-time and load-time. [Read more](composite.md) |
-| [error-macro](error-macro.red)     | Shortcut for raising an error using string interpolation for the message |
+| [error-macro](error-macro.red)     | Shortcut for raising an error using string interpolation for the message. [Read more](https://gitlab.com/hiiamboris/red-mezz-warehouse/-/blob/master/composite.md#error-macro) |
 
 ### Filesystem scanning
 | Source file                  | Description |
