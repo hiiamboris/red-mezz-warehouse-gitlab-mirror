@@ -46,8 +46,9 @@ Red [
 			]
 
 		;; bind a block to multiple contexts at once (in the list order):
-		   first item in the block should be of word!, path! or lit-word! type
+		   first item in the block should be of word!/get-word!, path!/get-path! or lit-word! type
 		   1) words and paths values are fetched, while lit-words are converted into words
+		      get-words and get-paths should be used for function context, otherwise they get evaluated
 		   2) if resulting value is a context, block is bound to it
 		      if resulting value is a word, block is bound to the context of this word
 
@@ -59,11 +60,13 @@ Red [
 				b: 2
 				f: func [x y] [
 					print with [self 'x] composite "a=(a) b=(b) x*y=(x * y)"
+					print with [self :f] composite "a=(a) b=(b) x*y=(x * y)"	;-- equivalent
 				]
 			]
 			
 			Thus, `with [c]` is equivalent to `with c`, while `with ['c]` - to `with 'c`.
 
+		TODO: make an R/S version which will not evaluate functions, and get-variants won't be needed
 	}
 	notes: {
 		Why is it designed like this?
