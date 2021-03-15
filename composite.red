@@ -1,19 +1,32 @@
 Red [
-	title:   "#composite macro"
-	purpose: "String interpolation using the preprocessor"
+	title:   "#composite macro & mezz"
+	purpose: "String interpolation"
 	author:  @hiiamboris
 	license: 'BSD-3
 	notes: {
 		It supports only parens as expression designators.
-		Examples:
+
+		EXAMPLES:
+
+		#composite
+
 			stdout: #composite %"(working-dir)stdout-(index).txt"
 			pid: call/shell #composite {console-view.exe (to-local-file name) 1>(to-local-file stdout)}
 			log-info #composite {Started worker (name) ("(")PID:(pid)(")")}
-				;) note the natural escape mechanism: ("("), which is ugly as hell
+				;) note the natural escape mechanism: ("("), resembling an ugly parrot
 			#composite "Worker build date: (var/date) commit: (var2)^/OS: (system/platform)"
 			write/append cfg-file #composite "config: (mold config)"
+		
+			#macro [#print string!] func [[manual] s e] [insert remove s [print #composite] s]
+			#print {invoking: (cmd)^/from: "(to-local-file what-dir)"}
+			#print "error reading the config file: (msg)"
 
-		See README
+		composite
+
+			cmd: composite['root] get bind either afile ['avcmd]['vcmd] :a+v
+			prints: func [b [block!] s [string!]] [print composite b s]
+
+		See `composite.md` for more
 	}
 ]
 

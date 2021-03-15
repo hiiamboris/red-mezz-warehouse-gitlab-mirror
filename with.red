@@ -7,6 +7,7 @@ Red [
 			with x  [..]          == bind [..] x
 			with 'x [..]          == bind [..] 'x
 			with :fun [..]        == bind [..] :fun
+			with [:fun] [..]      == bind [..] :fun
 			with [x y 'z] [..]    == bind bind bind [..] 'z y x
 			with [x: 1 y: 2] [..] == bind [..] context [x: 1 y: 2]
 
