@@ -45,6 +45,7 @@ Red [
 #include %timestamp.red
 #include %tabs.red
 #include %modulo.red
+#include %print-macro.red
 
 #include %glob.red
 
