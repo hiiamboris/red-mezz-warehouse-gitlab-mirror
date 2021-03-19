@@ -16,7 +16,10 @@ Red [
 #include %composite.red									;-- doesn't make sense to include this file without #composite also
 
 ;; I'm intentionally not naming it `#error` or the macro may be silently ignored if it's not expanded (due to many issues with the preprocessor)
-#macro ['ERROR any-string!] func [[manual] ss ee] [
+#macro ['ERROR skip] func [[manual] ss ee] [
+	unless string? ss/2 [
+		print form make error! "ERROR macro expects a string! argument"
+	]
 	remove ss
 	insert ss [do make error! #composite]
 	ss		;-- reprocess it again so it expands #composite
