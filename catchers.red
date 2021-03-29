@@ -11,8 +11,7 @@ Red [
 			- on throw: CASES result
 			- normally: result of CODE evaluation
 
-			Inside CASES you can rethrow the caught value with `throw thrown` (BUGGED - see #4416)
-			e.g.:
+			Inside CASES you can rethrow the caught value with `throw thrown`, e.g.:
 				pcatch [
 					thrown = my-value [print "found it!"]
 					true [throw thrown]			;) not handled here
@@ -23,7 +22,7 @@ Red [
 		FCATCH - Filtered CATCH
 
 			Catches only values for which FILTER returns a truthy value (and also calls HANDLER if provided).
-			Rethrows values for which FILTER returns a falsey value (BUGGED - see #4416).
+			Rethrows values for which FILTER returns a falsey value.
 			Returns:
 			- on throw: HANDLER's result (if provided) or thrown value otherwise
 			- normally: result of CODE evaluation
@@ -86,7 +85,7 @@ context [
 			set/any
 				(bind quote 'thrown :with-thrown)
 				catch [return do code]
-			unless do filter [throw thrown]				;@@ BUG: this won't work because of #4416
+			unless do filter [throw thrown]
 			either handler [do on-throw][thrown]
 		]
 	]
