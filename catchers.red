@@ -6,18 +6,24 @@ Red [
 	notes: {
 		PCATCH - Pattern-matched CATCH
 
-			Evaluates CASES block after catching a throw.
+			Evaluates CASES block after catching a throw (similar to native CASE).
+			Rethrows values for which there is no matching pattern in CASES.
 			Returns:
-			- on throw: CASES result
+			- on throw: `CASE CASES` result if any pattern matched
 			- normally: result of CODE evaluation
 
-			Inside CASES you can rethrow the caught value with `throw thrown`, e.g.:
+			Automatic rethrow works as if `true [throw thrown]` line was appended to CASES.
+			However you can do always the same manually, e.g.:
 				pcatch [
-					thrown = my-value [print "found it!"]
-					true [throw thrown]			;) not handled here
+					thrown = my-value [
+						print "found it!"
+						if 1 = random 2 [throw thrown]		;) coin toss :D
+					]
 				][
 					do code
 				]
+
+			`pcatch [true [thrown]] [...]` is equivalent to `catch [...]`
 
 		FCATCH - Filtered CATCH
 
@@ -27,12 +33,13 @@ Red [
 			- on throw: HANDLER's result (if provided) or thrown value otherwise
 			- normally: result of CODE evaluation
 
-			Since rethrow is automatic here, it may be a bit shorter if you're wrapping unknown code:
 				fcatch/handler [thrown = my-value] [
 					do code
 				][
 					print "found it!"
 				]
+
+			`fcatch [] [...]` is equivalent to `catch [...]` (because result of [] is unset - a truthy value)
 
 		THROWN
 
@@ -52,8 +59,10 @@ Red [
 	}
 ]
 
+#include %assert.red
+
 context [
-	with-thrown: func [code [block!] /local thrown] [	;-- needed to be able to get thrown from both *catch funcs
+	with-thrown: func [code [block!] /local thrown] [		;-- needed to be able to get thrown from both *catch funcs
 		do code
 	]
 
@@ -70,7 +79,10 @@ context [
 			set/any
 				(bind quote 'thrown :with-thrown)
 				catch [return do code]
-			case cases									;-- case is outside of catch for `throw thrown` to work
+			;-- the rest mimicks `case append cases [true [throw thrown]]` behavior but without allocations
+			forall cases [if do/next cases 'cases [break]]	;-- will reset cases to head if no conditions succeed
+			if head? cases [throw thrown]					;-- outside of `catch` for `throw thrown` to work
+			do cases/1										;-- evaluates the block after true condition
 		]
 	]
 
@@ -92,4 +104,48 @@ context [
 
 ]
 
-;@@ TODO: unittests
+
+#assert [1 = r: catch [fcatch         [            ] [1      ]  ] 'r]		;-- normal result
+#assert [unset? catch [fcatch         [            ] [       ]  ] 'fcatch]
+#assert [unset? catch [fcatch         [true        ] [       ]  ] 'fcatch]
+#assert [2 = r: catch [fcatch         [            ] [throw 1] 2] 'r]		;-- unset is truthy, always catches
+#assert [1 = r: catch [fcatch         [no          ] [throw 1] 2] 'r]
+#assert [1 = r: catch [fcatch         [no          ] [throw/name 1 'abc] 2] 'r]
+#assert [2 = r: catch [fcatch         [yes         ] [throw 1] 2] 'r]
+#assert [1 = r: catch [fcatch         [even? thrown] [throw 1] 2] 'r]
+#assert [2 = r: catch [fcatch         [even? thrown] [throw 4] 2] 'r]
+#assert [3 = r: catch [fcatch/handler [even? thrown] [throw 3] [thrown * 2]] 'r]
+#assert [8 = r: catch [fcatch/handler [even? thrown] [throw 4] [thrown * 2]] 'r]
+#assert [9 = r: catch [loop 3 [fcatch/handler [] [throw 4] [break/return 9]]] 'r]			;-- break test
+#assert [8 = r: catch [loop 3 [fcatch/handler [continue] [throw 4] [break/return 9]] 8] 'r]	;-- continue test
+
+#assert [1 = r: catch [pcatch [              ] [throw 1] 2] 'r]				;-- no patterns matched, should rethrow
+#assert [3 = r: catch [pcatch [true [3]      ] [throw 1]  ] 'r]				;-- catch-all
+#assert [3 = r: catch [pcatch [true [throw 3]] [throw 1] 2] 'r]				;-- catch-all with custom throw
+#assert [1 = r: catch [pcatch [even? thrown [thrown * 2]] [throw 1]] 'r]
+#assert [4 = r: catch [pcatch [even? thrown [thrown * 2]] [throw 2]] 'r]
+#assert [4 = r: catch [pcatch [even? thrown [thrown * 2] thrown < 5 [0]] [throw 2]] 'r]
+#assert [0 = r: catch [pcatch [even? thrown [thrown * 2] thrown < 5 [0]] [throw 3]] 'r]
+#assert [5 = r: catch [pcatch [even? thrown [thrown * 2] thrown < 5 [0]] [throw 5]] 'r]
+#assert [9 = r: catch [repeat i 4 [pcatch [thrown < 3 [] 'else [break/return 9]] [throw i]]] 'r]	;-- break test
+#assert [9 = r: catch [repeat i 4 [pcatch [thrown < 3 [continue] 'else [break/return 9]] [throw i]]] 'r]
+
+
+{
+	;-- this version is simpler but requires explicit `true [throw thrown]` to rethrow values that fail all case tests
+	;-- and that I consider a bad thing
+
+	set 'pcatch function [
+		"Eval CODE and forward thrown value into CASES as 'THROWN'"
+		cases [block!] "CASE block to evaluate after throw (normally not evaluated)"
+		code  [block!] "Code to evaluate"
+	] compose/deep [
+		with-thrown [
+			set/any
+				(bind quote 'thrown :with-thrown)
+				catch [return do code]
+			case cases									;-- case is outside of catch for `throw thrown` to work
+		]
+	]
+}
+
