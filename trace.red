@@ -19,12 +19,27 @@ trace: func [
 	code	[block!]	"If empty, still evaluated once (resulting in unset)"
 	/local r
 ][
-	#assert [parse spec-of :inspect [thru word! quote [any-type!] thru word! not to word! to end]]	;@@ affects clock-each
-	until [
-		set/any 'r do/next code 'code					;-- eval at least once - to pass unset from an empty block
-		inspect :r code
-		tail? code
-	]
-	:r
+	; #assert [parse spec-of :inspect [thru word! quote [any-type!] thru word! not to word! to end]]	;@@ affects clock-each
+	set/any 'r do/next code 'code					;-- eval at least once - to pass unset from an empty block
+	inspect :r code
+	either tail? code [:r][trace :inspect code]
 ]
 
+{
+	;-- this version deadlocked if traced code contained `continue` (because it then applied to the `until` of `trace`)
+
+	trace: func [
+		"Evaluate each expression in CODE and pass it's result to the INSPECT function"
+		inspect	[function!] "func [result [any-type!] next-code [block!]]"
+		code	[block!]	"If empty, still evaluated once (resulting in unset)"
+		/local r
+	][
+		#assert [parse spec-of :inspect [thru word! quote [any-type!] thru word! not to word! to end]]	;@@ affects clock-each
+		until [
+			set/any 'r do/next code 'code					;-- eval at least once - to pass unset from an empty block
+			inspect :r code
+			tail? code
+		]
+		:r
+	]
+}
