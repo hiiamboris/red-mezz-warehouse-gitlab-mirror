@@ -52,6 +52,7 @@ Red [
 		Notes
 
 			Both trap RETURN & EXIT due to Red limitations.
+			Due to #4416 issue, `throw/name` loses it's `name` during rethrow. Nothing can be done about it.
 
 			See https://gitlab.com/-/snippets/1995436
 			and https://github.com/red/red/issues/3755
