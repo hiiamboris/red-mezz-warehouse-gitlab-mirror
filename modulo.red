@@ -6,7 +6,7 @@ Red [
 ]
 
 
-; #include %assert.red
+#include %assert.red
 
 context [
 	abs: :absolute
@@ -67,20 +67,24 @@ context [
 	]
 ]
 
+;@@ TODO: Linux and esp. ARM may produce different results for floats, and may need tests update
+
 ;; need a few values defined
-#assert [-1.3877787807814457e-17 =? -x: 0.15 - 0.05 - 0.1  'x]
+#assert [-1.3877787807814457e-17 =? -x: 0.15 - 0.05 - 0.1  'x]	;-- comes from some test on the internet IIRC
 #assert [ 1.3877787807814457e-17 =? +x: 0 - -x]
-#assert [-a: -1e-16]
+#assert [-a: -1e-16]											;-- just a few values near float/epsilon
 #assert [+a:  1e-16]
 #assert [-b: -1e-17]
 #assert [+b:  1e-17]
 #assert [-c: -1e-18]
 #assert [+c:  1e-18]
-#assert [ 0.1 + -x =? +I:   0.09999999999999999 '+I]
+#assert [+max:  2147483647]										;-- extreme integers
+#assert [-max: -2147483648]
+#assert [ 0.1 + -x =? +I:   0.09999999999999999 '+I]			;-- results of adding epsilon to a value near 1
 #assert [-0.1 + +x =? -I:  -0.09999999999999999 '-I]
 #assert [ 0.1 + -a =? +IA:  0.09999999999999991 '+IA]
 #assert [-0.1 + +a =? -IA: -0.09999999999999991 '-IA]
-#assert [+a + 0.1 - 0.1 =? +a':  9.71445146547012e-17 '+a']
+#assert [+a + 0.1 - 0.1 =? +a':  9.71445146547012e-17 '+a']		;-- FP rounding errors distort original small value
 #assert [-a - 0.1 + 0.1 =? -a': -9.71445146547012e-17 '-a']
 #assert [+b + 0.1 - 0.1 =? +b':  1.3877787807814457e-17 '+b']
 #assert [-b - 0.1 + 0.1 =? -b': -1.3877787807814457e-17 '-b']
@@ -246,6 +250,21 @@ context [
 #assert [  23 = r: modulo/trunc  123 -50  'r]
 #assert [ -23 = r: modulo/trunc -123  50  'r]
 #assert [ -23 = r: modulo/trunc -123 -50  'r]
+
+#assert [2    =? r: modulo       -max  10 'r]		;-- extreme ints produce ints, not floats
+#assert [2    =? r: modulo       -max -10 'r]
+#assert [7    =? r: modulo       +max  10 'r]
+#assert [7    =? r: modulo       +max -10 'r]
+
+#assert [ 2   =? r: modulo/floor -max  10 'r]
+#assert [-8   =? r: modulo/floor -max -10 'r]
+#assert [ 7   =? r: modulo/floor +max  10 'r]
+#assert [-3   =? r: modulo/floor +max -10 'r]
+
+#assert [-8   =? r: modulo/trunc -max  10 'r]
+#assert [-8   =? r: modulo/trunc -max -10 'r]
+#assert [ 7   =? r: modulo/trunc +max  10 'r]
+#assert [ 7   =? r: modulo/trunc +max -10 'r]
 
 
 ;; time tests
