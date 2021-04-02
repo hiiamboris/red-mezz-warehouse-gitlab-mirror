@@ -62,32 +62,35 @@ context [
 	]
 
 	;; reduces each expression in a chain
-	rewrite: func [code inspect] [
+	rewrite: func [code inspect preview] [
 		code: copy code									;-- will be modified in place; but /deep isn't applicable as we want side effects
-		while [not empty? code] [code: rewrite-next code :inspect]
+		while [not empty? code] [code: rewrite-next code :inspect :preview]
 		head code										;-- needed by `trace-deep`
 	]
 	
 	;; fully reduces a single value, triggering a callback
-	rewrite-atom: function [code inspect] [
+	rewrite-atom: function [code inspect preview] [
 		if find eval-types type: type? :code/1 [
 			to-eval:   copy/part      code 1			;-- have to separate it from the rest, to stop ops from being evaluated
 			to-report: copy/deep/part code 1			;-- report an unchanged (by evaluation) expr to `inspect` (here: can be a paren with blocks inside)
 			change/only code
 				either type == paren! [
-					as paren! rewrite as block! code/1 :inspect
-				][	wrap inspect to-report do to-eval
+					as paren! rewrite as block! code/1 :inspect :preview
+				][
+					preview to-report
+					wrap inspect to-report do to-eval
 				]
 		]
 	]
 
 	;; rewrites an operator application, e.g. `1 + f x`
 	;; makes a deep copy of each code part in case a value gets modified by the code
-	rewrite-op-chain: function [code inspect] [
+	rewrite-op-chain: function [code inspect preview] [
 		until [
-			rewrite-next/no-op skip code 2 :inspect		;-- reduce the right value to a final, but not any subsequent ops
+			rewrite-next/no-op skip code 2 :inspect :preview	;-- reduce the right value to a final, but not any subsequent ops
 			to-eval:   copy/part      code 3			;-- have to separate it from the rest, to stop ops from being evaluated
 			to-report: copy/deep/part code 3			;-- report an unchanged (by evaluation) expr to `inspect`
+			preview to-report
 			change/part/only code wrap inspect to-report do to-eval 3
 			not all [									;-- repeat until the whole chain is reduced
 				word? :code/2
@@ -97,7 +100,7 @@ context [
 	]
 
 	;; deeply reduces a single expression, recursing into subexpressions
-	rewrite-next: function [code inspect /no-op /local end' r] [
+	rewrite-next: function [code inspect preview /no-op /local end' r] [
 		;; determine expression bounds & skip set-words/set-paths - not interested in them
 		start: code
 		while [any [set-path? :start/1 set-word? :start/1]] [start: next start]		;@@ optimally this needs `find` to support typesets
@@ -112,9 +115,9 @@ context [
 				word? :v2
 				op! = type? get/any v2
 			][
-				rewrite-atom start :inspect					;-- rewrite the left part
+				rewrite-atom start :inspect :preview		;-- rewrite the left part
 				if no-op [return next start]				;-- don't go past the op if we aren't allowed
-				rewrite-op-chain start :inspect				;-- rewrite the whole chain of operators
+				rewrite-op-chain start :inspect :preview	;-- rewrite the whole chain of operators
 				rewrite?: no								;-- final value; but still may need to reduce set-words/set-ops
 			]
 
@@ -123,7 +126,7 @@ context [
 					word? :v1
 					all [									;-- get the path in objects/blocks.. without refinements
 						path? :v1
-						set [v1: _:] preprocessor/value-path? v1
+						set/any [v1: _:] preprocessor/value-path? v1
 					]
 				]
 				find [native! action! function! routine!] type?/word get/any v1
@@ -133,15 +136,15 @@ context [
 				][	preprocessor/func-arity?      spec-of :v2
 				]
 				end: next start
-				loop arity [end: rewrite-next end :inspect]	;-- rewrite all arguments before the call, end points past the last arg
+				loop arity [end: rewrite-next end :inspect :preview]	;-- rewrite all arguments before the call, end points past the last arg
 			]
 
 			paren? :v1 [								;-- recurse into paren; after that still `do` it as a whole
-				change/only start as paren! rewrite as block! v1 :inspect
+				change/only start as paren! rewrite as block! v1 :inspect :preview
 			]
 
 			'else [										;-- other cases
-				rewrite-atom start :inspect
+				rewrite-atom start :inspect :preview
 				rewrite?: no								;-- final value
 			]
 		]
@@ -150,6 +153,7 @@ context [
 			rewrite?									;-- a function call or a paren to reduce
 			not start =? code							;-- or there are set-words/set-paths, so we have to actually set them
 		][
+			preview copy/deep/part code end
 			set/any 'r either rewrite? [
 				to-report: copy/deep/part code end
 				inspect to-report do/next code 'end'
@@ -169,11 +173,13 @@ context [
 	]
 
 	set 'trace-deep function [
-		"Deeply trace a set of expressions"			;@@ TODO: remove `quote` once apply is available
+		"Deeply trace a set of expressions"				;@@ TODO: remove `quote` once apply is available
 		inspect	[function!] "func [expr [block!] result [any-type!]]"
 		code	[block!]	"If empty, still evaluated once"
+		/preview
+			pfunc [function! none!] "func [expr [block!]] - called before evaluation"
 	][
-		do rewrite code :inspect						;-- `do` will process `quote`s and return the last result
+		do rewrite code :inspect :pfunc					;-- `do` will process `quote`s and return the last result
 	]
 ]
 

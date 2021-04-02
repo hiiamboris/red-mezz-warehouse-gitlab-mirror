@@ -39,14 +39,14 @@ show-deep-trace: function [
 		right [integer!] "Result column (default: 40)"
 ][
 	unless widths [left: 20  right: 40]
-	trace-deep
+	trace-deep/preview
 		func [expr [block!] rslt [any-type!]] compose [
-			print [
-				pad mold/part/flat/only expr (left) (left)
-				"=>" mold/part/flat :rslt (right)
-			]
+			print [mold/part/flat :rslt (right)]
 			:rslt
 		]
 		code
+		func [expr [block!]] [
+			prin [pad mold/part/flat/only expr (left) (left) "=> "]
+		]
 ]
 
