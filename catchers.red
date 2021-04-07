@@ -1,9 +1,32 @@
 Red [
-	title:   "FCATCH & PCATCH mezzanines"
-	purpose: "Reimagined CATCH design variants"
+	title:   "TRAP, FCATCH & PCATCH mezzanines"
+	purpose: "Reimagined TRY & CATCH design variants"
 	author:  @hiiamboris
 	license: 'BSD-3
 	notes: {
+		TRAP - Enhances native TRY with /CATCH refinement
+
+			Backward-compatible with native TRY, ideally should replace it.
+			But we cannot override it (yet) because it traps RETURN & EXIT.
+
+			In addition to native TRY, supports:
+				/catch handler [function! block!]
+			HANDLER is called whenever TRAP successfully catches an error.
+				If it's a block, it should use THROWN to get the error.
+				If it's a function, it should accept the error as it's argument.
+
+			Returns:
+			- on error: return of HANDLER if provided, error itself otherwise
+			- normally: result of CODE evaluation
+
+			Common code pattern:
+				error: try/all [set/any 'result do code  'ok]
+				unless error == 'ok [print error  result: 'default]
+				:result
+			Becomes much cleaner:
+				trap/all/catch code [print error  'default]
+
+
 		PCATCH - Pattern-matched CATCH
 
 			Evaluates CASES block after catching a throw (similar to native CASE).
@@ -25,6 +48,7 @@ Red [
 
 			`pcatch [true [thrown]] [...]` is equivalent to `catch [...]`
 
+		
 		FCATCH - Filtered CATCH
 
 			Catches only values for which FILTER returns a truthy value (and also calls HANDLER if provided).
@@ -41,13 +65,15 @@ Red [
 
 			`fcatch [] [...]` is equivalent to `catch [...]` (because result of [] is unset - a truthy value)
 
+		
 		THROWN
 
 			Returns the thrown value inside:
 			- CASES block of PCATCH
 			- FILTER and HANDLER of FCATCH
+			- HANDLER of TRY
 			Inside CODE it will be = none.
-			Undefined outside the scopes of FCATCH & PCATCH.
+			Undefined outside the scopes of TRY, FCATCH & PCATCH.
 
 		Notes
 
@@ -63,7 +89,7 @@ Red [
 #include %assert.red
 
 context [
-	with-thrown: func [code [block!] /local thrown] [		;-- needed to be able to get thrown from both *catch funcs
+	with-thrown: func [code [block!] /thrown] [			;-- needed to be able to get thrown from both *catch funcs
 		do code
 	]
 
@@ -75,17 +101,17 @@ context [
 		"Eval CODE and forward thrown value into CASES as 'THROWN'"
 		cases [block!] "CASE block to evaluate after throw (normally not evaluated)"
 		code  [block!] "Code to evaluate"
-	] compose/deep [
+	] bind [
 		with-thrown [
-			set/any
-				(bind quote 'thrown :with-thrown)
-				catch [return do code]
+			set/any 'thrown catch [return do code]
 			;-- the rest mimicks `case append cases [true [throw thrown]]` behavior but without allocations
 			forall cases [if do/next cases 'cases [break]]	;-- will reset cases to head if no conditions succeed
-			if head? cases [throw thrown]					;-- outside of `catch` for `throw thrown` to work
+			if head? cases [throw :thrown]					;-- outside of `catch` for `throw thrown` to work
 			do cases/1										;-- evaluates the block after true condition
 		]
-	]
+	] :with-thrown
+	;-- bind above binds `thrown` and `code` but latter is rebound on func construction
+	;-- as a bonus, `thrown` points to a value, not to a function, so a bit faster
 
 	set 'fcatch function [
 		"Eval CODE and catch a throw from it when FILTER returns a truthy value"
@@ -93,15 +119,36 @@ context [
 		code   [block!] "Code to evaluate"
 		/handler        "Specify a handler to be called on successful catch"
 			on-throw [block!] "Has word THROWN set to the thrown value"
-	] compose/deep [
+	] bind [
 		with-thrown [
-			set/any
-				(bind quote 'thrown :with-thrown)
-				catch [return do code]
-			unless do filter [throw thrown]
-			either handler [do on-throw][thrown]
+			set/any 'thrown catch [return do code]
+			unless do filter [throw :thrown]
+			either handler [do on-throw][:thrown]
 		]
-	]
+	] :with-thrown
+
+	set 'trap function [					;-- backward-compatible with native try, but traps return & exit, so can't override
+		"Try to DO a block and return its value or an error"
+		code [block!]
+		/all   "Catch also BREAK, CONTINUE, RETURN, EXIT and THROW exceptions"
+		/catch "If provided, called upon exceptiontion and handler's value is returned"
+			handler [block! function!] "func [error][] or block that uses THROWN"
+			;@@ maybe also none! to mark a default handler that just prints the error?
+		/local result
+	] bind [
+		with-thrown [
+			plan: [set/any 'result do code  'ok]
+			set 'thrown either all [					;-- returns 'ok or error object ;@@ use `apply`
+				try/all plan
+			][	try     plan
+			]
+			case [
+				thrown == 'ok   [:result]
+				block? :handler [do handler]
+				'else           [handler thrown]		;-- if no handler is provided - this returns the error
+			]
+		]
+	] :with-thrown
 
 ]
 
@@ -131,6 +178,15 @@ context [
 #assert [9 = r: catch [repeat i 4 [pcatch [thrown < 3 [] 'else [break/return 9]] [throw i]]] 'r]	;-- break test
 #assert [9 = r: catch [repeat i 4 [pcatch [thrown < 3 [continue] 'else [break/return 9]] [throw i]]] 'r]
 
+#assert [unset?       trap []]							;-- native try compatibility tests
+#assert [1       = r: trap [1]]
+#assert [3       = r: trap [1 + 2]]
+#assert [error?    r: trap [1 + none]]
+#assert [error?    r: trap/all [throw 3 1]]
+#assert [error?    r: trap/all [continue 1]]
+#assert [10      = r: trap/catch [1 + none] [10]]		;-- /catch tests
+#assert ['script = r: trap/catch [1 + none] [select thrown 'type]]
+#assert [6       = r: trap/all/catch [throw 3 1] [2 * select thrown 'arg1]]
 
 {
 	;-- this version is simpler but requires explicit `true [throw thrown]` to rethrow values that fail all case tests
@@ -149,4 +205,3 @@ context [
 		]
 	]
 }
-
