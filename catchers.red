@@ -1,6 +1,6 @@
 Red [
 	title:   "TRAP, FCATCH & PCATCH mezzanines"
-	purpose: "Reimagined TRY & CATCH design variants"
+	purpose: "Reimagined TRY & CATCH design variants, fixed ATTEMPT"
 	author:  @hiiamboris
 	license: 'BSD-3
 	notes: {
@@ -74,6 +74,11 @@ Red [
 			- HANDLER of TRY
 			Inside CODE it will be = none.
 			Undefined outside the scopes of TRY, FCATCH & PCATCH.
+
+
+		ATTEMPT
+			Fixed of #3755 issue.
+
 
 		Notes
 
@@ -153,6 +158,19 @@ context [
 ]
 
 
+attempt: func [
+	"Tries to evaluate a block and returns result or NONE on error"
+	code [block!]
+	/safer "Capture all possible errors and exceptions"
+][
+	either safer [
+		trap/all/catch code [none]
+	][
+		try [return do code] none						;-- faster than trap
+	]
+]
+
+
 #assert [1 = r: catch [fcatch         [            ] [1      ]  ] 'r]		;-- normal result
 #assert [unset? catch [fcatch         [            ] [       ]  ] 'fcatch]
 #assert [unset? catch [fcatch         [true        ] [       ]  ] 'fcatch]
@@ -179,14 +197,22 @@ context [
 #assert [9 = r: catch [repeat i 4 [pcatch [thrown < 3 [continue] 'else [break/return 9]] [throw i]]] 'r]
 
 #assert [unset?       trap []]							;-- native try compatibility tests
-#assert [1       = r: trap [1]]
-#assert [3       = r: trap [1 + 2]]
-#assert [error?    r: trap [1 + none]]
-#assert [error?    r: trap/all [throw 3 1]]
-#assert [error?    r: trap/all [continue 1]]
-#assert [10      = r: trap/catch [1 + none] [10]]		;-- /catch tests
-#assert ['script = r: trap/catch [1 + none] [select thrown 'type]]
-#assert [6       = r: trap/all/catch [throw 3 1] [2 * select thrown 'arg1]]
+#assert [1       = r: trap [1] 'r]
+#assert [3       = r: trap [1 + 2] 'r]
+#assert [error?    r: trap [1 + none] 'r]
+#assert [error?    r: trap/all [throw 3 1] 'r]
+#assert [error?    r: trap/all [continue 1] 'r]
+#assert [10      = r: trap/catch [1 + none] [10] 'r]	;-- /catch tests
+#assert ['script = r: trap/catch [1 + none] [select thrown 'type] 'r]
+#assert [6       = r: trap/all/catch [throw 3 1] [2 * select thrown 'arg1] 'r]
+
+#assert [unset? attempt []]
+#assert [3    = r: attempt [1 + 2] 'r]
+#assert [none = r: attempt [1 + none] 'r]
+#assert [error? r: attempt [make error! "oops"] 'r]		;-- this is where it's different from native attempt
+#assert [none = r: attempt/safer [throw 123] 'r]
+#assert [none = r: attempt/safer [continue] 'r]
+
 
 {
 	;-- this version is simpler but requires explicit `true [throw thrown]` to rethrow values that fail all case tests
