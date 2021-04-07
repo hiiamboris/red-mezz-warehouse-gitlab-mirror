@@ -222,12 +222,10 @@ attempt: func [
 		"Eval CODE and forward thrown value into CASES as 'THROWN'"
 		cases [block!] "CASE block to evaluate after throw (normally not evaluated)"
 		code  [block!] "Code to evaluate"
-	] compose/deep [
+	] bind [
 		with-thrown [
-			set/any
-				(bind quote 'thrown :with-thrown)
-				catch [return do code]
+			set/any 'thrown catch [return do code]
 			case cases									;-- case is outside of catch for `throw thrown` to work
 		]
-	]
+	] :with-thrown
 }
