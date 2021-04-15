@@ -16,6 +16,14 @@ Red [
 		17.0 ms	[recycle]
 		10.0 ms	[wait 0.01]
 
+		Or simpler, add `***` into any block to profile each expression after `***`:
+			my-function [...][
+				1 + 2
+			***	append/dup [] 1 1000000			;) will print timings starting at this line
+				recycle
+				wait 0.01
+			]
+
 		Use /times to profile synthetic code or code without side effects:
 		 >> clock-each/times [
 				wait 0.001
@@ -36,10 +44,15 @@ Red [
 
 #include %trace.red
 
+#macro ['*** to end] func [[manual] s e] [	;-- has to support inner `???`s inside the `???` block
+	back clear change s reduce ['clock-each copy next s]
+]
+
 clock-each: function [
 	"Display execution time of each expression in CODE"
-	code [block!]
+	code [block!] "Result is only returned if N = 1"
 	/times n [integer!] "Repeat the whole CODE N times (default: once); displayed time is per iteration"
+	/local result
 ][
 	orig: copy/deep code								;-- preserve the original code in case it changes during execution
 	code: compose [none none (code)]					;-- need 2 no-ops to: (1) establish a baseline, (2) negate startup time of `trace`
@@ -52,11 +65,12 @@ clock-each: function [
 			dt + any [times/1 0.0]						;-- save both timing...
 			index? pos									;-- ...and position
 		t1: now/precise
+		:x
 	]
 
 	loop n: any [n 1] [									;-- profile the code
 		t1: now/precise
-		trace :timer code
+		set/any 'result trace :timer code
 		times: head times
 	]
 
@@ -73,6 +87,5 @@ clock-each: function [
 		print [dt unit mold/flat/part code 70]
 		times: next times
 	]
-	()													;@@ should it return the last value?
+	either n = 1 [:result][()]							;-- result is needed for transparent profiling with `***`
 ]
-
