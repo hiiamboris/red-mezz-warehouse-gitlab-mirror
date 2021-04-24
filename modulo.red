@@ -367,14 +367,25 @@ context [
 #assert [   1  = r: modulo/trunc 9 #"^D" 'r]
 
 ;; terminal cases tests
-#assert [0    = r: modulo       123  1    'r]
-#assert [0    = r: modulo/floor 123  1    'r]
-#assert [0    = r: modulo/trunc 123  1    'r]
-#assert [0.5  = r: modulo       12.5 1    'r]
-#assert [0.5  = r: modulo       12.5 1.0  'r]
+#assert [0    = r: modulo       123  1      'r]
+#assert [0    = r: modulo/floor 123  1      'r]
+#assert [0    = r: modulo/trunc 123  1      'r]
+#assert [0.5  = r: modulo       12.5 1      'r]
+#assert [0.5  = r: modulo       12.5 1.0    'r]
 #assert [error? r: try [modulo       123 0] 'r]		;-- division by zero
 #assert [error? r: try [modulo/floor 123 0] 'r]
 #assert [error? r: try [modulo/trunc 123 0] 'r]
-#assert [nan?   r: modulo       123  0.0  'r]		;-- qnan
-#assert [nan?   r: modulo/floor 12.5 0    'r]
-#assert [nan?   r: modulo/trunc 12.5 0.0  'r]
+#assert [nan?   r: modulo       123  0.0    'r]		;-- qnan
+#assert [nan?   r: modulo/floor 123  0.0    'r]
+#assert [nan?   r: modulo/trunc 123  0.0    'r]
+#assert [nan?   r: modulo       12.5 0      'r]
+#assert [nan?   r: modulo       12.5 0.0    'r]
+#assert [nan?   r: modulo       123  1.#inf 'r]
+#assert [nan?   r: modulo/floor 123  1.#inf 'r]
+#assert [nan?   r: modulo/trunc 123  1.#inf 'r]
+#assert [nan?   r: modulo       123 -1.#inf 'r]
+#assert [nan?   r: modulo/floor 123 -1.#inf 'r]
+#assert [nan?   r: modulo/trunc 123 -1.#inf 'r]
+#assert [nan?   r: modulo       123  1.#nan 'r]
+#assert [nan?   r: modulo/floor 123  1.#nan 'r]
+#assert [nan?   r: modulo/trunc 123  1.#nan 'r]
