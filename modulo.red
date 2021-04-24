@@ -3,10 +3,31 @@ Red [
 	purpose: "Tired of waiting for it to be fixed in Red"
 	author:  @hiiamboris
 	license: 'BSD-3
+	notes: {
+		Info about various definitions:
+			https://en.wikipedia.org/wiki/Modulo_operation#Variants_of_the_definition
+		
+		What is `a mod 0`?
+			https://math.stackexchange.com/questions/516251/why-is-n-mod-0-undefined/516270#516270
+		there is not a single answer
+		1) a mod 0 = a
+			though it makes sense in ring theory, it's hardly practical or expected
+			it seems more logical to me to think of `a mod 0` as `lim (a mod x) where x->+0`
+			the lesser the x the lesser the result, so limit = +0
+			so..
+		2) a mod 0 = 0
+			this is however nonstandard as it does not follow any definition on the web I could find
+			plus, for `r: a mod x` we expect r >= 0 and r < x
+			for n=0 this means an empty range [0,0) and there is no number that can satisfy it
+			so..
+		3) a mod 0 = NaN/error
+			let the user deal with edge cases
+			this is how the modulo below is implemented
+	}
 ]
 
 
-#include %assert.red
+; #include %assert.red
 
 context [
 	abs: :absolute
@@ -345,3 +366,15 @@ context [
 #assert [   1  = r: modulo/floor 9 #"^D" 'r]
 #assert [   1  = r: modulo/trunc 9 #"^D" 'r]
 
+;; terminal cases tests
+#assert [0    = r: modulo       123  1    'r]
+#assert [0    = r: modulo/floor 123  1    'r]
+#assert [0    = r: modulo/trunc 123  1    'r]
+#assert [0.5  = r: modulo       12.5 1    'r]
+#assert [0.5  = r: modulo       12.5 1.0  'r]
+#assert [error? r: try [modulo       123 0] 'r]		;-- division by zero
+#assert [error? r: try [modulo/floor 123 0] 'r]
+#assert [error? r: try [modulo/trunc 123 0] 'r]
+#assert [nan?   r: modulo       123  0.0  'r]		;-- qnan
+#assert [nan?   r: modulo/floor 12.5 0    'r]
+#assert [nan?   r: modulo/trunc 12.5 0.0  'r]
