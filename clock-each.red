@@ -3,6 +3,10 @@ Red [
 	purpose: "Allows you to profile each expression in a block of code"
 	author:  @hiiamboris
 	license: 'BSD-3
+	notes: {
+		Obsoleted by PROF/EACH (profiling.red)
+		Left for backward compatibility
+	}
 	usage: {
 		Embed inside your script to find what's causing the most delay:
 		 >> clock-each [
@@ -11,10 +15,14 @@ Red [
 				recycle
 				wait 0.01
 			]
-		0.0 μs	[1 + 2]
-		41.0 ms	[append/dup [] 1 1000000]
-		17.0 ms	[recycle]
-		10.0 ms	[wait 0.01]
+		<1>       0      ms           0 B [1 + 2]
+		<1>      20      ms  33'555'392 B [append/dup [] 1 1000000]
+		<1>      11.6    ms -33'260'184 B [recycle]
+		<1>      23      ms           0 B [wait 0.01]
+		Obviously the columns are:
+		| #iterations       | RAM usage per iteration
+		|      |            |             |                       |
+		       | time per iteration       | expression
 
 		Or simpler, add `***` into any block to profile each expression after `***`:
 			my-function [...][
@@ -26,66 +34,28 @@ Red [
 
 		Use /times to profile synthetic code or code without side effects:
 		 >> clock-each/times [
-				wait 0.001
-				wait 0.002
-				wait 0.003
-			] 100
-		1.00 ms	[wait 0.001]
-		2.00 ms	[wait 0.002]
-		3.00 ms	[wait 0.003]
+				wait 0.01
+				wait 0.02
+				wait 0.03
+			] 10
+		<10>     14.9    ms           0 B [wait 0.01]		;) note the OS timer resolution is ~15ms
+		<10>     31      ms           0 B [wait 0.02]
+		<10>     33      ms           0 B [wait 0.03]
+
+		Units of measure:
+			Time is displayed in milliseconds per iteration because:
+			- sub-microseconds are usually beyond TRACE resolution and only can be found in CLOCK mezz
+			- less columns wasted for formatting, frees up space for code lines
+			- output is nicely balanced around a central dot, helps visually compare the results
+			RAM is displayed in bytes per iteration because:
+			- this aligns the column
+			- bytes are integers so can be known precisely
 
 		 >> clock-each/times [1 2 + 3 add 4 5] 1000000
-		0.02 μs	[1]
-		0.22 μs	[2 + 3]
-		0.27 μs	[add 4 5]
+		<1000000>    .0002 ms           0 B [1]
+		<1000000>    .0004 ms           0 B [2 + 3]
+		<1000000>    .00038ms           0 B [add 4 5]
 	}
 ]
 
-
-#include %trace.red
-
-#macro ['*** to end] func [[manual] s e] [	;-- has to support inner `???`s inside the `???` block
-	back clear change s reduce ['clock-each copy next s]
-]
-
-clock-each: function [
-	"Display execution time of each expression in CODE"
-	code [block!] "Result is only returned if N = 1"
-	/times n [integer!] "Repeat the whole CODE N times (default: once); displayed time is per iteration"
-	/local result
-][
-	orig: copy/deep code								;-- preserve the original code in case it changes during execution
-	code: compose [none none (code)]					;-- need 2 no-ops to: (1) establish a baseline, (2) negate startup time of `trace`
-	times: make block! 64
-
-	timer: func [x [any-type!] pos [block!]] [			;-- collects timing of each expression
-		t2: now/precise									;-- 2 time markers here - to minimize `timer` influence on timings
-		dt: difference t2 t1							;-- in millisecs
-		times: change/only change times
-			dt + any [times/1 0.0]						;-- save both timing...
-			index? pos									;-- ...and position
-		t1: now/precise
-		:x
-	]
-
-	loop n: any [n 1] [									;-- profile the code
-		t1: now/precise
-		set/any 'result trace :timer code
-		times: head times
-	]
-
-	baseline: first sort extract times 2				;-- use the minimal timing as baseline (should be `none`)
-	times: skip times 4									;-- hide startup time and baseline code
-	forall times [										;-- display the results
-		set [p1: dt: p2:] back times
-		dt: 1e3 / n * to float! dt - baseline				;-- into millisecs
-		unit: either dt < 1 [dt: dt * 1e3 "μs^-"]["ms^-"]	;-- switch to microsecs?
-		parse form dt [										;-- save 3 significant digits max
-			0 3 [opt #"." skip] opt [to #"."] dt: (dt: head clear dt)
-		]
-		code: copy/part at orig p1 - 2 p2 - p1
-		print [dt unit mold/flat/part code 70]
-		times: next times
-	]
-	either n = 1 [:result][()]							;-- result is needed for transparent profiling with `***`
-]
+#include %profiling.red
