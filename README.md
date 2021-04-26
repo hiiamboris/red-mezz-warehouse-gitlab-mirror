@@ -71,7 +71,8 @@ These two functions will serve as a great playground for such an experiment.
 | Source file                  | Description |
 | ---                          | --- |
 | [clock](clock.red)           | Simple, even minimal, mezz for timing code execution |
-| [clock-each](clock-each.red) | Allows you to profile each expression in a block of code |
+| [clock-each](clock-each.red) | Allows you to profile each expression in a block of code (obsolete) |
+| [profiling](profiling.red)   | Inline profiling macros and functions (documented in the header) |
 
 ### Formatting
 | Source file                        | Description |
