@@ -96,6 +96,7 @@ Red [
 
 once prof: context [									;-- don't reinclude or stats may be reset
 	data: make hash! []									;-- collected stats and their code offsets
+	pending: []			;-- block of time+ram & code pairs that weren't processed due to control flow escapes
 
 	format-delta: function [
 		"Number formatter used internally by PROF/EACH"
@@ -122,6 +123,7 @@ once prof: context [									;-- don't reinclude or stats may be reset
 		"Print all profiling stats collected so far"
 		/only code [block!] "Only for the selected code block"
 	][
+		unless empty? pending [process none true]				;-- commit pending results if any
 		pos: data
 		all [only  none? pos: find/same/only pos code  exit]	;-- find where /only points to or exit if not found
 		foreach [_: code-copy: len: dt: ds: n:] pos [
@@ -145,13 +147,14 @@ once prof: context [									;-- don't reinclude or stats may be reset
 		/quiet "Don't print anything, just save the results for later display via PROF/SHOW"
 		/local result
 	][
+		n: any [n 1]
 		code-copy: any [									;-- preserve the original code in case it changes during execution
 			select/same/only data code						;-- could be preserved already
 			copy/deep code
 		]
 		test-code: compose [none none (code)]				;-- need 2 no-ops to: (1) negate startup time of `trace`, (2) establish a baseline
 		time+ram: make block! 64
-
+		repend pending [code code-copy n time+ram]			;-- stash stats in case the loop doesn't finish
 		timer: func [x [any-type!] pos [block!]] [			;-- collects timing of each expression
 			t2: now/precise									;-- 2 time markers here - to minimize `timer` influence on timings
 			s2: stats
@@ -165,13 +168,28 @@ once prof: context [									;-- don't reinclude or stats may be reset
 			:x
 		]
 
-		loop n: any [n 1] [									;-- profile the code
+		loop n [											;-- profile the code
 			s1: stats
 			t1: now/precise
-			set/any 'result trace :timer test-code
+			set/any 'result trace :timer test-code			;-- this may throw out of the profiler
 			time+ram: head time+ram
 		]
 
+		process code quiet									;-- prepare & show the results
+		either n = 1 [:result][()]							;-- result is needed for transparent profiling with `***` and `(* *)`
+	]
+
+	process: function [
+		"Process pending profiling results (if any)"
+		code [block! none!] "none to process everything"
+		quiet [logic!] "Show or not"
+	][
+		unless code [
+			while [code: pending/1] [process code quiet]
+			exit
+		]
+		set [_: code-copy: n: time+ram:] pending: find/same/only/skip self/pending code 4
+		#assert [pending]
 		baseline: first sort extract time+ram 3				;-- use the minimal timing as baseline (should be `none`)
 		time+ram: skip time+ram 6							;-- hide startup time and baseline code
 		forall time+ram [									;-- save & maybe display the results
@@ -191,7 +209,7 @@ once prof: context [									;-- don't reinclude or stats may be reset
 			unless quiet [show/only at code i]
 			time+ram: next next time+ram
 		]
-		either n = 1 [:result][()]							;-- result is needed for transparent profiling with `***` and `(* *)`
+		remove/part pending 4
 	]
 ]
 
@@ -201,6 +219,11 @@ once prof: context [									;-- don't reinclude or stats may be reset
 ; ; loop 100 [(* 1 2 3 wait 0.002 *)]
 ; prof/show
 ; prof/each/times [1] 10000
+
+; loop 10 [(* break 1 2 3 4 5 6 7 *) 2]
+; probe 1
+; prof/show
+; halt
 
 
 
