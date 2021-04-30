@@ -242,15 +242,3 @@ once prof: context [									;-- don't reinclude or stats may be reset
 ; prof/show
 ; halt
 
-
-	loop 5 [
-					print "some code"
-				(*
-					1 + 2
-					append/dup [] 1 1000000
-					recycle
-					wait 0.01
-				*)
-					print "rest of the code"
-				]
-				prof/show
