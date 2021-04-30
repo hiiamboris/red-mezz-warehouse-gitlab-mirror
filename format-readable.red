@@ -65,7 +65,7 @@ Red [
 	}
 ]
 
-; #include %assert.red
+#include %assert.red
 ; #include %show-trace.red
 
 context [
@@ -117,11 +117,12 @@ context [
 	#assert ["12'345'678.9E-10"  = r: insert-separators"12345678.9E-10"  'r]	;-- exp notation
 	#assert [        "12.3456E3" = r: insert-separators      "12.3456E3" 'r]	;-- but not after the dot
 
+	;-- returns none for: zero (undefined exponent), +/-inf (overflow), NaN (undefined)
 	set 'exponent-of function [
 		"Returns the exponent E of X = m * (10 ** e), 1 <= m < 10"
 		x [number!]
 	][
-		if 0 <> x [to 1 round/to/floor log-10 absolute x 1.0]	;-- zero has undefined exponent
+		attempt [to 1 round/floor log-10 absolute x]
 	]
 
 	set 'format-readable function [
@@ -135,6 +136,7 @@ context [
 		/clean  "Remove trailing zeroes after the dot and leading zero before the dot"
 	][
 		#assert [any [none? e  integer? e  'auto = e]]
+		#assert [not nan? num]
 		#assert [(
 			|num|: absolute num
 			any [0 = |num|  all [1e-30 < |num| |num| < 1e30]]	;-- limits help simplify the algorithm
@@ -251,12 +253,20 @@ context [
 	#assert [      "0"       = r: format-readable/clean/size   0 3       'r]
 	#assert [      "0.0000"  = r: format-readable/size         0 5       'r]
 	#assert [       ".00001" = r: format-readable/clean        1e-5      'r]		;-- shouldn't be formed as "1e-5"
+	#assert [      "0"       = r: format-readable/size         0.45 0    'r]
+	#assert [      "1"       = r: format-readable/size         0.54 0    'r]
 	
 	#assert [      "0%"      = r: format-readable/clean        0%        'r]
 	#assert [    "123%"      = r: format-readable            123%        'r]
 	#assert [  "2'345%"      = r: format-readable           2345%        'r]
 	#assert [      "2.3%"    = r: format-readable              2.345%    'r]
 	#assert [     "-2.3%"    = r: format-readable             -2.345%    'r]
+	#assert [      "0%"      = r: format-readable/size         0.45% 0   'r]
+	#assert [      "1%"      = r: format-readable/size         0.54% 0   'r]
+
+	; #assert [      "1.#inf"  = r: format-readable              1.#inf    'r]		;-- not working yet
+	; #assert [     "-1.#inf"  = r: format-readable             -1.#inf    'r]
+	; #assert [      "1.#nan"  = r: format-readable             -1.#nan    'r]
 
 	#assert [    "123e0"     = r: format-readable/exp        123 0       'r]
 	#assert [   "12.3e1"     = r: format-readable/exp/extend 123 1       'r]

@@ -100,9 +100,12 @@ once prof: context [									;-- don't reinclude or stats may be reset
 
 	format-delta: function [
 		"Number formatter used internally by PROF/EACH"
-		delta [float! integer!] dot-index [integer!]
+		delta [number!] dot-index [integer!]
 	][
-		s: format-readable/extend/clean delta
+		s: either percent? delta [
+			format-readable/size         delta 0
+		][	format-readable/extend/clean delta
+		]
 		dot: index? any [find s #"."  tail s]			;-- align the dot
 		pad/left s dot-index - dot + length? s
 	]
@@ -116,25 +119,36 @@ once prof: context [									;-- don't reinclude or stats may be reset
 		b
 	]
 
-	reset: function ["Forget all collected profiling stats"] [clear data]
+	reset: function ["Forget all collected profiling stats"] [clear data ()]
 
 	;@@ TODO: get stats as a table (block), sorted output
 	show: function [
 		"Print all profiling stats collected so far"
-		/only code [block!] "Only for the selected code block"
+		/only exprs [block!] "Block of blocks, each starting at a profiled expression (must be sequential)"
 	][
-		unless empty? pending [process none true]				;-- commit pending results if any
+		all [not only  not empty? pending  process none true]	;-- commit pending results if any
 		pos: data
-		all [only  none? pos: find/same/only pos code  exit]	;-- find where /only points to or exit if not found
-		foreach [_: code-copy: len: dt: ds: n:] pos [
-			dt: dt / n											;-- always switch to microsecs so bigger times stand out
+		all [only  none? pos: find/same/only pos exprs/1  exit]	;-- find where /only points to or exit if not found
+		to-show: clear []
+		width: any [attempt [system/console/size/x - 40] 40]
+		foreach [code: code-copy: len: dt: ds: n:] pos [
+			all [only  not code =? exprs/1  continue]			;-- skip results not selected for display
+			dt: (t: dt) / n										;-- always switch to microsecs so bigger times stand out
 			dt: pad format-delta dt 5 10						;-- 9'999.9999 ms: dot=5 total=10
 			ds: round/to ds / n 1
 			ds: format-delta ds 12								;-- 999'999'999 b: dot=12, total=11
-			slice: ellipsize (copy/part code-copy len) 40
-			n: pad mold to tag! n 7								;-- <99999> iterations: total=7
-			print rejoin [n dt "ms " ds " B " slice]
-			if only [break]
+			slice: ellipsize (copy/part code-copy len) width
+			n: pad mold to tag! n 8								;-- '<99999> ' iterations: total=8
+			repend to-show [n t dt "ms " ds " B " slice]		;-- 7 items
+			if only [exprs: next exprs]
+		]
+		t-total: sum extract next to-show 7						;-- obtain total time spent during evaluation of chosen exprs
+		if 0 = t-total [t-total: 1.0]							;-- avoid zero division
+		while [not empty? to-show] [
+			amnt: 100% * to-show/2 / t-total 4
+			to-show/2: pad format-delta amnt 4 5				;-- '100% ' = 5 chars
+			print rejoin copy/part to-show 7
+			remove/part to-show 7
 		]
 		()
 	]
@@ -185,13 +199,15 @@ once prof: context [									;-- don't reinclude or stats may be reset
 		quiet [logic!] "Show or not"
 	][
 		unless code [
-			while [code: pending/1] [process code quiet]
+			while [code: self/pending/1] [process code quiet]
 			exit
 		]
+	
 		set [_: code-copy: n: time+ram:] pending: find/same/only/skip self/pending code 4
 		#assert [pending]
 		baseline: first sort extract time+ram 3				;-- use the minimal timing as baseline (should be `none`)
 		time+ram: skip time+ram 6							;-- hide startup time and baseline code
+		to-show: clear []									;-- list of expressions to print stats for
 		forall time+ram [									;-- save & maybe display the results
 			set [p1: dt: ds: p2:] back time+ram
 			dt: 1e3 * to float! dt - baseline				;-- into millisecs
@@ -206,10 +222,11 @@ once prof: context [									;-- don't reinclude or stats may be reset
 					at code i  at code-copy i  p2 - p1  dt   ds  n
 				] pos: tail data
 			]
-			unless quiet [show/only at code i]
+			append/only to-show at code i
 			time+ram: next next time+ram
 		]
 		remove/part pending 4
+		unless quiet [show/only to-show]
 	]
 ]
 
@@ -220,7 +237,7 @@ once prof: context [									;-- don't reinclude or stats may be reset
 ; prof/show
 ; prof/each/times [1] 10000
 
-; loop 10 [(* break 1 2 3 4 5 6 7 *) 2]
+; loop 10000 [(* 1 2 3 continue 4 5 6 7 *) 2]
 ; probe 1
 ; prof/show
 ; halt
