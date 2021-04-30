@@ -20,11 +20,11 @@ Red [
 					print "rest of the code"
 				]
 			Then call PROF/SHOW to see the stats:
-				<5>       0      ms           0 B [1 + 2]
-				<5>      35      ms  53'687'707 B [append/dup [] 1 1000000]
-				<5>      29      ms -26'902'506 B [recycle]
-				<5>      21      ms          46 B [wait 0.01]
-			You can see that it was evaluated <5> times, and what expression took more CPU or RAM.
+				<5>      0%     0      ms           0 B [1 + 2]
+				<5>     54%    93      ms  51'943'976 B [append/dup [] 1 1000000]
+				<5>     35%    61      ms -25'166'638 B [recycle]
+				<5>     11%    19      ms          46 B [wait 0.01]
+			You can see that it was evaluated <5> times, total time spent in each expression, and what took more CPU or RAM.
 			This macro is good for collecting stats on small operations, possibly in different parts of the code.
 
 
@@ -47,10 +47,10 @@ Red [
 			Profiles each expression while evaluating a block of code.
 		
 			Use /TIMES to profile synthetic code or code without side effects:
-				>> prof/each/times [1 2 + 3 add 4 5] 1000000
-				<1000000>    .0002 ms           0 B [1]
-				<1000000>    .0004 ms           0 B [2 + 3]
-				<1000000>    .00038ms           0 B [add 4 5]
+				>> prof/each/times [1 2 + 3 add 4 5] 999999
+				<999999> 20%      .00071ms           0 B [1]
+				<999999> 37%      .00127ms           0 B [2 + 3]
+				<999999> 43%      .00147ms           0 B [add 4 5]
 
 			Note: normally it returns the value of the last expression so it can be inlined,
 			      but with /times it returns unset to reduce noise in the console.
@@ -243,4 +243,14 @@ once prof: context [									;-- don't reinclude or stats may be reset
 ; halt
 
 
-
+	loop 5 [
+					print "some code"
+				(*
+					1 + 2
+					append/dup [] 1 1000000
+					recycle
+					wait 0.01
+				*)
+					print "rest of the code"
+				]
+				prof/show
