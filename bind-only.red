@@ -4,32 +4,32 @@ Red [
 	author:  @hiiamboris
 	license: 'BSD-3
 	usage: {
-		Simple: 
-			bind-only code 'my-word
+		Bind single word in a block:
+			>> bind-only code 'my-word  
+			Binds all instances of [my-word 'my-word :my-word my-word:]
+			inside CODE to the context of given MY-WORD.
 
-		Interestingly, it does not share the normal bind's spec:
-			- subject may never be a word, otherwise it makes no sense: `bind-only 'word target 'word`
-			- there's no need in specifying a target as it can be implicitly derived from given words
-		It should become a native though, as speed is it's major limitation
-
-		The trick here is that we usually wanna bind a word that's in the current context.
-		This saves an extra argument. Compare:
-			bind-only code 'word 'word
-		to just:
-			bind-only code 'word
-
-		So how to rebind some code to words from *other* contexts?
-		Easy!
-			bind-only code in my-ctx 'my-word
-		Binding to different contexts at once is possible:
-			c1: context [x: 1]
-			c2: context [y: 2]
-			c3: context [z: none]
-			z: 3
-			print bind-only [x y z] reduce [in c1 'x in c2 'y]
-		Output:
+		Bind multiple words at once:
+			>> c1: context [x: 1]
+			>> c2: context [y: 2]
+			>> z: 3
+			>> print bind-only [x y z] reduce [in c1 'x  in c2 'y]  ;-- binds x and y to c1 and c2
 			1 2 3
-		In this case the targets block is likely already provided to the function and is bound accordingly.
+			In this case the targets block is likely already provided to the function and is bound accordingly.
+
+		It's similar to native bind. Compare:
+			>> bind code 'my-word`
+			binds whole code to `context? 'my-word`
+			>> bind-only code 'my-word`
+			binds only 'my-word to `context? 'my-word`
+		The only differences are:
+		- it accepts a block as it's second argument
+		- it does not accept a word as it's first argument, as it makes no sense:
+			>> `bind-only 'word 'word`
+			word here is already bound, no point in spawning another
+
+		With this compatibility in mind, it could be made into an /only refinement for the bind native.
+		And it should, as speed is it's major limitation
 	}
 ]
 
