@@ -28,7 +28,7 @@ Red [
 	[]
 ]
 #macro [#debug not ['on | 'off | 'set] opt word! block!] func [[manual] s e /local code] [
-	if either block? s/2 [:*debug?* = on][attempt [find *debug?* s/2]] [
+	if either block? s/2 [:*debug?* <> off][attempt [find *debug?* s/2]] [
 		code: e/-1
 	]
 	remove/part s e
