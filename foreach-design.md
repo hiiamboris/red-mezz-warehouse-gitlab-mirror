@@ -318,6 +318,42 @@ As a side effect, it can be used to iterate over full multiples of spec length o
 4 5 6
 ```
 
+### Iteration over pair ranges
+
+This is often useful on 2D data or images.
+
+Current implementation accepts a pair *limit* and walks from 1x1 up to that limit:
+```
+>> for-each xy 3x2 [prin [xy ""]]
+1x1 2x1 3x1 1x2 2x2 3x2 
+>> remove-each xy 3x3 [xy/x = xy/y]
+== [2x1 3x1 1x2 3x2 1x3 2x3]
+```
+It is also a common need to have a starting point not at 1x1, which is currently achieved with addition:
+```
+>> map-each xy 2x2 [10x10 + xy]
+== [11x11 12x11 11x12 12x12]
+```
+However I expect eventually Red to be enriched with a range! datatype that \*each loops will accept as subject argument, and it will work like this out of the box:
+```
+>> map-each xy 11x11..12x12 [xy]
+== [11x11 12x11 11x12 12x12]
+```
+
+### Iteration over integer ranges
+
+`repeat` already provides this functionality. However \*each version generalizes that to multiple words at a time:
+```
+>> for-each [i j] 10 [print [i j]]
+1 2
+3 4
+5 6
+7 8
+9 10
+```
+What \*each functions do not provide is choice of step: it's always equal to `1`. This is where more specialized loops like `for`/`loop` from [REP#0101](https://github.com/red/REP/blob/master/REPs/rep-0101.adoc) will shine eventually.
+
+
 ## Design edge cases
 
 ### Source modification on the fly
