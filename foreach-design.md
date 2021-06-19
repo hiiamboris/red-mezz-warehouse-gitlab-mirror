@@ -344,12 +344,11 @@ However I expect eventually Red to be enriched with a range! datatype that \*eac
 
 `repeat` already provides this functionality. However \*each version generalizes that to multiple words at a time:
 ```
->> for-each [i j] 10 [print [i j]]
-1 2
-3 4
-5 6
-7 8
-9 10
+>> for-each [i j | k] 10 [print [i j k]]
+1 2 3
+3 4 5
+5 6 7
+7 8 9
 ```
 What \*each functions do not provide is choice of step: it's always equal to `1`. This is where more specialized loops like `for`/`loop` from [REP#0101](https://github.com/red/REP/blob/master/REPs/rep-0101.adoc) will shine eventually.
 
