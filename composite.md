@@ -42,7 +42,7 @@ With the above said, I considered the following:
 - `(var) \(text)` - requires to escape every backslash, because makes it impossible to write a Red expression after the backslash (without making the backslash ugly `("\")`) - doubling is very bad
 - `(var) (\text)` - although escaping is sort of backwards here, it should just work because `\` in Red is a forbidden char (reserved? what if gets used later?)
 - `(var) (;text)` - future-proof, however `;...` could be a comment in a composed multiline string, and this syntax disables it (but it's easy to fix by adding a whitespace: `( ;`); biggest issue is that `(;` is not an unlikely emoji
-- `(var) (\text\)` - longer, I see no point in preferring this over the previous variant
+- `(var) (\text\)` - longer, I see no point in preferring this over the `(\text)` variant
 - `(var) ((text))`/`(var) ([text])`/`(var) ("text")`/`(var) (:text:)` - can hurt perfectly valid exprs like `((a + b) / (c + d))`, or `([a] op [b])`, or `("a" op "b")`, or `(:a op b:)`
 - `(var) (]text[)`/`(var) (>text<)` - reads as some error
 - `[var] ^(text)` - impossible: `^(XX)` is a char syntax in Red
