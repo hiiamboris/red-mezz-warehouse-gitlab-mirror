@@ -63,6 +63,7 @@ During macro expansion phase `#composite` macro simply **transforms** a given st
 **Benefits** of macro approach over a function implementation are:
 - Huge benefit is that used expressions are **automatically bound** as expected, because macro expansion happens before any `bind` can be executed upon it. This makes it easy and natural to use, contrary to the function version that would have to receive a context (or multiple contexts) to bind it's words to and becomes so ugly that's it's not worth the effort using it.
 - Another is runtime **performance**: expression is expanded only once, so any subsequent evaluations do not pay the expansion cost. And if you compile it, you pay the cost at compile time only.
+- Expands macros within parens.
 
 **Drawbacks** compared to function implementation are:
 - You cannot **pass around or build** the template strings at runtime. E.g. if you want to write a simple wrapper around `#composite` call, you have to make it a macro wrapper, not function wrapper. So, formatting a dataset using a template won't work with a macro.
@@ -89,6 +90,7 @@ write/append cfg-file #composite "config: (mold config)"
 **Drawbacks**:
 - Requires explicit binding info. See [`with` header](https://gitlab.com/hiiamboris/red-mezz-warehouse/-/blob/master/with.red) - usage is the same, and resembles usage of `bind`.
 - Slower at runtime due to extra processing.
+- Does not expand macros within parens (by design, because preprocessor would slow down it's operation a lot for some dubious edge case).
 
 ### Examples:
 ```

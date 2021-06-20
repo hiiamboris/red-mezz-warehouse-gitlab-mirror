@@ -40,7 +40,9 @@ context [
 	non-paren: charset [not #"("]
 
 	trap-error: function [on-err [function! string!] :code [paren!]] [
-		trap/catch as [] code pick [ [on-err thrown] [on-err] ] function? :on-err
+		trap/catch
+			as [] code
+			pick [ [on-err thrown] [on-err] ] function? :on-err
 	]
 
 	set 'composite function [
@@ -54,9 +56,10 @@ context [
 		b: with ctx parse s [collect [
 			keep ("")									;-- ensures the output of rejoin is string, not block
 			any [
-				keep copy some non-paren
-			|	keep [#"(" ahead #"\"] skip
-			|	s: (set [v: e:] transcode/next s) :e keep (:v)
+				keep copy some non-paren				;-- text part
+			|	keep [#"(" ahead #"\"] skip				;-- escaped opening paren
+			|	s: (set [v: e:] transcode/next s) :e	;-- paren expression
+				keep (:v)
 			]
 		]]
 
@@ -65,26 +68,14 @@ context [
 				if paren? b/1 [b: insert b [trap-error :on-err]]
 			]
 			;@@ use map-each when it becomes native
-			; b: map-each/eval [p [paren!]] b [['do-trap quote :on-err as [] p]]
+			; b: map-each/eval [p [paren!]] b [['trap-error quote :on-err p]]
 		]
 		as str rejoin b
+		; as str rejoin expand-directives b		-- expansion disabled by design for performance reasons
 	]
 ]
 
 
-#assert [%" - 3 - <abc)))> - func1" == s: composite[] %"()() - (1 + 2) - (<abc)))>) - ('func)(1)()()" 's]
-#assert [<tag flag=3/>              == s: composite[] <tag flag=(mold 1 + 2)/> 's]
-#assert ["((\\))"                   == s: composite[] "(\(\\\))" 's]
-#assert [""                         == s: composite[] "()" 's]
-#assert [""                         == s: composite[] "([])" 's]
-#assert ["*ERROR*"                  == s: composite/trap[] "(1 / 0)" "*ERROR*" 's]
-#assert ["zero-divide expect-arg"   == s: composite/trap[] "(1 / 0) ({a} + 1)" func [e][e/id] 's]
-#assert ["print"                    == s: composite/trap[] "(1 / 0)" func [e]['print] 's]		;-- no second error from double evaluation
-
-
-
-;@@ TODO: support comments? e.g. `(;-- comments)` in multiline strings, if so - how should it count braces?
-;@@ TODO: expand "(#macros)" ?
 ;; has to be both Red & R2-compatible
 ;; any-string! for composing files, urls, tags
 ;; load errors are reported at expand time by design
@@ -148,20 +139,19 @@ context [
 		;; change/part is different between red & R2, so: remove+insert
 		remove/part ss ee
 		insert ss reduce ['rejoin r]
-		return ee
+		return next ss									;-- expand block further but not rejoin
 	]
 	print ["***** ERROR in #COMPOSITE *****^/" :error]
-	ee
+	ee													;-- don't expand failed macro anymore - or will deadlock
 ]
 
 
-#assert ["((\\))" == #composite "(\(\\\))"]
-#assert ["" == #composite "()"]
-#assert ["" == #composite "([])"]
 
-#assert [(b: [#composite "(\(\\\))"]) == [rejoin ["((" "\\))"]] 'b]
-#assert [(b: [#composite "()"      ]) == [rejoin ["" ()]      ] 'b]
-#assert [(b: [#composite "([])"    ]) == [rejoin ["" []]      ] 'b]
+
+
+
+
+;-- -- -- -- -- -- -- -- -- -- -- -- -- -- TESTS -- -- -- -- -- -- -- -- -- -- -- -- -- --
 
 #assert [
 	(b: [#composite %"()() - (1 + 2) - (<abc)))>) - (func)(1)()()"]) == [
@@ -203,3 +193,36 @@ context [
 ; ]
 
 
+#assert [%" - 3 - <abc)))> - func1" == s: composite[] %"()() - (1 + 2) - (<abc)))>) - ('func)(1)()()" 's]
+#assert [<tag flag=3/>              == s: composite[] <tag flag=(mold 1 + 2)/> 's]
+#assert ["((\\))"                   == s: composite[] "(\(\\\))" 's]
+#assert [""                         == s: composite[] "()" 's]
+#assert [""                         == s: composite[] "([])" 's]
+#assert ["*ERROR*"                  == s: composite/trap[] "(1 / 0)" "*ERROR*" 's]
+#assert ["zero-divide expect-arg"   == s: composite/trap[] "(1 / 0) ({a} + 1)" func [e][e/id] 's]
+#assert ["print"                    == s: composite/trap[] "(1 / 0)" func [e]['print] 's]		;-- no second error from double evaluation
+; #assert ["123"                      == s: composite[] "(append {1} #composite {2(1 + 2)})" 's]	;-- macro expansion within composite exprs
+
+
+#assert ["((\\))" == #composite "(\(\\\))"]
+#assert ["" == #composite "()"]
+#assert ["" == #composite "([])"]						;-- result is string not block
+
+#assert [(b: [#composite "(\(\\\))"]) == [rejoin ["((" "\\))"]] 'b]			;-- escaping
+#assert [(b: [#composite "()"      ]) == [rejoin ["" ()]      ] 'b]
+#assert [(b: [#composite "([])"    ]) == [rejoin ["" []]      ] 'b]			;-- paren removal from obvious cases
+#assert [(b: [#composite "(1)"     ]) == [rejoin ["" 1]       ] 'b]
+
+#assert ["123" == s: #composite "(append {1} #composite {2(1 + 2)})" 's]	;-- macro expansion within composite exprs
+#assert [
+	(b: [ #composite "(append {1} #composite {2(1 + 2)})" ])
+	== [ rejoin ["" (append "1" rejoin ["2" (1 + 2)])] ]
+'b]
+
+;-- line comments handling
+#assert ["9" == s: #composite {(;-- comment
+	1 + 2 * 3					;-- another
+)} 's]
+#assert ["9" == s: composite[] {(;-- comment
+	1 + 2 * 3					;-- another
+)} 's]
