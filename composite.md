@@ -1,6 +1,6 @@
 # `#composite` macro & `composite` mezz
 
-[`composite`](composite.red) is an implementation of string interpolation. It's (probably sole) **advantage** over `rejoin` is **readability**. Compare:
+[`composite`](composite.red) is an implementation of [string interpolation](https://en.wikipedia.org/wiki/String_interpolation). It's main **advantage** over `rejoin` is **readability**. Compare:
 ```
 cmd: #composite {red(flags) -o "(to-local-file exe-file)" "(to-local-file src-file)"}
 cmd: rejoin ["red" flags { -o "} to-local-file exe-file {" "} to-local-file src-file {"}]
@@ -15,9 +15,49 @@ It should also be useful for **tag** composition, but be careful that tags with 
 
 To compose **urls**, we need different syntax than parens, as urls do not support non-encoded parens. So just use `as url! #composite "https://..."` trick.
 
+## Syntax
+
+Any paren inside string gets treated like a Red expression. Result of this paren's evaluation gets `form`ed (using `rejoin`).
+
+Opening paren can be escaped: `(\` (slash after paren).\
+E.g. `log-info #composite "Started worker (name) (\PID:(pid))"`
+
+<details>
+	<summary>On choice of escape format...</summary>
+
+Sometimes we want literal parens. After ~2 years of using `composite` and writing hundreds of composite-expressions, I've encountered a need to:
+- put some comment into the string in parens (2-3 times), which can be done as `"... ("(comment)") ..."`
+- put Red expression inside literal parens (2 times), e.g. `"... ("(")PID: (pid)(")")"`
+
+Needless to say this is unreadable, esp. the latter case that looks like 2 ugly parrots `("(")`.
+
+Question is: should we complicate the substituted parens, like `:(expr):` in the sad emoji dialect? or should we complicate literal parens by using an escape pattern?\
+My own statistics (4-5 cases of literal parens versus many hundreds of substituted expressions) tells me that latter is preferred. So the question boils down to the choice of escape sigil.
+
+It seems that most [widely used interpolation syntaxes](https://en.wikipedia.org/wiki/String_interpolation) are: `$var`, `$(var)` and `${var}`, leaving `"(normal parens)"` as is. This goes against the above conclusion, but it's explainable: many languages do not require a `#composite` prefix before the interpolated string, they have interpolation always built in, so for those languages literal parens is a much more likely case to deal with.
+
+With the above said, I considered the following:
+- `$var text` - `$var` doesn't stand out, making it harder to visually tell apart evaluated expressions from literal text, requires escaping every `$` and possibly every `\`, and has [other problems](https://stackoverflow.com/questions/17622106/variable-interpolation-in-the-shell)
+- `!(var) (text)`/`@(var) (text)`/`$(var) (text)` - [reshape](reshape.md)-like or bash-like syntax - OK, but I'd like to avoid the overhead of extra sigil prefix
+- `(var) \(text)` - requires to escape every backslash, because makes it impossible to write a Red expression after the backslash (without making the backslash ugly `("\")`) - doubling is very bad
+- `(var) (\text)` - although escaping is sort of backwards here, it should just work because `\` in Red is a forbidden char (reserved? what if gets used later?)
+- `(var) (;text)` - future-proof, however `;...` could be a comment in a composed multiline string, and this syntax disables it (but it's easy to fix by adding a whitespace: `( ;`); biggest issue is that `(;` is not an unlikely emoji
+- `(var) (\text\)` - longer, I see no point in preferring this over the previous variant
+- `(var) ((text))`/`(var) ([text])`/`(var) ("text")`/`(var) (:text:)` - can hurt perfectly valid exprs like `((a + b) / (c + d))`, or `([a] op [b])`, or `("a" op "b")`, or `(:a op b:)`
+- `(var) (]text[)`/`(var) (>text<)` - reads as some error
+- `[var] ^(text)` - impossible: `^(XX)` is a char syntax in Red
+- `{var} ^{text}` - impossible: `^` gets lost during load
+- `[var] ^[text]` - should just work, since `^[` is an ESC (27) char, however I'd like to avoid using square brackets for parens are more natural way to write expressions
+- `(var) (^text)` - bad: on load converts first char of text into a control char, esp. `^t` into tab; we could convert them back, but only if we expect control chars to never follow an opening paren - surely that's dangerous to assume about linefeed `^/`
+- `\var\ ^\text\` - should just work, since `^\` is a char 28 (file separator)
+
+To me `(var) (\text)` seems like the best tradeoff, followed by `[var] ^[text]` then `\var\ ^\text\` (in former 2 expressions are also easy to load, while latter requires manual parsing that will slow it down).
+
+</details>
+
 ## Macro version
 
-I'm using it in the [Red View Test System repo](https://gitlab.com/hiiamboris/red-view-test-system) and I'm satisfied with it.
+I'm using it in the [Red View Test System repo](https://gitlab.com/hiiamboris/red-view-test-system) and other places and I'm satisfied with it.
 During macro expansion phase `#composite` macro simply **transforms** a given string **into a rejoin-expression**. 
 
 **Benefits** of macro approach over a function implementation are:
@@ -25,17 +65,17 @@ During macro expansion phase `#composite` macro simply **transforms** a given st
 - Another is runtime **performance**: expression is expanded only once, so any subsequent evaluations do not pay the expansion cost. And if you compile it, you pay the cost at compile time only.
 
 **Drawbacks** compared to function implementation are:
-- You cannot **pass around or build** the template strings at runtime. E.g. if you want to write a simple around `#composite` call, you have to make it a macro wrapper. So, formatting a dataset using a template won't work with a macro.
-- Macros **loading is unreliable** right now (see the numerous issues on the tracker)
-- If you have a lot of `composite` expressions, most of which are not going to ever be used by the program (like, composite error messages), then it's **only slower** than the function.
+- You cannot **pass around or build** the template strings at runtime. E.g. if you want to write a simple wrapper around `#composite` call, you have to make it a macro wrapper, not function wrapper. So, formatting a dataset using a template won't work with a macro.
+- Macros **loading is unreliable** right now \(see the [numerous issues on the tracker](https://github.com/red/red/issues?q=is%3Aissue+is%3Aopen+preprocessor)\) - often you just move your included file somewhere else and it stops working.
+- If you have a lot of `composite` expressions, most of which are not going to ever be used by the program (like, composite error messages), then it's **only slower** than the function version (unless you're compiling your code).
 
 ### Examples:
 ```
-	stdout: #composite %"(working-dir)stdout-(index).txt"
-	pid: call/shell #composite {console-view.exe (to-local-file name) 1>(to-local-file stdout)}
-	log-info #composite {Started worker (name) ("(")PID:(pid)(")")}			;) note the natural escape mechanism: ("("), which looks like an ugly parrot
-	#composite "Worker build date: (var/date) commit: (var2)^/OS: (system/platform)"
-	write/append cfg-file #composite "config: (mold config)"
+stdout: #composite %"(working-dir)stdout-(index).txt"
+pid: call/shell #composite {console-view.exe (to-local-file name) 1>(to-local-file stdout)}
+log-info #composite {Started worker (name) (\PID:(pid))}
+#composite "Worker build date: (var/date) commit: (var2)^/OS: (system/platform)"
+write/append cfg-file #composite "config: (mold config)"
 ```
 
 ## Mezz version
@@ -44,6 +84,7 @@ During macro expansion phase `#composite` macro simply **transforms** a given st
 - Much **simpler** code.
 - Can be used on **dynamically** generated or passed around strings, like any other function.
 - No tripping on macro issues.
+- Supports `/trap` refinement to handle evaluation errors (I don't think it's of any use for macro version, so not implemented there)
 
 **Drawbacks**:
 - Requires explicit binding info. See [`with` header](https://gitlab.com/hiiamboris/red-mezz-warehouse/-/blob/master/with.red) - usage is the same, and resembles usage of `bind`.
@@ -51,22 +92,19 @@ During macro expansion phase `#composite` macro simply **transforms** a given st
 
 ### Examples:
 ```
-	prints: func [b [block!] s [string!]] [print composite b s]
-	prints['msg] "error reading the config file: (mold msg)"			;) often requires duplication of variable name
+prints: func [b [block!] s [string!]] [print composite b s]
+prints['msg] "error reading the config file: (mold msg)"			;) often requires duplication of variable name
 
-	play: function [player root vfile afile] [
-		...
-		cmd: composite['root] get bind either afile ['avcmd]['vcmd] :a+v
-		...
-	]
+play: function [player root vfile afile] [
+	...
+	cmd: composite['root] get bind either afile ['avcmd]['vcmd] :a+v
+	...
+]
 
-	composite[] "system/words size = (length? words-of system/words)"	;) automatically bound to global context
+composite[] "system/words size = (length? words-of system/words)"	;) automatically bound to global context
 ```
 
 
-## Design issues:
-
-**Paren syntax** is great in 90% cases, but in some cases I *may forget* about parens special meaning and just put a "(comment)" in. Then get an error when the code gets evaluated ;) Also as examples show, escaping it is problematic (escaping always is). So an optional **alternate syntax** support may help **eliminate the need** for escaping anything, if it's worth it. Haven't decided on the escaping syntax though :/
 
 What **features** should embedded expressions support? E.g. what about `"(#macros)"` or `"(;-- line comments)"` (latter is especially problematic to implement).
 
@@ -78,14 +116,14 @@ What **features** should embedded expressions support? E.g. what about `"(#macro
 
 As all macros it is **case-sensitive!** (`error` and `Error` won't be affected).
 
-Why `ERROR` and not `#error`? <br>
-Because the preprocessor may easily fail to expand the macro (just look how many issues with it are on the tracker). In this case `#error` will just be skipped silently, propagating errors further, while `ERROR` will likely tell that the word is undefined.
+Why `ERROR` and not `#error`?\
+Because the preprocessor has a lot of issues and may easily fail to expand the macro. In this case `#error` will just be skipped silently, propagating errors further, while `ERROR` will likely tell that the word is undefined.
 
 ### Examples:
 ```
-	ERROR "Unexpected spec format (mold spc)"
-	ERROR "command (mold-part/flat code 30) failed with:^/(form/part output 100)"
-	ERROR "Images are expected to be of equal size, got (im1/size) and (im2/size)"
+ERROR "Unexpected spec format (mold spc)"
+ERROR "command (mold-part/flat code 30) failed with:^/(form/part output 100)"
+ERROR "Images are expected to be of equal size, got (im1/size) and (im2/size)"
 ```
 
 ## Localization
@@ -105,5 +143,5 @@ coming from `rejoin ["A " type " message with " this value " and " another value
 
 Not only `rejoin` leaves no option to reword the phrase properly, it also blocks any attempt to get the meaning of the message.
 
-That's why I believe **`#composite` should be a part of Red runtime** and should be used for formatting values in error messages.
+That's why I believe **`#composite` (macro and function) should be a part of Red runtime** and should be used for formatting values in error messages.
 

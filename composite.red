@@ -5,6 +5,7 @@ Red [
 	license: 'BSD-3
 	notes: {
 		It supports only parens as expression designators.
+		To escape opening paren, add a backslash after it: `(\`
 
 		EXAMPLES:
 
@@ -12,8 +13,7 @@ Red [
 
 			stdout: #composite %"(working-dir)stdout-(index).txt"
 			pid: call/shell #composite {console-view.exe (to-local-file name) 1>(to-local-file stdout)}
-			log-info #composite {Started worker (name) ("(")PID:(pid)(")")}
-				;) note the natural escape mechanism: ("("), resembling an ugly parrot
+			log-info #composite {Started worker (name) (\PID:(pid))}		;-- escaped opening brace!
 			#composite "Worker build date: (var/date) commit: (var2)^/OS: (system/platform)"
 			write/append cfg-file #composite "config: (mold config)"
 		
@@ -26,45 +26,77 @@ Red [
 			cmd: composite['root] get bind either afile ['avcmd]['vcmd] :a+v
 			prints: func [b [block!] s [string!]] [print composite b s]
 
-		See `composite.md` for more
+		See `composite.md` for more details
 	}
 ]
 
 
-; #include %assert.red
-#include %with.red
+#include %assert.red
+#include %with.red			;-- used by composite func to bind exprs
+#include %catchers.red		;-- used by composite func to trap errors
 
 
 context [
 	non-paren: charset [not #"("]
-	
-	;@@ TODO: error inlining
-	set 'composite function [ctx [block!] str [any-string!]] [
-		s: as string! str				;-- use "string": load %file/url:// does something else entirely, <tags> get appended with <>
-		b: parse s [collect [
+
+	trap-as-func: function [on-err [function!] code [block!]] [
+		trap/catch code [on-err thrown]
+	]
+	trap-as-str: function [on-err [string!] code [block!]] [
+		trap/catch code [on-err]
+	]
+
+	set 'composite function [
+		"Return STR with parenthesized expressions evaluated and formed"
+		ctx [block!] "Bind expressions to CTX - in any format accepted by WITH function"
+		str [any-string!] "String to interpolate"
+		/trap "Trap evaluation errors and insert text instead"	;-- not load errors!
+			on-err [function! string!] "string or function [error [error!]]"
+	][
+		s: as string! str
+		b: with ctx parse s [collect [
+			keep ("")									;-- ensures the output of rejoin is string, not block
 			any [
 				keep copy some non-paren
+			|	keep [#"(" ahead #"\"] skip
 			|	s: (set [v: e:] transcode/next s) :e keep (:v)
 			]
 		]]
-		as str rejoin with ctx b
+
+		if trap [										;-- each result has to be evaluated separately
+			do-trap: either string? :on-err [:trap-as-str][:trap-as-func]
+			forall b [
+				if paren? b/1 [
+					b: insert b [do-trap :on-err as [] quote]
+				]
+			]
+			;@@ use map-each when it becomes native
+			; b: map-each/eval [p [paren!]] b [['do-trap quote :on-err as [] p]]
+		]
+		as str rejoin b
 	]
 ]
 
 
-#assert [%" - 3 - <abc)))> - func1" == composite[] %"()() - (1 + 2) - (<abc)))>) - ('func)(1)()()"]
-#assert [<tag flag=3/> == composite[] <tag flag=(mold 1 + 2)/>]
+#assert [%" - 3 - <abc)))> - func1" == s: composite[] %"()() - (1 + 2) - (<abc)))>) - ('func)(1)()()" 's]
+#assert [<tag flag=3/>              == s: composite[] <tag flag=(mold 1 + 2)/> 's]
+#assert ["((\\))"                   == s: composite[] "(\(\\\))" 's]
+#assert [""                         == s: composite[] "()" 's]
+#assert [""                         == s: composite[] "([])" 's]
+#assert ["*ERROR*"                  == s: composite/trap[] "(1 / 0)" "*ERROR*" 's]
+#assert ["zero-divide expect-arg"   == s: composite/trap[] "(1 / 0) ({a} + 1)" func [e][e/id] 's]
+#assert ["print"                    == s: composite/trap[] "(1 / 0)" func [e]['print] 's]		;-- no second error from double evaluation
 
 
 
-;@@ TODO: make an escape mechanism? although, it's already there: ("(") (")") (")))((()()("), but can be shorter perhaps?
 ;@@ TODO: support comments? e.g. `(;-- comments)` in multiline strings, if so - how should it count braces?
 ;@@ TODO: expand "(#macros)" ?
 ;; has to be both Red & R2-compatible
 ;; any-string! for composing files, urls, tags
 ;; load errors are reported at expand time by design
-#macro [#composite set s any-string!] func [[manual] ss ee /local r e type load-expr wrap keep] [
+#macro [#composite any-string!] func [[manual] ss ee /local r e s type load-expr wrap keep] [
 	set/any 'error try [								;-- display errors rather than cryptic "error in macro!"
+		s: ss/2
 		r: copy []
 		type: type? s
 		s: to string! s									;-- use "string": load %file/url:// does something else entirely, <tags> get appended with <>
@@ -111,7 +143,10 @@ context [
 			(pick [parse/all parse] object? rebol) s [
 				any [
 					s: to marker e: (keep copy/part s e)
-					s: (keep wrap load-expr) :e
+					[
+						"(\" (append last r #"(")
+					|	s: (keep wrap load-expr) :e
+					]
 				]
 				s: to end (keep copy s)
 			]
@@ -125,6 +160,14 @@ context [
 	ee
 ]
 
+
+#assert ["((\\))" == #composite "(\(\\\))"]
+#assert ["" == #composite "()"]
+#assert ["" == #composite "([])"]
+
+#assert [(b: [#composite "(\(\\\))"]) == [rejoin ["((" "\\))"]] 'b]
+#assert [(b: [#composite "()"      ]) == [rejoin ["" ()]      ] 'b]
+#assert [(b: [#composite "([])"    ]) == [rejoin ["" []]      ] 'b]
 
 #assert [
 	(b: [#composite %"()() - (1 + 2) - (<abc)))>) - (func)(1)()()"]) == [
