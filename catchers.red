@@ -24,7 +24,7 @@ Red [
 				unless error == 'ok [print error  result: 'default]
 				:result
 			Becomes much cleaner:
-				trap/all/catch code [print error  'default]
+				trap/all/catch code [print thrown  'default]
 
 			NOTE: R3 uses the similar design: `try/except [code][print "error"]`
 			and similarly accepts a function of one argument for /except.
