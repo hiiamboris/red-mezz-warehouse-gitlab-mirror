@@ -39,11 +39,8 @@ Red [
 context [
 	non-paren: charset [not #"("]
 
-	trap-as-func: function [on-err [function!] code [block!]] [
-		trap/catch code [on-err thrown]
-	]
-	trap-as-str: function [on-err [string!] code [block!]] [
-		trap/catch code [on-err]
+	trap-error: function [on-err [function! string!] :code [paren!]] [
+		trap/catch as [] code pick [ [on-err thrown] [on-err] ] function? :on-err
 	]
 
 	set 'composite function [
@@ -64,11 +61,8 @@ context [
 		]]
 
 		if trap [										;-- each result has to be evaluated separately
-			do-trap: either string? :on-err [:trap-as-str][:trap-as-func]
 			forall b [
-				if paren? b/1 [
-					b: insert b [do-trap :on-err as [] quote]
-				]
+				if paren? b/1 [b: insert b [trap-error :on-err]]
 			]
 			;@@ use map-each when it becomes native
 			; b: map-each/eval [p [paren!]] b [['do-trap quote :on-err as [] p]]
