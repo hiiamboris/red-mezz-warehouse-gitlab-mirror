@@ -80,6 +80,34 @@ log-info #composite {Started worker (name) (\PID:(pid))}
 #composite "Worker build date: (var/date) commit: (var2)^/OS: (system/platform)"
 write/append cfg-file #composite "config: (mold config)"
 ```
+Bigger example:
+```
+stdin:  #composite %"(working-dir)stdin-(wi).txt"
+name:   #composite %"(working-dir)worker-(wi).red"
+write name #composite {
+	Red [needs: view]
+	context [
+		ofs: 0
+		bin: none
+		pos: none
+		forever [
+			wait 1e-2
+			unless empty? system/view/screens/1/pane [
+				loop 5 [do-events/no-wait]
+			]
+			bin: read/binary/seek (mold stdin) ofs			;<-- filename goes here
+			if pos: find/tail bin #"^^/" [
+				ofs: ofs + offset? bin pos
+				str: to string! copy/part bin pos
+				print ["=== BUSY:" str]
+				task: load/all str
+				if error? e: try/all [do next task 'ok] [print e]
+				print ["=== IDLE:" :task/1 "@" now/precise]
+			]
+		]
+	]
+}
+```
 
 ## Mezz version
 
@@ -97,7 +125,12 @@ write/append cfg-file #composite "config: (mold config)"
 <details>
 	<summary>Why do we even need binding info?</summary>
 
-Usually Red code is bound during `load` phase. But since `composite` accepts a string, words that it will extract from that string will always be bound to the global namespace. This makes using `composite` inside functions a bag of gotchas:
+\
+Usually Red code is bound:
+- to global context during `load` phase
+- to other contexts during their creation at evaluation time
+
+But since `composite` accepts a string, when it's wrapping context was created there were no words to bind. Just a string. Words that it will extract from that string will always be bound to the global namespace. This makes using `composite` inside functions a bag of gotchas:
 ```
 o: object [
 	x: 1 y: 2
@@ -111,11 +144,11 @@ o: object [
 *** Where: =
 *** Stack: tell composite rejoin empty?  
 ```
-I was lucky `z` wasn't defined globally and got an error. But `x` and `y` were `1` (probably some leaking assertions), and if `z` was also globally known it would have likely led to a nastiest bug hunt session.
+I was lucky `z` wasn't defined globally and I got an error. But `x` and `y` were `= 1` (probably some leaking assertions), and if `z` was also globally known it would have likely led to a nastiest bug hunt session. Moreso, *I wouldn't be able to use any words from function or from any contexts except global one, if I could not provide the context info to `composite`.*
 
-True that tiny scripts where all data is global do not require binding info. But they also do not require a mezz version and will be perfectly fine with a macro.
+Tiny scripts where all data is global do not require it. But they also do not require a mezz version and will be perfectly fine with a macro.
 
-Where we build something more complex, we will be bitten by this again and again, and especially beginners (and they are always a majority statistically).
+Where we build something more complex, there's no way around it that I can see. And if `composite` was only good for global words, imagine how many times that would bite programmers, and especially beginners (and they are always a majority statistically).
 
 So, proper way to write the above is:
 ```
@@ -129,37 +162,32 @@ o: object [
 >> o/tell 3
 == "Result of `x + y * z` is: 9"
 ```
-Since `z` and `x` refer to values and not contexts, they are quoted as `'z` so reduction results in a word and word carries the context info for the [`with`](with.red) call.
+Since `z` and `x` refer to values and not contexts, they are quoted as `'z` so reduction results in a word and word carries the context info for the [`with`](with.red) call. See `with` syntax, it's used here as is.
+
+Macro version does not require this, as macros get expanded *before* any evaluation happens, and the result of #composite expansion - a rejoin call with a block - gets bound when it's wrapping context is built.
 </details>
 
-<details>
-	<summary>
-Why `with` cannot be used separately from `composite`?
-</summary>
-
-Because `composite` takes and returns a string. The only thing that can be bound - a block of expressions - lives solely within `composite` and never leaves it.
-
-</details>
-
+Why `with` cannot be used separately from `composite`?\
+Because `composite` mezz takes and returns a string. The only thing that can be bound - a block of expressions - lives solely within `composite` and never leaves it.
 
 
 ### Examples:
 ```
 prints: func [b [block!] s [string!]] [print composite b s]
 prints['msg] "error reading the config file: (mold msg)"			;) often requires duplication of variable name
-
-play: function [player root vfile afile] [
-	...
-	cmd: composite['root] get bind either afile ['avcmd]['vcmd] :a+v
-	...
-]
-
 composite[] "system/words size = (length? words-of system/words)"	;) automatically bound to global context
 ```
+Bigger example:
+```
+avcmd: {"(player)" "(vfile)" --audio-file "(afile)"}
+vcmd:  {"(player)" "(vfile)"}
+play: function [player root vfile afile] [
+	...
+	cmd: composite['root] either afile [avcmd][vcmd]
+	...
+]
+```
 
-
-
-What **features** should embedded expressions support? E.g. what about `"(#macros)"` or `"(;-- line comments)"` (latter is especially problematic to implement).
 
 ## ERROR macro
 
