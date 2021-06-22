@@ -170,6 +170,9 @@ Macro version does not require this, as macros get expanded *before* any evaluat
 Why `with` cannot be used separately from `composite`?\
 Because `composite` mezz takes and returns a string. The only thing that can be bound - a block of expressions - lives solely within `composite` and never leaves it.
 
+Why binding info is not a refinement?\
+Main reason is readability: refinement implies that block goes after the string, which is not quite readable.\
+Another reason is to help the user not forget to specify it (and thus prevent bughunt sessions). E.g. I do forget it myself when I switch from `#composite` to `composite`, and I immediately get a type error that I'm passing a string as first argument.
 
 ### Examples:
 ```
