@@ -8,12 +8,16 @@ Red [
 
 		Usage patterns:
 
-		I	apply :function 'local
+		I	apply :function 'local						;) 'local carries the context of the caller
 			apply  funcname 'local
+			apply :function object [arg-name: expression ...]
+			apply  funcname object [arg-name: expression ...]
 
-			Set arguments of function to their values from given (by 'local) context and evaluate it.
-			Context will typically be a wrapping function.
-			Use case: function (or native) extension, when argument names are the same, with maybe minor variations.
+			Set arguments of function to their values from given (directly or indirectly by 'local)
+			context and evaluate it. Context will typically be a wrapping function.
+			Use cases:
+			- function (or native) extension, when argument names are the same, with maybe minor variations.
+			- sharing of argument list between a set of functions (CLI lib is an example)
 			Example:
 				my-find: function
 					compose [(spec-of :find) /my-ref]
@@ -54,4 +58,5 @@ Red [
 	}
 ]
 
+;@@ Don't forget multiple set-words case, e.g. `ref1: ref2: true`
 
