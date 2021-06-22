@@ -17,6 +17,8 @@ To compose **urls**, we need different syntax than parens, as urls do not suppor
 
 ## Syntax
 
+\(See also [@greggirwin's sad emoji DSL](https://github.com/greggirwin/red-formatting/blob/master/formatting-functions.adoc#composite), which informed this design.\)
+
 Any paren inside string gets treated like a Red expression. Result of this paren's evaluation gets `form`ed (using `rejoin`).
 
 Opening paren can be escaped: `(\` (slash after paren).\
@@ -91,6 +93,55 @@ write/append cfg-file #composite "config: (mold config)"
 - Requires explicit binding info. See [`with` header](https://gitlab.com/hiiamboris/red-mezz-warehouse/-/blob/master/with.red) - usage is the same, and resembles usage of `bind`.
 - Slower at runtime due to extra processing.
 - Does not expand macros within parens (by design, because preprocessor would slow down it's operation a lot for some dubious edge case).
+
+<details>
+	<summary>Why do we even need binding info?</details>
+
+Usually Red code is bound during `load` phase. But since `composite` accepts a string, words that it will extract from that string will always be bound to the global namespace. This makes using `composite` inside functions a bag of gotchas:
+```
+o: object [
+	x: 1 y: 2
+	tell: function [z] [
+		composite[] "Result of `x + y * z` is: (x + y * z)"
+	]
+]
+
+>> o/tell 3
+*** Script Error: z has no value
+*** Where: =
+*** Stack: tell composite rejoin empty?  
+```
+I was lucky `z` wasn't defined globally and got an error. But `x` and `y` were `1` (probably some leaking assertions), and if `z` was also globally known it would have likely led to a nastiest bug hunt session.
+
+True that tiny scripts where all data is global do not require binding info. But they also do not require a mezz version and will be perfectly fine with a macro.
+
+Where we build something more complex, we will be bitten by this again and again, and especially beginners (and they are always a majority statistically).
+
+So, proper way to write the above is:
+```
+o: object [
+	x: 1 y: 2
+	tell: function [z] [
+		composite['z 'x] "Result of `x + y * z` is: (x + y * z)"
+	]
+]
+
+>> o/tell 3
+== "Result of `x + y * z` is: 9"
+```
+Since `z` and `x` refer to values and not contexts, they are quoted as `'z` so reduction results in a word and word carries the context info for the [`with`](with.red) call.
+</details>
+
+<details>
+	<summary>
+Why `with` cannot be used separately from `composite`?
+</summary>
+
+Because `composite` takes and returns a string. The only thing that can be bound - a block of expressions - lives solely within `composite` and never leaves it.
+
+</details>
+
+
 
 ### Examples:
 ```
