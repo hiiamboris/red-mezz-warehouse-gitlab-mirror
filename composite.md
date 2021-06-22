@@ -95,7 +95,7 @@ write/append cfg-file #composite "config: (mold config)"
 - Does not expand macros within parens (by design, because preprocessor would slow down it's operation a lot for some dubious edge case).
 
 <details>
-	<summary>Why do we even need binding info?</details>
+	<summary>Why do we even need binding info?</summary>
 
 Usually Red code is bound during `load` phase. But since `composite` accepts a string, words that it will extract from that string will always be bound to the global namespace. This makes using `composite` inside functions a bag of gotchas:
 ```
