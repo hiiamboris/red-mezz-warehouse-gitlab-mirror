@@ -84,7 +84,8 @@ Red [
 	back clear change s reduce ['clock-each copy next s]
 ]
 
-#macro [ahead paren! into ['* some [thru '*]]] func [[manual] s e] [
+; #macro [ahead paren! into ['* some [thru '*]]] func [[manual] s e] [	-- this doesn't work in compiler (R2 parse)
+#macro [p: paren! :p into ['* some [thru '*]]] func [[manual] s e] [
 	e: s/1
 	if '* = pick e length? e [							;-- R2 compatibility headaches
 		remove s
