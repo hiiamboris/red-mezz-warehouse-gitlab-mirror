@@ -44,7 +44,7 @@ Red [
 ; #include %format-number.red							;-- included by timestamp.red
 ; #include %stepwise-macro.red							;-- included by timestamp.red
 #include %timestamp.red
-#include %tabs.red
+if error? set/any 'e try [#include %tabs.red] [print ["%tabs.red:^/" e]]
 #include %modulo.red
 #include %print-macro.red
 
