@@ -60,8 +60,8 @@ Red [
 				a: 1
 				b: 2
 				f: func [x y] [
-					print with [self 'x] composite "a=(a) b=(b) x*y=(x * y)"
-					print with [self :f] composite "a=(a) b=(b) x*y=(x * y)"	;-- equivalent
+					print composite [self 'x] "a=(a) b=(b) x*y=(x * y)"		;) calls `with` internally
+					print composite [self :f] "a=(a) b=(b) x*y=(x * y)"		;) equivalent
 				]
 			]
 			
@@ -146,11 +146,21 @@ with: func [
 	case [
 		not block? :ctx  [bind code :ctx]
 		set-word? :ctx/1 [bind code context ctx]
-		'otherwise       [foreach ctx ctx [bind code do :ctx]  code]		;-- `do` decays lit-words and evals words
+		'otherwise       [foreach ctx ctx [bind code do :ctx]  code]		;-- `do` decays lit-words and evals words, but doesn't allow expressions
+		; 'otherwise       [while [not tail? ctx] [bind code do/next ctx 'ctx]  code]		;-- allows expressions
 		; 'otherwise       [foreach ctx reduce ctx [bind code :ctx]  code]	;-- `reduce` is an extra allocation
 	]
 ]
 
+#assert [
+	(c: context [x: 4 y: 5]
+	20 == do with [c] [x * y])
+]
+
+; #assert [
+; 	(c: context [x: 4 y: 5]
+; 	20 == do with [context? in c 'x] [x * y])
+; ]
 
 #assert [(
 	200 == do with [
