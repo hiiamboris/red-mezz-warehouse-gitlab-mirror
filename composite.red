@@ -79,7 +79,7 @@ context [
 ;; has to be both Red & R2-compatible
 ;; any-string! for composing files, urls, tags
 ;; load errors are reported at expand time by design
-#macro [#composite any-string!] func [[manual] ss ee /local r e s type load-expr wrap keep] [
+#macro [#composite any-string! | '` any-string! '`] func [[manual] ss ee /local r e s type load-expr wrap keep] [
 	set/any 'error try [								;-- display errors rather than cryptic "error in macro!"
 		s: ss/2
 		r: copy []
@@ -182,6 +182,10 @@ context [
 	'b
 ]
 
+#assert [ [#composite <tag flag=(mold 1 + 2)/>] == [`<tag flag=(mold 1 + 2)/>`] ]
+#assert [ [#composite %"()() - (1 + 2) - (<abc)))>) - (func)(1)()()"] == [` %"()() - (1 + 2) - (<abc)))>) - (func)(1)()()" `] ]
+
+
 ; #assert [			;-- this is unloadable because of tag limitations
 ; 	[#composite <tag flag="(form 1 + 2)">] == [
 ; 		rejoin [
@@ -208,6 +212,10 @@ context [
 #assert ["" == #composite "()"]
 #assert ["" == #composite "([])"]						;-- result is string not block
 
+#assert ["((\\))" == `"(\(\\\))"`]
+#assert ["" == `"()"`]
+#assert ["" == `"([])"`]
+
 #assert [(b: [#composite "(\(\\\))"]) == [rejoin ["((" "\\))"]] 'b]			;-- escaping
 #assert [(b: [#composite "()"      ]) == [rejoin ["" ()]      ] 'b]
 #assert [(b: [#composite "([])"    ]) == [rejoin ["" []]      ] 'b]			;-- paren removal from obvious cases
@@ -223,6 +231,10 @@ context [
 #assert ["9" == s: #composite {(;-- comment
 	1 + 2 * 3					;-- another
 )} 's]
+#assert ["9" == s:           `{(;-- comment
+	1 + 2 * 3					;-- another
+)}` 's]
 #assert ["9" == s: composite[] {(;-- comment
 	1 + 2 * 3					;-- another
 )} 's]
+
