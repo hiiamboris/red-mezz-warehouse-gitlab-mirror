@@ -72,6 +72,28 @@ During macro expansion phase `#composite` macro simply **transforms** a given st
 - Macros **loading is unreliable** right now \(see the [numerous issues on the tracker](https://github.com/red/red/issues?q=is%3Aissue+is%3Aopen+preprocessor)\) - often you just move your included file somewhere else and it stops working.
 - If you have a lot of `composite` expressions, most of which are not going to ever be used by the program (like, composite error messages), then it's **only slower** than the function version (unless you're compiling your code).
 
+### Shorter format
+
+Since `#composite` is a long thing to type and as a result I found myself writing macro wrappers around it: `#print` for `print #composite`, `ERROR` for `do make error! #composite` and so on, it is reasonable to provide a shorter universal syntax.
+
+Below's a comparison of short macro formats as currently possible to lex. As can be seen some tokens are more sticky than the others, but that can be fixed of course.
+
+|string|alt string|tag|file|note|
+|-|-|-|-|-|
+| `` `"value=(v)"` ``  | `` `{value=(v)}` ``  | `` `<value=(v)>` `` | `` ` %"value=(v)" ` ``  | |
+| `@"value=(v)"`  | `@{value=(v)}`  | `@<value=(v)>`    | `@%"value=(v)"`    | 1 |
+| `&"value=(v)"`  | `&{value=(v)}`  | `&<value=(v)>`    | `& %"value=(v)"`   | 2 |
+| `/"value=(v)"/` | `/{value=(v)}/` | `/ <value=(v)> /` | `/%"value=(v)"/`   | |
+| `="value=(v)"=` | `={value=(v)}=` | `=<value=(v)>=`   | `= %"value=(v)" =` | |
+| `^"value=(v)"^` | `^{value=(v)}^` | `^<value=(v)>^`   | `^ %"value=(v)" ^` | |
+
+1. similar to [reshape](https://gitlab.com/hiiamboris/red-mezz-warehouse/-/blob/master/reshape.md) 
+2. `&` can't be an operator then
+
+We could modify lexer to transform `` `value=(v)` `` patterns *on load* into blocks or rejoin-expressions, but:
+- this will harm localization as we won't have the string form anymore, and will have to invent some kludges to extract it
+- macros can be disabled by user, but lexer behavior is hardcoded, so there'll be no way around it
+
 ### Examples:
 ```
 stdout: #composite %"(working-dir)stdout-(index).txt"
