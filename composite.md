@@ -51,9 +51,9 @@ With the above said, I considered the following:
 - `{var} ^{text}` - impossible: `^` gets lost during load
 - `[var] ^[text]` - should just work, since `^[` is an ESC (27) char, however I'd like to avoid using square brackets for parens are more natural way to write expressions
 - `(var) (^text)` - bad: on load converts first char of text into a control char, esp. `^t` into tab; we could convert them back, but only if we expect control chars to never follow an opening paren - surely that's dangerous to assume about linefeed `^/`
-- `\var\ ^\text\` - should just work, since `^\` is a char 28 (file separator)
+- `\var\ ^\text^\` - should just work, since `^\` is a char 28 (file separator)
 
-To me `(var) (\text)` seems like the best tradeoff, followed by `[var] ^[text]` then `\var\ ^\text\` (in former 2 expressions are also easy to load, while latter requires manual parsing that will slow it down).
+To me `(var) (\text)` seems like the best tradeoff, followed by `[var] ^[text]` then `\var\ ^\text^\` (in former 2 expressions are also easy to load, while latter requires manual parsing that will slow it down).
 
 </details>
 
