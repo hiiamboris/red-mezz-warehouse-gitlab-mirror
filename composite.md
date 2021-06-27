@@ -81,13 +81,14 @@ Below's a comparison of short macro formats as currently possible to lex. As can
 |string|alt string|tag|file|note|
 |-|-|-|-|-|
 | `` `"value=(v)"` ``  | `` `{value=(v)}` ``  | `` `<value=(v)>` `` | `` ` %"value=(v)" ` ``  | |
+| `` #`"value=(v)"` `` | `` #`{value=(v)}` `` | `` #` <value=(v)> ` `` | `` #`%"value=(v)"` ``  | |
 | `@"value=(v)"`  | `@{value=(v)}`  | `@<value=(v)>`    | `@%"value=(v)"`    | 1 |
 | `&"value=(v)"`  | `&{value=(v)}`  | `&<value=(v)>`    | `& %"value=(v)"`   | 2 |
 | `/"value=(v)"/` | `/{value=(v)}/` | `/ <value=(v)> /` | `/%"value=(v)"/`   | |
 | `="value=(v)"=` | `={value=(v)}=` | `=<value=(v)>=`   | `= %"value=(v)" =` | |
 | `^"value=(v)"^` | `^{value=(v)}^` | `^<value=(v)>^`   | `^ %"value=(v)" ^` | |
 
-1. similar to [reshape](https://gitlab.com/hiiamboris/red-mezz-warehouse/-/blob/master/reshape.md) 
+1. similar to [reshape](https://gitlab.com/hiiamboris/red-mezz-warehouse/-/blob/master/reshape.md), but disables possible future `@".."` format for refs
 2. `&` can't be an operator then
 
 We could modify lexer to transform `` `value=(v)` `` patterns *on load* into blocks or rejoin-expressions, but:
