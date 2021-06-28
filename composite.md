@@ -78,15 +78,15 @@ Since `#composite` is a long thing to type and as a result I found myself writin
 
 Below's a comparison of short macro formats as currently possible to lex. As can be seen some tokens are more sticky than the others, but that can be fixed of course.
 
-|string|alt string|tag|file|note|
-|-|-|-|-|-|
-| `` `"value=(v)"` ``  | `` `{value=(v)}` ``  | `` `<value=(v)>` `` | `` ` %"value=(v)" ` ``  | |
-| `` #`"value=(v)"` `` | `` #`{value=(v)}` `` | `` #` <value=(v)> ` `` | `` #`%"value=(v)"` ``  | |
-| `@"value=(v)"`  | `@{value=(v)}`  | `@<value=(v)>`    | `@%"value=(v)"`    | 1 |
-| `&"value=(v)"`  | `&{value=(v)}`  | `&<value=(v)>`    | `& %"value=(v)"`   | 2 |
-| `/"value=(v)"/` | `/{value=(v)}/` | `/ <value=(v)> /` | `/%"value=(v)"/`   | |
-| `="value=(v)"=` | `={value=(v)}=` | `=<value=(v)>=`   | `= %"value=(v)" =` | |
-| `^"value=(v)"^` | `^{value=(v)}^` | `^<value=(v)>^`   | `^ %"value=(v)" ^` | |
+|string|alt string|raw string|tag|file|note|
+|-|-|-|-|-|-|
+| `` `"value=(v)"` ``  | `` `{value=(v)}` ``  | `` ` %{value=(v)}% ` ``  | `` `<value=(v)>` `` | `` ` %"value=(v)" ` ``  | |
+| `` #`"value=(v)"` `` | `` #`{value=(v)}` `` | `` #`%{value=(v)}%` `` | `` #` <value=(v)> ` `` | `` #`%"value=(v)"` ``  | |
+| `@"value=(v)"`  | `@{value=(v)}`  | `@%{value=(v)}%` | `@<value=(v)>`    | `@%"value=(v)"`    | 1 |
+| `&"value=(v)"`  | `&{value=(v)}`  | `& %{value=(v)}%` | `&<value=(v)>`    | `& %"value=(v)"`   | 2 |
+| `/"value=(v)"/` | `/{value=(v)}/` | `/%{value=(v)}%/` | `/ <value=(v)> /` | `/%"value=(v)"/`   | |
+| `="value=(v)"=` | `={value=(v)}=` | `= %{value=(v)}% =` | `=<value=(v)>=`   | `= %"value=(v)" =` | |
+| `^"value=(v)"^` | `^{value=(v)}^` | `^ %{value=(v)}% ^` | `^<value=(v)>^`   | `^ %"value=(v)" ^` | |
 
 1. similar to [reshape](https://gitlab.com/hiiamboris/red-mezz-warehouse/-/blob/master/reshape.md), but disables possible future `@".."` format for refs
 2. `&` can't be an operator then
