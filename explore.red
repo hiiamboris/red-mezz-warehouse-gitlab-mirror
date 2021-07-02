@@ -139,6 +139,7 @@ Red [
 ]
 
 
+#include %assert.red
 #include %setters.red
 #include %with.red
 #include %xyloop.red
@@ -411,4 +412,4 @@ explore: function [
 
 ; print 1
 ; explore to image! system/view/screens/1
-; explore make image! 5x5 halt
+; explore make image! 5x5 quit
