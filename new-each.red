@@ -435,13 +435,13 @@ context [
 		/drop "Discard regions that didn't match SPEC (else includes them unmodified)"
 		/case "Values are matched using strict comparison"
 		/same "Values are matched using sameness comparison"
-		/self "Map series into itself (incompatible with ranges and maps)"
+		/self "Map series into itself (incompatible with ranges)"
 		/local part
 	][
 		all [
 			self
-			not series? series							;-- change/part below relies on this error
-			ERROR "/self is only allowed when iterating over series"
+			scalar? series								;-- change/part below relies on this error
+			ERROR "/self is only allowed when iterating over series or map"
 		]
 
 		;-- where to collect into: always a block, regardless of the series given
@@ -493,7 +493,13 @@ context [
 			;-- original series is changed only once, after iteration is finished
 			;-- this produces a single on-deep-change event on owned series
 			;-- during iteration, intermediate changes will not be detected by user code
-			if self [change/part series buf tail series]
+			if self [
+				either map? series [
+					extend clear series buf
+				][
+					change/part series buf tail series
+				]
+			]
 		]												;-- otherwise, empty series: buf is already empty
 
 		;@@ TODO: in R/S free the `red-buf` here (not possible in Red)
@@ -846,13 +852,14 @@ context [
 ;; /self
 #assert [error? try     [b: map-each/self x 4             [x]]                 'b]		;-- incompatible with ranges & maps
 #assert [error? try     [b: map-each/self x 2x2           [x]]                 'b]
-#assert [error? try     [b: map-each/self x #(a b)        [x]]                 'b]
 #assert [[1 2 3 4]     = b: map-each/self x [11 22 33 44] [x / 11]             'b]
 #assert ["1234"        = s: map-each/self x "abcd"        [x - #"a" + #"1"]    's]		;-- string in, string out
 #assert ["a1b2c3d4"    = s: map-each/self/eval x "abcd"  [[x x - #"a" + #"1"]] 's]
 #assert ["c1d2"        = s: map-each/self/eval [/i x] skip "abcd" 2 [[x i]] 's]			;-- retains original index
 #assert ["abc1d2" = s: head map-each/self/eval [/i x] skip "abcd" 2 [[x i]] 's]			;-- does not affect series before it's index
 #assert ["abef"        =    map-each/self x s: "abCDef" [either x < #"a" [][x]] 's]		;-- unset should silently be formed into empty string
+#assert [#(1 2 3 4   ) = m: map-each/self [k v]  #(1 2 3 4) [reduce [k v]] 'm]			;-- preserves map type
+#assert [#(2 4       ) = m: map-each/self [k v]  #(1 2 3 4) [v]            'm]
 
 ; ;; `advance` support (NOTE: without /drop - advance makes little sense and hard to think about)
 ; #assert [[[2 3] #[none]] = b: map-each/drop/only  x    [1 2 3    ] [        advance] 'b]
@@ -916,5 +923,4 @@ context [
 #assert ["abcf"= s: head remove-each x skip "abcdef" 2 [find "de" x] 's]
 
 
-; print "------ WORK HERE ------"
 
