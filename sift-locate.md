@@ -7,7 +7,7 @@ The idea behind these two is to **remove the syntactic noise** from trivial filt
 
 Sift & Locate make great one-liners. If filtering block is huge and complicated, no win here.
 
-To use currently you have to `#include %sift-locate.red`. Fastest way to learn is to play ☻
+To use currently you have to [**`#include %sift-locate.red`**](sift-locate.red). Fastest way to learn is to play ☻
 
 ## Usage examples
 
