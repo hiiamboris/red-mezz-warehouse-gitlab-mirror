@@ -29,15 +29,15 @@ To use currently you have to `#include %sift-locate.red`. Fastest way to learn i
 ## Syntax
 
 
-See [https://github.com/greggirwin/red-hof/tree/master/code-analysis#siftlocate](here) for background. But those were just early ideas. Some weren't good at all. Some were ambiguous or contradictory. Some were unnecessary. And as @greggirwin said, filters are only a tiny part of code and we don't want to switch our mind into a totally differernt dialect every time we see or write one.
+See [https://github.com/greggirwin/red-hof/tree/master/code-analysis#siftlocate](here) for background. But those were just early ideas. Some weren't good at all. Some were ambiguous or contradictory. Some were unnecessary. And as @greggirwin said, filters are only a tiny part of code and we don't want to switch our mind into a totally differernt dialect every time we see or write one. This redesign is based on a minimal set of simple rules.
 
 Both `sift` & `locate` accept a **pattern** argument written in the same dialect:
-- **pattern**: `[spec opt ['.. tests]]` - `..` acts as a delimiter, visually separaring row format from filter
+- **pattern**: `[spec opt ['.. tests]]` - **`..`** acts as a delimiter, visually separaring row format from filter
 - **spec**: [format used by \*each functions](foreach-design.md) is fully supported, including value and type filters (in fact, `locate` translates into `foreach`, while `sift` - into `map-each`)
-- **tests**: `[test-chain any ['| test-chain]]` - like in Parse, `|` declares an alternative logical path (used to construct `any` clause)
+- **tests**: `[test-chain any ['| test-chain]]` - like in Parse, **`|`** declares an alternative logical path (used to construct `any` clause)
 - **test-chain**: `[any expression]` - a chain of Red expressions that is used to construct an `all` clause (with some special cases allowed, see below)
 
-`locate` returns position in the series *before* a row that matched the pattern:
+`locate` returns position in the series *before* a row that matched the pattern (or none if not found):
 ```
 >> locate [1 2 3 4 5 6 7 8 9] [- x - .. x = 5]
 == [4 5 6 7 8 9]
@@ -45,7 +45,7 @@ Both `sift` & `locate` accept a **pattern** argument written in the same dialect
 == [4 5 6 7 8 9]
 ```
 
-`sift` returns selected (named) columns from rows that matched the pattern:
+`sift` returns selected (named) columns from rows that matched the pattern (preserves series type):
 ```
 >> sift [1 2 3 4 5 6 7 8 9] [- x - .. x = 5]
 == [5]
@@ -55,22 +55,22 @@ Both `sift` & `locate` accept a **pattern** argument written in the same dialect
 == [1 3 5 7 9]
 ```
 
-
 ### Spec
 
-Is used to specify row format in the data being inspected.
+Is used to specify **row format** in the data being inspected.
 
 \*each spec format here is extended with:
-- `-` marker that denotes unused columns, e.g. `[one - - four]`
+- **`-`** marker that denotes unused columns, e.g. `[one - - four]`
 - empty spec is allowed and gets transformed into a single anonymous word (i.e. step = 1), e.g. `[.. pair! /x > 0]` is the same as `[p .. pair? p p/x > 0]`
 
 Named columns (e.g. `one` and `four` in `[one - - four]`) both declare the meaning of data and can be used in tests. They also appear in `sift` output.
 
-Unnamed columns (skipped by `-` or using value filters `(value)`) can still be checked using positional index: `[p: x - - .. p/2 = p/3]` will select first column from rows where 2nd and 3rd columns are equal. `p:` is not a column here, but `x` is.
+Unnamed columns (skipped by `-` or using value filters `(value)`) can still be checked using positional index:\
+`[p: x - - .. p/2 = p/3]` will select first column from rows where 2nd and 3rd columns are equal. `p:` is not a column here, but `x` is.
 
 ### Tests
 
-Similar to Parse DSL, `sift` & `locate` use blocks of expressions delimited by `|` marker instead of nested any/all clauses. The point of it is to enhance readability.
+Similar to Parse DSL, `sift` & `locate` use blocks of expressions delimited by **`|`** marker instead of nested any/all clauses. The point of it is to enhance readability.
 
 Each **test must return a truthy value** to proceed further. If it returns `false` or `none`, next alternate test chain is evaluated, or if this was the last chain, iteration immediately continues. For `sift` this means that row is skipped in output, for `locate` - that this is not the row we're looking for.
 
@@ -81,34 +81,33 @@ Tests are normal Red expressions, with the following special cases made:
 1. Refinements get converted into paths\
 e.g. `[obj .. /item = 0]` -> `[obj .. obj/item = 0]`.
 
-That works when only a single named column is present in the spec: `obj` or `- x - -`. Empty spec is also allowed, because it gets transformed into a single named anonymous column. Value filters are not named: `- (value)` spec forbids refinement syntax.
+   That works when only a single named column is present in the spec: `obj` or `- x - -`. Empty spec is also allowed, because it gets transformed into a single named anonymous column. Value filters are not named: `- (value)` spec forbids refinement syntax.
 
-Note that refinements don't stick to each other, so `/a/b` is lexed as `/a /b`, resulting in two paths tested one after the other: `[obj .. /a/b = 0]` will be rewritten as `[obj .. obj/a obj/b = 0]` and will likely be a mistake. So, remember to fully qualify deep paths: `[obj .. obj/a/b = 0]`
+   Note that refinements don't stick to each other, so `/a/b` is lexed as `/a /b`, resulting in two paths tested one after the other: `[obj .. /a/b = 0]` will be rewritten as `[obj .. obj/a obj/b = 0]` and will likely be a mistake. So, remember to fully qualify deep paths: `[obj .. obj/a/b = 0]`
 
 2. Single-word expression that evaluates to a datatype or typeset is used as a type check\
 e.g. `[x .. integer!]` -> `[x .. integer? x]`.
 
-As above, this only works for specs containing a single named column.
+   As above, this only works for specs containing a single named column.
 
 3. Paths are tested for validity first (including those produced by refinements)\
 e.g. `[p .. /x = 0]` -> `[p .. path-exists? p/x p/x = 0]` - validity test is inserted before the expression that uses path.
 
-This is done to avoid unnecessary error handling. Non-existing paths just fail the tests and search/filtering continues.
+   This is done to avoid unnecessary error handling. Non-existing paths just fail the tests and search/filtering continues.
 
-If you want to receive an error from invalid path, wrap it in parens: `(p/x) = 0`.
+   If you want to receive an error from invalid path, wrap it in parens: `(p/x) = 0`.
 
 4. Parens are not processed at all.
 
-Use them to escape the dialect: `(my-func /ref-arg path/that/throws/errors)` etc.
+   Use them to escape the dialect: `(my-func /ref-arg path/that/throws/errors)` etc.
 
 5. Single literal blocks are used to construct inner `any [all [...]]` subtrees (similar to Parse)\
 e.g. `[x y .. x > 0 [y < 5 | z > 10]]` -> `[x y .. all [x > 0 any [y < 5 z > 10]]]`.
 
-Blocks used as arguments are unaffected. And blocks returned as evaluation results.
+   Blocks used as arguments are unaffected. And blocks returned as evaluation results.
 
-Such literal blocks can in turn contain other literal blocks, allowing any logical nesting level to be reached.
+   Such literal blocks can in turn contain other literal blocks, allowing any logical nesting level to be reached.
 
----
 
 **Note**: some of these cases require use of the preprocessor to determine expression bounds, so avoid overly tricky dynamic code (e.g. construction of functions used in tests as a side effect of tests evaluation).
 
