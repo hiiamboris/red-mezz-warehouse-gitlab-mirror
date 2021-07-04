@@ -116,34 +116,31 @@ apply: function [
 	foreach word spec-of :fun [
 		;@@ the below part will be totally different in R/S,
 		;@@ hopefully just setting values at corresponding offsets
-		switch type?/word word [
-			refinement! [
+		type: type? word
+		case [
+			type = refinement! [
 				if set/any 'use-words? do get-value [append path to word! word]
 			]
-			word! [
-				if :use-words? [
-					repend call ['quote do get-value]
-				]
-			]
-			lit-word! get-word! [
-				;@@ done for simplicity: extra work that won't be needed in R/S
-				ERROR "This implementation does not support lit-args and get-args"
-			]
+			not use-words? []							;-- refinement is not set, ignore words
+			type = word!     [repend call ['quote do get-value]]
+			;@@ extra work that won't be needed in R/S:
+			type = lit-word! [repend call as paren! compose/only [(do get-value)]]
+			type = get-word! [repend call [do get-value]]
 			;@@ type checking - where? should interpreter do it for us?
 		]
 	]
-	print ["Constructed call:" mold call]
+	; print ["Constructed call:" mold call]
 	do call
 ]
 
-value: "d"
-probe apply find [series: "abcdef" value: value only: case: yes]
+; value: "d"
+; probe apply find [series: "abcdef" value: value only: case: yes]
 
-probe apply find object [series: "abcde" value: "d" only: case: yes]
+; probe apply find object [series: "abcde" value: "d" only: case: yes]
 
-my-find: function spec-of :find [
-	case: yes
-	only: no
-	apply find 'only
-]
-probe my-find/only "abcd" "c"
+; my-find: function spec-of :find [
+; 	case: yes
+; 	only: no
+; 	apply find 'only
+; ]
+; probe my-find/only "abcd" "c"

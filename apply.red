@@ -5,7 +5,7 @@ Red [
 	license: 'BSD-3
 	notes: {
 		Implements approach (5) of https://github.com/greggirwin/red-hof/blob/master/apply.md
-		Accepts and object, or a block that is just fed to `object` constructor internally.
+		Accepts an object, or a block that is just fed to `object` constructor internally.
 		Does not evaluate the values! This is handy when passing an object to it:
 			apply my-func object [
 				arg1: make a value
