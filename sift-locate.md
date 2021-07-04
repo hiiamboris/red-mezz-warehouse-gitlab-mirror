@@ -78,47 +78,48 @@ Empty set of tests `[x ..]` always succeeds \(similar to how `[]` rule in Parse 
 
 Tests are normal Red expressions, with the following special cases made:
 
-1. Refinements get converted into paths\
+1. Refinements get **converted into paths**\
 e.g. `[obj .. /item = 0]` -> `[obj .. obj/item = 0]`.
 
    That works when only a single named column is present in the spec: `obj` or `- x - -`. Empty spec is also allowed, because it gets transformed into a single named anonymous column. Value filters are not named: `- (value)` spec forbids refinement syntax.
 
    Note that refinements don't stick to each other, so `/a/b` is lexed as `/a /b`, resulting in two paths tested one after the other: `[obj .. /a/b = 0]` will be rewritten as `[obj .. obj/a obj/b = 0]` and will likely be a mistake. So, remember to fully qualify deep paths: `[obj .. obj/a/b = 0]`
 
-2. Single-word expression that evaluates to a datatype or typeset is used as a type check\
+2. **Single-word** expression that has a **value of datatype or typeset** is used as a type check\
 e.g. `[x .. integer!]` -> `[x .. integer? x]`.
 
-   As above, this only works for specs containing a single named column.
+   Function calls don't get this special treatment of their result.
 
-3. Paths are tested for validity first (including those produced by refinements)\
+   As above, this only works for specs containing a single named column. 
+
+3. **Paths** (including those produced by refinements) are **tested for validity** first\
 e.g. `[p .. /x = 0]` -> `[p .. path-exists? p/x p/x = 0]` - validity test is inserted before the expression that uses path.
 
-   This is done to avoid unnecessary error handling. Non-existing paths just fail the tests and search/filtering continues.
-
+   This is done to avoid unnecessary error handling. Non-existing paths just fail the tests and search/filtering continues.\
    If you want to receive an error from invalid path, wrap it in parens: `(p/x) = 0`.
 
-4. Parens are not processed at all.
+4. **Parens are not processed** at all.
 
    Use them to escape the dialect: `(my-func /ref-arg path/that/throws/errors)` etc.
 
-5. Single literal blocks are used to construct inner `any [all [...]]` subtrees (similar to Parse)\
+5. Single **literal blocks** are used to construct inner `any [all [...]]` subtrees (similar to Parse)\
 e.g. `[x y .. x > 0 [y < 5 | z > 10]]` -> `[x y .. all [x > 0 any [y < 5 z > 10]]]`.
 
+   Such literal blocks can in turn contain other literal blocks, allowing any logical nesting level to be reached.\
    Blocks used as arguments are unaffected. And blocks returned as evaluation results.
 
-   Such literal blocks can in turn contain other literal blocks, allowing any logical nesting level to be reached.
 
 
-**Note**: some of these cases require use of the preprocessor to determine expression bounds, so avoid overly tricky dynamic code (e.g. construction of functions used in tests as a side effect of tests evaluation).
+**Note**: some of these cases require use of the **preprocessor** to determine expression bounds, so avoid overly tricky dynamic code (e.g. construction of functions used in tests as a side effect of tests evaluation).
 
 
 ### Expand-pattern
 
-Is a function used by both `sift` and `locate` to rewrite their dialected pattern as Red code.
+Is a function used by both `sift` and `locate` to rewrite their dialected pattern as Red code.\
+It returns the block: `[spec tests]`
 
 You can use it to learn how the dialect works under the hood or debug your patterns.
 
-It returns the block: `[spec tests]`
 
 E.g.:
 ```
