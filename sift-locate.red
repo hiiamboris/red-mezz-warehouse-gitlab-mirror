@@ -4,6 +4,7 @@ Red [
 	author:  @hiiamboris
 	license: BSD-3
 	notes: {
+		See sift-locate.md for details
 	}
 ]
 
@@ -377,4 +378,4 @@ faces: reduce [
 #assert [single? b: locate      faces [.. /size = 0x2                ]  'b]
 
 ; #include %prettify.red
-print "------ WORK HERE ------"
+; print "------ WORK HERE ------"
