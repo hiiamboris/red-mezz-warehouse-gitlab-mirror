@@ -11,7 +11,7 @@ To use currently you have to [**`#include %sift-locate.red`**](sift-locate.red).
 
 ## Usage examples
 
-| Red code | Sift/Locate code | Comment |
+| Classic Red code | Sift/Locate code | Comment |
 |-|-|-|
 | <pre><br>forall faces [<br>	all [<br>		faces/1/type = 'base<br>		faces/1/size <> 0x0<br>		faces: head pos: faces<br>		break<br>	]<br>]<br>if pos [do-smth]<br></pre> | `if pos: locate faces [.. /type = 'base /size <> 0x0] [do-smth]` | /refinements are automatically made into paths |
 | <pre><br>forall objs [<br>	all [<br>		in objs/1 'data<br>		in objs/1/data 'type<br>		objs/1/data/type = 'container<br>		objs: head pos: objs<br>		break<br>	]<br>]<br>if pos [do-smth]<br></pre> | `if pos: locate/back objs [obj .. obj/data/type = 'container] [do-smth]` | Paths are automatically checked for existence - no error dodging required |
