@@ -266,7 +266,7 @@ while [pos: find/skip pos field 3] [
 ```
 Becomes obvious:
 ```
-foreach [(field) reaction: target:] pos [
+foreach [(field) reaction target] pos [
 	...
 ]
 ```
