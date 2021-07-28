@@ -40,7 +40,7 @@ bulk: function [
 		not single? ns [ERROR "Path masks refer to series of different lengths in: (mold/part expr 50)"]
 	]
 	either all [
-		collect [repeat * ns/1 [keep/only do expr]]
+		collect [repeat * ns/1 [keep/only do expr]]		;-- '*' is the index word here
 	][
 		repeat * ns/1 expr
 	]
