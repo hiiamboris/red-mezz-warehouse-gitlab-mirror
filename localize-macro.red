@@ -14,6 +14,8 @@ Red [
 
 		Limitations:
 			traps return, exit
+
+		'localize' may misleadingly hint at l10n. But what name fits this macro better?
 	}
 ]
 
