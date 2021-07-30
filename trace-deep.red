@@ -126,7 +126,8 @@ context [
 					word? :v1
 					all [									;-- get the path in objects/blocks.. without refinements
 						path? :v1
-						set/any [v1: _:] preprocessor/value-path? v1
+						also set/any [v1: _:] preprocessor/value-path? v1
+							if single? v1 [v1: :v1/1]		;-- turn single path into word
 					]
 				]
 				find [native! action! function! routine!] type?/word get/any v1
