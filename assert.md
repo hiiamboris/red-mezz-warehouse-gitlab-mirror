@@ -1,4 +1,4 @@
-# ASSERT
+# [ASSERT](assert.red)
 
 ## Use cases
 
