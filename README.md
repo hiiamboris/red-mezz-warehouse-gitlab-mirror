@@ -26,6 +26,7 @@ Notes:
 | ---                                    | --- |
 | [setters](setters.red)                 | Contains ONCE, DEFAULT, MAYBE, ANONYMIZE value assignment wrappers, and IMPORT/EXPORT to expose some object's words globally |
 | [catchers](catchers.red)               | TRAP - enhanced TRY, FCATCH - Filtered catch, and PCATCH - Pattern-matched catch |
+| [#include macro](include-once.red)     | Smart replacement for #include directive that includes every file only once |
 | [with](with.red)                       | A convenient/readable BIND variant |
 | [#localize macro](localize-macro.red)  | Automatic set-word and loop counter hiding |
 | [bind-only](bind-only.red)             | Selectively bind a word or a few only |
