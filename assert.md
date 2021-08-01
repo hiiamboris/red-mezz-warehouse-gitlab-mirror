@@ -85,11 +85,27 @@ diagonal?: function [
 	1 = diagonal? [ 1x0  0x0]
 	1 = diagonal? [ 0x0 -1x0]
 	1 = diagonal? [ 0x0 0x-1]
+	3 = diagonal? [ 0x0 5x4 ]			;) to produce a failure example
+	4 = diagonal? [ 0x0 5x4 ] "But of course this will fail"
 	1 = diagonal? [-1x0 0x0]
 	1 = diagonal? [0x-1 0x0]
 	5 = diagonal? [-4x0 0x3]			;) 2 axis combined
 ]
 ```
+When included this file prints:
+```
+ASSERTION FAILED!  
+ERROR: [3 = diagonal? [0x0 5x4]] check failed with false 
+  Reduction log:
+    diagonal? [0x0 5x4]            => 6.4031242374328485 
+    3 = 6.4031242374328485         => false 
+ASSERTION FAILED! But of course this will fail 
+ERROR: [4 = diagonal? [0x0 5x4]] check failed with false 
+  Reduction log:
+    diagonal? [0x0 5x4]            => 6.4031242374328485 
+    4 = 6.4031242374328485         => false 
+```
+Full reduction log helps you see what happened. Notice the error message I provided. Evaluation continues despite the errors.
 
 More real world uses can be found in my [mezz-warehouse repo](https://gitlab.com/search?search=%23assert&group_id=&project_id=18539768&scope=&search_code=true&snippets=false&repository_ref=master&nav_source=navbar) to help you get more confident with `#assert`.
 
@@ -102,7 +118,7 @@ More real world uses can be found in my [mezz-warehouse repo](https://gitlab.com
 2. **Keep** tests for every function **right after** it's definition. This way:
    - you will always immediately know what code is covered by tests and what isn't
    - your tests will be kept in sync with changes in the function
-   - tests will automatically run every time you include the function
+   - tests will automatically run every time you include the function\
 
 3. In complex programs after you modify some shared state, and you expect this state to honor some constraints, do **test those constraints** after the change. This may save your time spent on debugging.
 
@@ -112,7 +128,7 @@ More real world uses can be found in my [mezz-warehouse repo](https://gitlab.com
 
    For that, it has to make **a copy** of it's given block every time it's evaluated. When assertion fails, this copy is used to repeat the computation step by step. So:
    - consider this copy in tight loops or when profiling memory usage
-   - don't use literal maps `#()` as they are not copied by `copy/deep` (bug [#2167](https://github.com/red/red/issues/2167#issuecomment-801358034)), or at least don't modify them in assertion code. Use `make map! []` instead of `#()`.
+   - don't use literal maps `#()` as they are not copied by `copy/deep` (bug [#2167](https://github.com/red/red/issues/2167#issuecomment-801358034)), or at least don't modify them in assertion code. Use `make map! []` instead of `#()`.\
 
 6. Keep test expressions **side-effect free** if possible. See Repeatability clause below for more info.
 
