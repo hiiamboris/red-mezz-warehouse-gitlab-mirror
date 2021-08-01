@@ -4,41 +4,41 @@
 
 1. **Unit testing**
 
-```
-my-func: func [x][...]		;) declared a function
-
-#assert [					;) a set of tests to ensure it's correct
-	"1" = my-func 1
-	"2" = my-func 2
-	"x" = my-func 10
-	...
-]
-```
-This feature requires set-words to be hidden, which is achieved by [`#localize` macro](localize-macro.red).
+   ```
+   my-func: func [x][...]		;) declared a function
+   
+   #assert [					;) a set of tests to ensure it's correct
+   	"1" = my-func 1
+   	"2" = my-func 2
+   	"x" = my-func 10
+   	...
+   ]
+   ```
+   This feature requires set-words to be hidden, which is achieved by [`#localize` macro](localize-macro.red).
 
 2. **Run-time state validity checking**
 
-```
-my-func: func [...][
-	x: my-func2 ...
-	y: my-func3 ...
-	#assert [x > y]			;) ensure state is correct to limit error propagation
-]
-```
-This must work as fast as possible and have minimal memory footprint, or people will tend to avoid assertions where they could have them.
+   ```
+   my-func: func [...][
+   	x: my-func2 ...
+   	y: my-func3 ...
+   	#assert [x > y]			;) ensure state is correct to limit error propagation
+   ]
+   ```
+   This must work as fast as possible and have minimal memory footprint, or people will tend to avoid assertions where they could have them.
 
 3. **Function argument verification**
 
-```
-my-func: func [x [integer!] "0 to 10 !!"] [
-	#assert [all [0 <= x x <= 10]]
-	... code that uses x ...
-]
-```
-Apart from speed, this may require a human-friendly error message or it may be hard to get what exactly failed, even for code's author. Real example: 
-```
-#assert [not all [def/flags/compiled find [not-compiled compiling] def/status] "Issue has not been compiled!"]
-```
+   ```
+   my-func: func [x [integer!] "0 to 10 !!"] [
+   	#assert [all [0 <= x x <= 10]]
+   	... code that uses x ...
+   ]
+   ```
+   Apart from speed, this may require a human-friendly error message or it may be hard to get what exactly failed, even for code's author. Real example: 
+   ```
+   #assert [not all [def/flags/compiled find [not-compiled compiling] def/status] "Issue has not been compiled!"]
+   ```
 
 ## Usage
 
