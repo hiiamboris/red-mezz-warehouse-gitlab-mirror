@@ -42,14 +42,13 @@ Red [
 		if find included-scripts file [					;-- if already included, skip it
 			return remove/part s 2
 		]
-
+		if true = :verbose-inclusion? [print ["including" mold file]]
 		data: try [load file]
 		if error? data [								;-- on loading error, report & skip
 			print data
 			return remove/part s 2
 		]
 
-		if true = :verbose-inclusion? [print ["including" mold file]]
 		old-path: what-dir
 		set [path _] split-path file
 		change/part s compose/deep [					;-- insert contents
