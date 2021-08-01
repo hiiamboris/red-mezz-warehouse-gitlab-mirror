@@ -118,7 +118,7 @@ More real world uses can be found in my [mezz-warehouse repo](https://gitlab.com
 2. **Keep** tests for every function **right after** it's definition. This way:
    - you will always immediately know what code is covered by tests and what isn't
    - your tests will be kept in sync with changes in the function
-   - tests will automatically run every time you include the function\
+   - tests will automatically run every time you include the function<br>
 
 3. In complex programs after you modify some shared state, and you expect this state to honor some constraints, do **test those constraints** after the change. This may save your time spent on debugging.
 
@@ -128,7 +128,7 @@ More real world uses can be found in my [mezz-warehouse repo](https://gitlab.com
 
    For that, it has to make **a copy** of it's given block every time it's evaluated. When assertion fails, this copy is used to repeat the computation step by step. So:
    - consider this copy in tight loops or when profiling memory usage
-   - don't use literal maps `#()` as they are not copied by `copy/deep` (bug [#2167](https://github.com/red/red/issues/2167#issuecomment-801358034)), or at least don't modify them in assertion code. Use `make map! []` instead of `#()`.\
+   - don't use literal maps `#()` as they are not copied by `copy/deep` (bug [#2167](https://github.com/red/red/issues/2167#issuecomment-801358034)), or at least don't modify them in assertion code. Use `make map! []` instead of `#()`.<br>
 
 6. Keep test expressions **side-effect free** if possible. See Repeatability clause below for more info.
 
