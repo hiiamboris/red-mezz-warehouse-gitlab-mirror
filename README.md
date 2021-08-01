@@ -21,6 +21,14 @@ Notes:
 
 ## By category:
 
+### Recent implementations, not yet incorporated into the whole
+| Source file                            | Description |
+| ---                                    | --- |
+| [new apply](new-apply.red)             | Waits for #4854 to be fixed and then I can start porting it to R/S |
+| [new for-each, map-each, remove-each](new-each.red) | Waits for Gregg's review then I can start porting it to R/S |
+| [new count](new-count.red)             | Based on the new apply, waits for it's R/S implementation |
+| [sift & locate](sift-locate.red)       | Based on the new-each and new-apply. [Read more](sift-locate.md) |
+
 ### General purpose
 | Source file                            | Description |
 | ---                                    | --- |
