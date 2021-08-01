@@ -137,14 +137,16 @@ anonymize: function [
 
 
 ;-- there's a lot of ways this function can be written carelessly...
-#assert ['w     == anonymize 'w 0]
-#assert ['value  = get anonymize 'value 'value]
-#assert [true    = get anonymize 'value true]
-#assert ['true   = get anonymize 'value 'true]
-#assert ['none   = get anonymize 'value 'none]
-#assert [unset?    get/any anonymize 'value ()]
-#assert [[1 2]   = get/any anonymize 'value [1 2]]
-#assert [#(a: 1) = get/any anonymize 'value #(a: 1)]
-#assert [(object [a: 1]) = get/any anonymize 'value object [a: 1]]
-#assert [set-word? get/any anonymize 'value quote value:]
-#assert [lit-word? get/any anonymize 'value quote 'value]
+#assert [
+	'w     == anonymize 'w 0
+	'value  = get anonymize 'value 'value
+	true    = get anonymize 'value true
+	'true   = get anonymize 'value 'true
+	'none   = get anonymize 'value 'none
+	unset?    get/any anonymize 'value ()
+	[1 2]   = get/any anonymize 'value [1 2]
+	#(a: 1) = get/any anonymize 'value #(a: 1)
+	(object [a: 1]) = get/any anonymize 'value object [a: 1]
+	set-word? get/any anonymize 'value quote value:
+	lit-word? get/any anonymize 'value quote 'value
+]

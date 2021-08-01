@@ -8,6 +8,7 @@ Red [
 	}
 ]
 
+#include %localize-macro.red
 #include %assert.red
 
 #include %setters.red									;-- we need `anonymize`
@@ -22,11 +23,13 @@ context [
 	path-exists?: func [path [path!]] [
 		not try [get/any path  none]
 	]
-	#assert [(b: [a 1]             path-exists? 'b/a) 'path-exists?]
-	;@@ this technically fails, but I don't care since my aim is to avoid path errors rather than a precise check:
-	; #assert [(b: [a 1]         not path-exists? 'b/b) 'path-exists?]
-	#assert [(o: object [a: 1]     path-exists? 'o/a) 'path-exists?]
-	#assert [(o: object [a: 1] not path-exists? 'o/b) 'path-exists?]
+	#assert [
+		(b: [a 1]             path-exists? 'b/a)
+		;@@ this technically fails, but I don't care since my aim is to avoid path errors rather than a precise check:
+		; (b: [a 1]         not path-exists? 'b/b)
+		(o: object [a: 1]     path-exists? 'o/a)
+		(o: object [a: 1] not path-exists? 'o/b)
+	]
 
 	anonymous-hyphen: anonymize '- none					;-- a safe-to-assign hyphen for use in spec
 	spec-end-marker: ['..]								;-- readable delimiter between spec and tests
@@ -255,127 +258,125 @@ context [
 	;-- see REP#85 for why `all []` should be left and it's expected to be true
 	; #assert [
 	; 	[ [subject] [any [all [] all []]] ]
-	; 	= r: expand-pattern [.. |]  'r
-	; ]
-	; #assert [
+	; 	= expand-pattern [.. |]
 	; 	[ [subject] [all []] ]
-	; 	= r: expand-pattern []  'r
+	; 	= expand-pattern []
 	; ]
 	;@@ but that doesn't work yet and a special case is made:
 	#assert [
 		[ [subject] [any [true true]] ]
-		= r: expand-pattern [.. |]  'r
-	]
-	#assert [
+		= expand-pattern [.. |]
 		[ [subject] [true] ]
-		= r: expand-pattern []  'r
+		= expand-pattern []
 	]
 	
 ]
 
-;-- basic tests
-#assert [[a b c      ] = b: sift [a 1 b 2 c] [.. word!]                            'b]
-#assert [[1 2        ] = b: sift [a 1 b 2 c] [.. integer!]                         'b]
-#assert [[1 2 3      ] = b: sift [1 2 3 4 5] [x .. x <= 3]                         'b]
-#assert [[3 4 5      ] = b: sift [1 2 3 4 5] [x .. x >= 3]                         'b]
-#assert [[3 4        ] = b: sift [1 2 3 4 5] [x .. x >= 3 x <= 4]                  'b]
-#assert [[1 4 5      ] = b: sift [1 2 3 4 5] [x .. x >= 4 | x <= 1]                'b]
-#assert [[2 3 5      ] = b: sift [1 2 3 4 5] [x .. x >= 2 [x = 5 | x <= 3]]        'b]
-#assert [[2 3 5      ] = b: sift [1 2 3 4 5] [x .. (x >= 2) [(x = 5) | (x <= 3)]]  'b]
-#assert [[1 3 5      ] = b: sift [1 2 3 4 5] [x .. find [1 | 3 | 5] x]             'b]	;-- block should be untouched
+#localize [#assert [
+	;-- basic tests
+	[a b c      ] = sift [a 1 b 2 c] [.. word!]                           
+	[1 2        ] = sift [a 1 b 2 c] [.. integer!]                        
+	[1 2 3      ] = sift [1 2 3 4 5] [x .. x <= 3]                        
+	[3 4 5      ] = sift [1 2 3 4 5] [x .. x >= 3]                        
+	[3 4        ] = sift [1 2 3 4 5] [x .. x >= 3 x <= 4]                 
+	[1 4 5      ] = sift [1 2 3 4 5] [x .. x >= 4 | x <= 1]               
+	[2 3 5      ] = sift [1 2 3 4 5] [x .. x >= 2 [x = 5 | x <= 3]]       
+	[2 3 5      ] = sift [1 2 3 4 5] [x .. (x >= 2) [(x = 5) | (x <= 3)]] 
+	[1 3 5      ] = sift [1 2 3 4 5] [x .. find [1 | 3 | 5] x]            	;-- block should be untouched
 
-#assert [[1 3 5      ] = b: sift [1 2 3 4 5] [x -]                                 'b]	;-- has to remove 2nd column
-#assert [[1 3 5      ] = b: sift [1 2 3 4 5] [x - ..]                              'b]
-#assert [[2 4 #[none]] = b: sift [1 2 3 4 5] [- x]                                 'b]	;-- has to remove 1st column
-#assert [[2 4        ] = b: sift [1 2 3 4 5] [- x |]                               'b]
-#assert [[2 3 4 5    ] = b: sift [1 2 3 4 5] [- | x]                               'b]
-#assert [[3 5        ] = b: sift [1 2 3 4 5] [- | x .. odd? x]                     'b]
+	[1 3 5      ] = sift [1 2 3 4 5] [x -]                                	;-- has to remove 2nd column
+	[1 3 5      ] = sift [1 2 3 4 5] [x - ..]                             
+	[2 4 #[none]] = sift [1 2 3 4 5] [- x]                                	;-- has to remove 1st column
+	[2 4        ] = sift [1 2 3 4 5] [- x |]                              
+	[2 3 4 5    ] = sift [1 2 3 4 5] [- | x]                              
+	[3 5        ] = sift [1 2 3 4 5] [- | x .. odd? x]                    
 
-#assert [[1 2 3 4 5  ] = b: sift [1 2 3 4 5] []                                    'b]	;-- empty tests are truthy
-#assert [[1 2 3 4 5  ] = b: sift [1 2 3 4 5] [..]                                  'b]
-#assert [[1 2 3 4 5  ] = b: sift [1 2 3 4 5] [.. | ]                               'b]
-#assert [[1 2 3 4 5  ] = b: sift [1 2 3 4 5] [.. none | ]                          'b]
-#assert [[           ] = b: sift [1 2 3 4 5] [.. none]                             'b]
-#assert [[           ] = b: sift [1 2 3 4 5] [.. (none)]                           'b]
+	[1 2 3 4 5  ] = sift [1 2 3 4 5] []                                   	;-- empty tests are truthy
+	[1 2 3 4 5  ] = sift [1 2 3 4 5] [..]                                 
+	[1 2 3 4 5  ] = sift [1 2 3 4 5] [.. | ]                              
+	[1 2 3 4 5  ] = sift [1 2 3 4 5] [.. none | ]                         
+	[           ] = sift [1 2 3 4 5] [.. none]                            
+	[           ] = sift [1 2 3 4 5] [.. (none)]                          
 
-;-- tests inspired from the HOF selection
-o1: object [p: object [q: 1]]
-o2: object [p: object [r: 2]]
-o3: object [p: object [r: 3]]
-#assert [(reduce [o1]) = b: sift reduce [o1 o2 o3] [x .. x/p/q        ]  'b]	;-- should not error out on non-existing paths
-#assert [(reduce [o1]) = b: sift reduce [o1 o2 o3] [x .. :x/p/q       ]  'b]	;-- get-paths too!
-#assert [(reduce [o1]) = b: sift reduce [o1 o2 o3] [x .. x/p/q > 0    ]  'b]
-#assert [(reduce [o2]) = b: sift reduce [o1 o2 o3] [x .. /p x = o2    ]  'b]
-#assert [(reduce [o3]) = b: sift reduce [o1 o2 o3] [x .. y: /p y/r > 2]  'b]
-#assert [(reduce [o3]) = b: sift reduce [o1 o2 o3] [x .. x: /p x/r > 2]  'b]	;-- x: override should not affect the result
-#assert [error?     b: try [sift reduce [o1 o2 o3] [x .. (x/p/q)     ]]  'b]	;-- should error out since path is escaped
-#assert [(reduce [o3]) = b: sift reduce ['a 'b o3] [.. object!        ]  'b]
-#assert [(reduce [o3]) = b: sift reduce ['a o2 o3] [.. object!  [r: 3] = to [] /p]  'b]
-unset [o1 o2 o3]
+	;-- tests inspired from the HOF selection
+	o1: object [p: object [q: 1]]
+	o2: object [p: object [r: 2]]
+	o3: object [p: object [r: 3]]
+	(reduce [o1]) = sift reduce [o1 o2 o3] [x .. x/p/q        ] 	;-- should not error out on non-existing paths
+	(reduce [o1]) = sift reduce [o1 o2 o3] [x .. :x/p/q       ] 	;-- get-paths too!
+	(reduce [o1]) = sift reduce [o1 o2 o3] [x .. x/p/q > 0    ] 
+	(reduce [o2]) = sift reduce [o1 o2 o3] [x .. /p x = o2    ] 
+	(reduce [o3]) = sift reduce [o1 o2 o3] [x .. y: /p y/r > 2] 
+	(reduce [o3]) = sift reduce [o1 o2 o3] [x .. x: /p x/r > 2] 	;-- x: override should not affect the result
+	error?     try [sift reduce [o1 o2 o3] [x .. (x/p/q)     ]] 	;-- should error out since path is escaped
+	(reduce [o3]) = sift reduce ['a 'b o3] [.. object!        ] 
+	(reduce [o3]) = sift reduce ['a o2 o3] [.. object!  [r: 3] = to [] /p] 
+	unset [o1 o2 o3]
 
-#assert ["^/^/^/" = s: sift "ab^/cd^/ef^/gh" [x .. x = lf]  's]					;-- should preserve input type
-#assert [#(1 2)   = m: sift #(a 1 b 2)       [- x]          'm]
-#assert [(s: sift s0: "ab^/cd^/ef^/gh" [x .. x = lf]  not s =? s0)  's0]		;-- should not modify original series
-#assert [(m: sift m0: #(a 1 b 2) [- x] m <> m0)            'm0]
+	"^/^/^/" = sift "ab^/cd^/ef^/gh" [x .. x = lf]					;-- should preserve input type
+	#(1 2)   = sift #(a 1 b 2)       [- x]        
+	(s: sift s0: "ab^/cd^/ef^/gh" [x .. x = lf]  not s =? s0)		;-- should not modify original series
+	(m: sift m0: #(a 1 b 2) [- x] m <> m0)
 
-#assert [[1x1 2x2 3x3] = b: sift [1x1 a 2x2 b 3x3 c] [.. pair!           ]  'b]	;-- type filter
-#assert [[1x1 2x2 3x3] = b: sift [1x1 a 2x2 b 3x3 c] [x .. pair? x       ]  'b]	;-- normal Red code as filter
-#assert [[1x1 2x2 3x3] = b: sift [1x1 a 2x2 b 3x3 c] [p: .. odd? index? p]  'b]	;-- uses position
-#assert [[1x1 2x2 3x3] = b: sift [1x1 a 2x2 b 3x3 c] [.. /x              ]  'b]	;-- path existence test as filter
-#assert [[1x1 2x2 3x3] = b: sift [1x1 a 2x2 b 3x3 c] [p .. p/x           ]  'b]	;-- same, more explicit
+	[1x1 2x2 3x3] = sift [1x1 a 2x2 b 3x3 c] [.. pair!           ] 	;-- type filter
+	[1x1 2x2 3x3] = sift [1x1 a 2x2 b 3x3 c] [x .. pair? x       ] 	;-- normal Red code as filter
+	[1x1 2x2 3x3] = sift [1x1 a 2x2 b 3x3 c] [p: .. odd? index? p] 	;-- uses position
+	[1x1 2x2 3x3] = sift [1x1 a 2x2 b 3x3 c] [.. /x              ] 	;-- path existence test as filter
+	[1x1 2x2 3x3] = sift [1x1 a 2x2 b 3x3 c] [p .. p/x           ] 	;-- same, more explicit
 
-#assert [(reduce [face!]) = b: sift reduce [face! reactor! deep-reactor! scroller!] [.. /type = 'face]  'b]
+	(reduce [face!]) = sift reduce [face! reactor! deep-reactor! scroller!] [.. /type = 'face] 
 
-#assert [[5 7 9] = (i: 1 b: sift [1 3 5 7 9] [x .. (i: i + 1) x > i     ])  'b]	;-- usage of side effects
-#assert [[5 7 9] = (i: 2 b: sift [1 3 5 7 9] [x .. x > i | (i: i + 1) no])  'b]
+	[5 7 9] = (i: 1 sift [1 3 5 7 9] [x .. (i: i + 1) x > i     ]) 	;-- usage of side effects
+	[5 7 9] = (i: 2 sift [1 3 5 7 9] [x .. x > i | (i: i + 1) no]) 
 
 
-;-- LOCATE basic tests
-#assert [[a 1 b 2 c  ] = b: locate      [a 1 b 2 c] [.. word!   ]  'b]
-#assert [[  1 b 2 c  ] = b: locate      [a 1 b 2 c] [.. integer!]  'b]
-#assert [[c          ] = b: locate/back [a 1 b 2 c] [.. word!   ]  'b]
-#assert [[2 c        ] = b: locate/back [a 1 b 2 c] [.. integer!]  'b]
-#assert [none?           b: locate/back [a 1 b 2 c] [.. none!   ]  'b]
-#assert [none?           b: locate/back [         ] [.. integer!]  'b]
-#assert [[1 2 3 4 5  ] = b: locate      [1 2 3 4 5] [x .. x <= 3]                         'b]
-#assert [[    3 4 5  ] = b: locate      [1 2 3 4 5] [x .. x >= 3]                         'b]
-#assert [[  2 3 4 5  ] = b: locate      [1 2 3 4 5] [x .. x >= 2 [x = 5 | x <= 3]]        'b]
-#assert [[  2 3 4 5  ] = b: locate      [1 2 3 4 5] [x .. (x >= 2) [(x = 5) | (x <= 3)]]  'b]
-#assert [[        5  ] = b: locate/back [1 2 3 4 5] [x .. (x >= 2) [(x = 5) | (x <= 3)]]  'b]
-#assert [[    3 4 5  ] = b: locate      [1 2 3 4 5] [x .. find [3 | 5] x]                 'b]	;-- block should be untouched
+	;-- LOCATE basic tests
+	[a 1 b 2 c  ] = locate      [a 1 b 2 c] [.. word!   ] 
+	[  1 b 2 c  ] = locate      [a 1 b 2 c] [.. integer!] 
+	[c          ] = locate/back [a 1 b 2 c] [.. word!   ] 
+	[2 c        ] = locate/back [a 1 b 2 c] [.. integer!] 
+	none?           locate/back [a 1 b 2 c] [.. none!   ] 
+	none?           locate/back [         ] [.. integer!] 
+	[1 2 3 4 5  ] = locate      [1 2 3 4 5] [x .. x <= 3]                        
+	[    3 4 5  ] = locate      [1 2 3 4 5] [x .. x >= 3]                        
+	[  2 3 4 5  ] = locate      [1 2 3 4 5] [x .. x >= 2 [x = 5 | x <= 3]]       
+	[  2 3 4 5  ] = locate      [1 2 3 4 5] [x .. (x >= 2) [(x = 5) | (x <= 3)]] 
+	[        5  ] = locate/back [1 2 3 4 5] [x .. (x >= 2) [(x = 5) | (x <= 3)]] 
+	[    3 4 5  ] = locate      [1 2 3 4 5] [x .. find [3 | 5] x]                	;-- block should be untouched
 
-#assert [[1 2 3 4 5  ] = b: locate [1 2 3 4 5] [x -]              'b]
-#assert [[1 2 3 4 5  ] = b: locate [1 2 3 4 5] [- x]              'b]
-#assert [[    3 4 5  ] = b: locate [1 2 3 4 5] [- x .. x >= 3]    'b]
-#assert [[        5  ] = b: locate [1 2 3 4 5] [x - .. x >= 5]    'b]
-#assert [none?           b: locate [1 2 3 4 5] [x - | .. x >= 5]  'b]	;-- last value is filtered out by `|`
+	[1 2 3 4 5  ] = locate [1 2 3 4 5] [x -]             
+	[1 2 3 4 5  ] = locate [1 2 3 4 5] [- x]             
+	[    3 4 5  ] = locate [1 2 3 4 5] [- x .. x >= 3]   
+	[        5  ] = locate [1 2 3 4 5] [x - .. x >= 5]   
+	none?           locate [1 2 3 4 5] [x - | .. x >= 5] 	;-- last value is filtered out by `|`
 
-#assert [[1 2 3 4 5  ] = b: locate [1 2 3 4 5] []            'b]	;-- empty tests are truthy
-#assert [[1 2 3 4 5  ] = b: locate [1 2 3 4 5] [..]          'b]
-#assert [[1 2 3 4 5  ] = b: locate [1 2 3 4 5] [.. | ]       'b]
-#assert [[1 2 3 4 5  ] = b: locate [1 2 3 4 5] [.. none | ]  'b]
-#assert [none?           b: locate [1 2 3 4 5] [.. none]     'b]
-#assert [none?           b: locate [1 2 3 4 5] [.. (none)]   'b]
+	[1 2 3 4 5  ] = locate [1 2 3 4 5] []           	;-- empty tests are truthy
+	[1 2 3 4 5  ] = locate [1 2 3 4 5] [..]         
+	[1 2 3 4 5  ] = locate [1 2 3 4 5] [.. | ]      
+	[1 2 3 4 5  ] = locate [1 2 3 4 5] [.. none | ] 
+	none?           locate [1 2 3 4 5] [.. none]    
+	none?           locate [1 2 3 4 5] [.. (none)]  
 
-;-- tests inspired from the HOF selection
-#assert [(
-	mon: "sep"
-	months: ["december" "november" "september"]
-	["september"] = b: locate months [m .. find/match m mon]
-) 'b]
-#assert [(
-	pts: [0x0 10x0 0x10 10x10 3x3 8x8]
-	[3x3 8x8] = b: locate pts [p .. within? p - 5x5 -2x-2 3x3]
-) 'b]
-faces: reduce [
-	a: make face! [size: 2x0]
-	b: make face! [size: 0x0]
-	c: make face! [size: 0x2]
-]
-#assert [single? b: locate/back faces [f .. [f/size/x * f/size/y = 0]]  'b]
-#assert [single? b: locate/back faces [.. s: /size [s/x * s/y = 0]   ]  'b]
-#assert [single? b: locate/back faces [.. s: /size [s/x * s/y = 0]   ]  'b]
-#assert [single? b: locate      faces [.. /size = 0x2                ]  'b]
+	;-- tests inspired from the HOF selection
+	(
+		mon: "sep"
+		months: ["december" "november" "september"]
+		["september"] = locate months [m .. find/match m mon]
+	)
+	(
+		pts: [0x0 10x0 0x10 10x10 3x3 8x8]
+		[3x3 8x8] = locate pts [p .. within? p - 5x5 -2x-2 3x3]
+	)
+	faces: reduce [
+		make face! [size: 2x0]
+		make face! [size: 0x0]
+		make face! [size: 0x2]
+	]
+	single? locate/back faces [f .. [f/size/x * f/size/y = 0]] 
+	single? locate/back faces [.. s: /size [s/x * s/y = 0]   ] 
+	single? locate/back faces [.. s: /size [s/x * s/y = 0]   ] 
+	single? locate      faces [.. /size = 0x2                ] 
 
+]]
 ; #include %prettify.red
 ; print "------ WORK HERE ------"

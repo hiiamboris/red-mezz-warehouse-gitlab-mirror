@@ -83,39 +83,41 @@ context [
 		formed
 	]
 
-	#assert ["999'999'999'999"   = r: insert-separators "999999999999"   'r]
-	#assert [ "99'999'999'999"   = r: insert-separators  "99999999999"   'r]
-	#assert [  "9'999'999'999"   = r: insert-separators   "9999999999"   'r]
-	#assert [    "999'999'999"   = r: insert-separators    "999999999"   'r]
-	#assert [     "99'999'999"   = r: insert-separators     "99999999"   'r]
-	#assert [      "9'999'999"   = r: insert-separators      "9999999"   'r]
-	#assert [        "999'999"   = r: insert-separators       "999999"   'r]
-	#assert [         "99'999"   = r: insert-separators        "99999"   'r]
-	#assert [          "9'999"   = r: insert-separators         "9999"   'r]
-	#assert [            "999"   = r: insert-separators          "999"   'r]
-	#assert [             "99"   = r: insert-separators           "99"   'r]
-	#assert [              "9"   = r: insert-separators            "9"   'r]
-	#assert [               ""   = r: insert-separators             ""   'r]
-	#assert [     "9'999.0000"   = r: insert-separators    "9999.0000"   'r]
-	#assert [       "999.0000"   = r: insert-separators     "999.0000"   'r]
-	#assert [        "99.0000"   = r: insert-separators      "99.0000"   'r]
-	#assert [         "9.0000"   = r: insert-separators       "9.0000"   'r]
-	#assert [         "9.000"    = r: insert-separators       "9.000"    'r]
-	#assert [         "9.00"     = r: insert-separators       "9.00"     'r]
-	#assert [         "9.0"      = r: insert-separators       "9.0"      'r]
-	#assert [         "0.999"    = r: insert-separators       "0.999"    'r]
-	#assert [         "0.0999"   = r: insert-separators       "0.0999"   'r]
-	#assert [          ".00999"  = r: insert-separators        ".00999"  'r]
-	#assert [         "0.00999"  = r: insert-separators       "0.00999"  'r]
-	#assert [         "0.000999" = r: insert-separators       "0.000999" 'r]
-	#assert [         "0.999999" = r: insert-separators       "0.999999" 'r]
-	#assert [     "9'999.000%"   = r: insert-separators    "9999.000%"   'r]
-	#assert [    "-9'999.000%"   = r: insert-separators   "-9999.000%"   'r]
-	#assert [   "-99'999.000%"   = r: insert-separators  "-99999.000%"   'r]
-	#assert [  "-999'999.000%"   = r: insert-separators "-999999.000%"   'r]
-	#assert [ "-$XX9'999.000"    = r: insert-separators"-$XX9999.000"    'r]	;-- money-like
-	#assert ["12'345'678.9E-10"  = r: insert-separators"12345678.9E-10"  'r]	;-- exp notation
-	#assert [        "12.3456E3" = r: insert-separators      "12.3456E3" 'r]	;-- but not after the dot
+	#assert [
+		"999'999'999'999"   = insert-separators "999999999999"  
+		 "99'999'999'999"   = insert-separators  "99999999999"  
+		  "9'999'999'999"   = insert-separators   "9999999999"  
+		    "999'999'999"   = insert-separators    "999999999"  
+		     "99'999'999"   = insert-separators     "99999999"  
+		      "9'999'999"   = insert-separators      "9999999"  
+		        "999'999"   = insert-separators       "999999"  
+		         "99'999"   = insert-separators        "99999"  
+		          "9'999"   = insert-separators         "9999"  
+		            "999"   = insert-separators          "999"  
+		             "99"   = insert-separators           "99"  
+		              "9"   = insert-separators            "9"  
+		               ""   = insert-separators             ""  
+		     "9'999.0000"   = insert-separators    "9999.0000"  
+		       "999.0000"   = insert-separators     "999.0000"  
+		        "99.0000"   = insert-separators      "99.0000"  
+		         "9.0000"   = insert-separators       "9.0000"  
+		         "9.000"    = insert-separators       "9.000"   
+		         "9.00"     = insert-separators       "9.00"    
+		         "9.0"      = insert-separators       "9.0"     
+		         "0.999"    = insert-separators       "0.999"   
+		         "0.0999"   = insert-separators       "0.0999"  
+		          ".00999"  = insert-separators        ".00999" 
+		         "0.00999"  = insert-separators       "0.00999" 
+		         "0.000999" = insert-separators       "0.000999"
+		         "0.999999" = insert-separators       "0.999999"
+		     "9'999.000%"   = insert-separators    "9999.000%"  
+		    "-9'999.000%"   = insert-separators   "-9999.000%"  
+		   "-99'999.000%"   = insert-separators  "-99999.000%"  
+		  "-999'999.000%"   = insert-separators "-999999.000%"  
+		 "-$XX9'999.000"    = insert-separators"-$XX9999.000"   	;-- money-like
+		"12'345'678.9E-10"  = insert-separators"12345678.9E-10" 	;-- exp notation
+		        "12.3456E3" = insert-separators      "12.3456E3"	;-- but not after the dot
+	]
 
 	;-- returns none for: zero (undefined exponent), +/-inf (overflow), NaN (undefined)
 	set 'exponent-of function [
@@ -135,13 +137,15 @@ context [
 		/extend "Let numbers starting with '1' get an additional digit"
 		/clean  "Remove trailing zeroes after the dot and leading zero before the dot"
 	][
-		#assert [any [none? e  integer? e  'auto = e]]
-		#assert [not nan? num]
-		#assert [(
-			|num|: absolute num
-			any [0 = |num|  all [1e-30 < |num| |num| < 1e30]]	;-- limits help simplify the algorithm
-		)]														;-- bigger limits reduce rounding precision and fail the tests
-																;@@ ideally we want string-based precise rounding here
+		#assert [
+			any [none? e  integer? e  'auto = e]
+			not nan? num
+			(
+				|num|: absolute num
+				any [0 = |num|  all [1e-30 < |num| |num| < 1e30]]	;-- limits help simplify the algorithm
+			)														;-- bigger limits reduce rounding precision and fail the tests
+		]															;@@ ideally we want string-based precise rounding here
+
 		;-- setup
 		n: any [n 2]
 		e: any [e 0]
@@ -189,112 +193,114 @@ context [
 		insert-separators formed
 	]
 
-	#assert [     "23"       = r: format-readable             23.45      'r]
-	#assert [    "-23"       = r: format-readable            -23.45      'r]
-	#assert [      "2.3"     = r: format-readable              2.345     'r]
-	#assert [      "0.23"    = r: format-readable              0.2345    'r]
-	#assert [      "0.023"   = r: format-readable              0.02345   'r]
-	#assert [      "0.0023"  = r: format-readable              0.002345  'r]
-	#assert [      "0.00023" = r: format-readable              0.0002345 'r]
-	#assert [      "0.0123"  = r: format-readable/extend       0.0123    'r]
-	#assert [       ".0001"  = r: format-readable/clean   1e-4           'r]
-	#assert [      "-.0001"  = r: format-readable/clean  -1e-4           'r]
-	#assert [      "0.00010" = r: format-readable         1e-4           'r]
-	#assert [     "-0.000100"= r: format-readable/extend -1e-4           'r]
-	#assert ["999'999"       = r: format-readable         999999         'r]
-	#assert ["999'999"       = r: format-readable         999999.1       'r]
-	#assert ["999'999"       = r: format-readable         999999.123     'r]
-	#assert ["100'000"       = r: format-readable          99999.999     'r]
-	#assert ["-10'000"       = r: format-readable          -9999.999     'r]
-	#assert [ "-1'000"       = r: format-readable           -999.999     'r]
-	#assert [   "-100"       = r: format-readable            -99.999     'r]
-	#assert [    "-10"       = r: format-readable             -9.999     'r]
-	#assert [    "-10.0"     = r: format-readable/extend      -9.999     'r]
-	#assert ["111'112.0"     = r: format-readable/size    111111.999 7   'r]
-	#assert ["211'112"       = r: format-readable/size    211111.999 3   'r]
-	#assert ["111'112"       = r: format-readable         111111.999     'r]
-	#assert [ "11'112"       = r: format-readable          11111.999     'r]
-	#assert [  "1'112"       = r: format-readable           1111.999     'r]
-	#assert [    "112"       = r: format-readable            111.999     'r]
-	#assert [     "12"       = r: format-readable             11.999     'r]
-	#assert [     "12.0"     = r: format-readable/extend      11.999     'r]
-	#assert [      "2"       = r: format-readable/clean        1.999     'r]
-	#assert [      "0.99"    = r: format-readable              0.991     'r]
-	#assert [      "1.0"     = r: format-readable              0.999     'r]
-	#assert [      "1"       = r: format-readable/clean        0.999     'r]
-	#assert [      "0.099"   = r: format-readable              0.0991    'r]
-	#assert [      "0.10"    = r: format-readable              0.0999    'r]
-	#assert [       ".1"     = r: format-readable/clean        0.0999    'r]
-	#assert [      "0.0099"  = r: format-readable              0.00989   'r]
-	#assert [      "0.0099"  = r: format-readable              0.00991   'r]
-	#assert [      "0.010"   = r: format-readable              0.00999   'r]
-	#assert [       ".01"    = r: format-readable/clean        0.00999   'r]
-	#assert [      "0.0199"  = r: format-readable/extend       0.01989   'r]
-	#assert [      "0.0199"  = r: format-readable/extend       0.01991   'r]
-	#assert [      "0.020"   = r: format-readable              0.01999   'r]
-	#assert [       ".02"    = r: format-readable/clean        0.01999   'r]
-	#assert [      "0.021"   = r: format-readable              0.02099   'r]
-	#assert [      "0.021"   = r: format-readable              0.02111   'r]
-	#assert [      "0.123"   = r: format-readable/extend       0.1234    'r]
-	#assert [      "0.20"    = r: format-readable/extend       0.1999    'r]
-	#assert [       ".2"     = r: format-readable/clean        0.1999    'r]
-	#assert [      "0.21"    = r: format-readable              0.2099    'r]
-	#assert [      "2.1"     = r: format-readable              2.099     'r]
-	#assert [     "21"       = r: format-readable             20.99      'r]
-	#assert [    "210"       = r: format-readable            209.9       'r]
-	#assert [  "2'100"       = r: format-readable           2099.9       'r]
-	#assert [  "2'099"       = r: format-readable           2099.1       'r]
+	#assert [
+	    	 "23"       = format-readable             23.45      
+		    "-23"       = format-readable            -23.45     
+		      "2.3"     = format-readable              2.345    
+		      "0.23"    = format-readable              0.2345   
+		      "0.023"   = format-readable              0.02345  
+		      "0.0023"  = format-readable              0.002345 
+		      "0.00023" = format-readable              0.0002345
+		      "0.0123"  = format-readable/extend       0.0123   
+		       ".0001"  = format-readable/clean   1e-4          
+		      "-.0001"  = format-readable/clean  -1e-4          
+		      "0.00010" = format-readable         1e-4          
+		     "-0.000100"= format-readable/extend -1e-4          
+		"999'999"       = format-readable         999999        
+		"999'999"       = format-readable         999999.1      
+		"999'999"       = format-readable         999999.123    
+		"100'000"       = format-readable          99999.999    
+		"-10'000"       = format-readable          -9999.999    
+		 "-1'000"       = format-readable           -999.999    
+		   "-100"       = format-readable            -99.999    
+		    "-10"       = format-readable             -9.999    
+		    "-10.0"     = format-readable/extend      -9.999    
+		"111'112.0"     = format-readable/size    111111.999 7  
+		"211'112"       = format-readable/size    211111.999 3  
+		"111'112"       = format-readable         111111.999    
+		 "11'112"       = format-readable          11111.999    
+		  "1'112"       = format-readable           1111.999    
+		    "112"       = format-readable            111.999    
+		     "12"       = format-readable             11.999    
+		     "12.0"     = format-readable/extend      11.999    
+		      "2"       = format-readable/clean        1.999    
+		      "0.99"    = format-readable              0.991    
+		      "1.0"     = format-readable              0.999    
+		      "1"       = format-readable/clean        0.999    
+		      "0.099"   = format-readable              0.0991   
+		      "0.10"    = format-readable              0.0999   
+		       ".1"     = format-readable/clean        0.0999   
+		      "0.0099"  = format-readable              0.00989  
+		      "0.0099"  = format-readable              0.00991  
+		      "0.010"   = format-readable              0.00999  
+		       ".01"    = format-readable/clean        0.00999  
+		      "0.0199"  = format-readable/extend       0.01989  
+		      "0.0199"  = format-readable/extend       0.01991  
+		      "0.020"   = format-readable              0.01999  
+		       ".02"    = format-readable/clean        0.01999  
+		      "0.021"   = format-readable              0.02099  
+		      "0.021"   = format-readable              0.02111  
+		      "0.123"   = format-readable/extend       0.1234   
+		      "0.20"    = format-readable/extend       0.1999   
+		       ".2"     = format-readable/clean        0.1999   
+		      "0.21"    = format-readable              0.2099   
+		      "2.1"     = format-readable              2.099    
+		     "21"       = format-readable             20.99     
+		    "210"       = format-readable            209.9      
+		  "2'100"       = format-readable           2099.9      
+		  "2'099"       = format-readable           2099.1      
 	
-	#assert [      "0"       = r: format-readable/clean        0         'r]		;-- log overflow test
-	#assert [      "0"       = r: format-readable/clean        0.0       'r]
-	#assert [      "0"       = r: format-readable/clean       -0.0       'r]		;-- form removes the sign; mold doesn't
-	#assert [      "0.0"     = r: format-readable              0         'r]
-	#assert [      "0.00"    = r: format-readable/size         0 3       'r]
-	#assert [      "0"       = r: format-readable/clean/size   0 3       'r]
-	#assert [      "0.0000"  = r: format-readable/size         0 5       'r]
-	#assert [       ".00001" = r: format-readable/clean        1e-5      'r]		;-- shouldn't be formed as "1e-5"
-	#assert [      "0"       = r: format-readable/size         0.45 0    'r]
-	#assert [      "1"       = r: format-readable/size         0.54 0    'r]
+		      "0"       = format-readable/clean        0        		;-- log overflow test
+		      "0"       = format-readable/clean        0.0      
+		      "0"       = format-readable/clean       -0.0      		;-- form removes the sign; mold doesn't
+		      "0.0"     = format-readable              0        
+		      "0.00"    = format-readable/size         0 3      
+		      "0"       = format-readable/clean/size   0 3      
+		      "0.0000"  = format-readable/size         0 5      
+		       ".00001" = format-readable/clean        1e-5     		;-- shouldn't be formed as "1e-5"
+		      "0"       = format-readable/size         0.45 0   
+		      "1"       = format-readable/size         0.54 0   
 	
-	#assert [      "0%"      = r: format-readable/clean        0%        'r]
-	#assert [    "123%"      = r: format-readable            123%        'r]
-	#assert [  "2'345%"      = r: format-readable           2345%        'r]
-	#assert [      "2.3%"    = r: format-readable              2.345%    'r]
-	#assert [     "-2.3%"    = r: format-readable             -2.345%    'r]
-	#assert [      "0%"      = r: format-readable/size         0.45% 0   'r]
-	#assert [      "1%"      = r: format-readable/size         0.54% 0   'r]
+		      "0%"      = format-readable/clean        0%     
+		    "123%"      = format-readable            123%     
+		  "2'345%"      = format-readable           2345%     
+		      "2.3%"    = format-readable              2.345% 
+		     "-2.3%"    = format-readable             -2.345% 
+		      "0%"      = format-readable/size         0.45% 0
+		      "1%"      = format-readable/size         0.54% 0
 
-	; #assert [      "1.#inf"  = r: format-readable              1.#inf    'r]		;-- not working yet
-	; #assert [     "-1.#inf"  = r: format-readable             -1.#inf    'r]
-	; #assert [      "1.#nan"  = r: format-readable             -1.#nan    'r]
+		      ; "1.#inf"  = format-readable              1.#inf		;-- not working yet
+		     ; "-1.#inf"  = format-readable             -1.#inf
+		      ; "1.#nan"  = format-readable             -1.#nan
 
-	#assert [    "123e0"     = r: format-readable/exp        123 0       'r]
-	#assert [   "12.3e1"     = r: format-readable/exp/extend 123 1       'r]
-	#assert [    "1.2e2"     = r: format-readable/exp        123 2       'r]
-	#assert [    "234e0"     = r: format-readable/exp        234 0       'r]
-	#assert [    "234e0"     = r: format-readable/exp/size   234 0 1     'r]
-	#assert [    "234e0"     = r: format-readable/exp/size   234 0 2     'r]
-	#assert [  "234.0e0"     = r: format-readable/exp/size   234 0 4     'r]
-	#assert [     "23e1"     = r: format-readable/exp        234 1       'r]
-	#assert [    "2.3e2"     = r: format-readable/exp        234 2       'r]
-	#assert [   "0.23e3"     = r: format-readable/exp        234 3       'r]
-	#assert [  "0.023e4"     = r: format-readable/exp        234 4       'r]
-	#assert [ "0.0123e4"     = r: format-readable/exp/extend 123 4       'r]
-	#assert [ "0.0023e5"     = r: format-readable/exp        234 5       'r]
-	#assert [  "2'340e-1"    = r: format-readable/exp        234 -1      'r]
-	#assert [ "23'400e-2"    = r: format-readable/exp        234 -2      'r]
-	#assert [ "12'300e-2"    = r: format-readable/exp        123 -2      'r]
-	#assert [ "12'300e-2"    = r: format-readable/exp/clean  123 -2      'r]
-	#assert ["-12'300e-2"    = r: format-readable/exp       -123 -2      'r]
-	; #assert [   "0.23e83"    = r: format-readable/exp        234e80 83   'r]
-	; #assert [   "0.20e83"    = r: format-readable/exp        200e80 83   'r]
-	; #assert [  "-0.20e83"    = r: format-readable/exp       -200e80 83   'r]
-	#assert [    "1.2e3"     = r: format-readable/exp       1.234e3 3    'r]
-	#assert [    "1.2e1"     = r: format-readable/exp       1.234e1 1    'r]
-	#assert [    "1.2e0"     = r: format-readable/exp       1.234e0 0    'r]
-	#assert [    "1.2e-1"    = r: format-readable/exp       1.234e-1 -1  'r]
-	#assert [     "12e-3"    = r: format-readable/exp       1.234e-2 -3  'r]
-	#assert [     "12e-5"    = r: format-readable/exp       1.234e-4 -5  'r]
+		    "123e0"     = format-readable/exp        123 0  
+		   "12.3e1"     = format-readable/exp/extend 123 1  
+		    "1.2e2"     = format-readable/exp        123 2  
+		    "234e0"     = format-readable/exp        234 0  
+		    "234e0"     = format-readable/exp/size   234 0 1
+		    "234e0"     = format-readable/exp/size   234 0 2
+		  "234.0e0"     = format-readable/exp/size   234 0 4
+		     "23e1"     = format-readable/exp        234 1  
+		    "2.3e2"     = format-readable/exp        234 2  
+		   "0.23e3"     = format-readable/exp        234 3  
+		  "0.023e4"     = format-readable/exp        234 4  
+		 "0.0123e4"     = format-readable/exp/extend 123 4  
+		 "0.0023e5"     = format-readable/exp        234 5  
+		  "2'340e-1"    = format-readable/exp        234 -1 
+		 "23'400e-2"    = format-readable/exp        234 -2 
+		 "12'300e-2"    = format-readable/exp        123 -2 
+		 "12'300e-2"    = format-readable/exp/clean  123 -2 
+		"-12'300e-2"    = format-readable/exp       -123 -2 
+		   ; "0.23e83"    = format-readable/exp        234e80 83
+		   ; "0.20e83"    = format-readable/exp        200e80 83
+		  ; "-0.20e83"    = format-readable/exp       -200e80 83
+		    "1.2e3"     = format-readable/exp       1.234e3 3  
+		    "1.2e1"     = format-readable/exp       1.234e1 1  
+		    "1.2e0"     = format-readable/exp       1.234e0 0  
+		    "1.2e-1"    = format-readable/exp       1.234e-1 -1
+		     "12e-3"    = format-readable/exp       1.234e-2 -3
+		     "12e-5"    = format-readable/exp       1.234e-4 -5
+	]
 ]
 
 

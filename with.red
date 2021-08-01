@@ -134,7 +134,8 @@ Red [
 ]
 
 
-; #include %assert.red
+#include %localize-macro.red
+#include %assert.red
 
 
 with: func [
@@ -152,39 +153,30 @@ with: func [
 	]
 ]
 
-#assert [
+#localize [#assert [
 	(c: context [x: 4 y: 5]
 	20 == do with [c] [x * y])
-]
 
-; #assert [
 ; 	(c: context [x: 4 y: 5]
 ; 	20 == do with [context? in c 'x] [x * y])
-; ]
 
-#assert [(
 	200 == do with [
 		x: context [x: 10]
 		y: context [y: 20]
 	][
 		do with [x y] [x * y]							;) multiple contexts
 	]
-) 'with]
 
-#assert [(
 	90 == do with [
 		x: context [y: context [x: 3 y: 30]]
 	][
 		do with [x/y] [x * y]							;) path support
 	]
-) 'with]
 
-#assert [(
 	8 == do with [
 		b: [x ** y]
 		c: context [x: 2]
 	][
 		context [y: 3 return do with ['y c] b]			;) mixed lit- and normal words
 	]
-) 'with]
-
+]]

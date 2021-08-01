@@ -9,6 +9,7 @@ Red [
 ]
 
 
+#include %localize-macro.red
 #include %assert.red
 #include %error-macro.red
 #include %new-each.red									;-- we want map-each
@@ -46,17 +47,18 @@ bulk: function [
 	]
 ]
 
-#assert [(ss: ["ab-c" "-def"] a: [1 2 3] b: [2 3 4])]			;-- init test vars
-#assert [[2 3 4 ] = r: bulk/all [b/*           ]  'r]
-#assert [[3 5 7 ] = r: bulk/all [a/* + b/*     ]  'r]
-#assert [[2 6 12] = r: bulk/all [a/* * b/*     ]  'r]			;-- should not override multiply operator
-#assert [[2 6 12] = r: bulk/all [(a/* * b/*)   ]  'r]			;-- should affect parens
-#assert [[2 6 12] = r: bulk/all [do [a/* * b/*]]  'r]			;-- should affect inner blocks
-#assert [12       = r: bulk     [a/* * b/*     ]  'r]
-#assert [[2 4 6 ] = r: (bulk    [a/*: a/* * 2] a) 'r]			;-- set-words must work
-#assert [[["ab" "c"] ["" "def"]] = r: bulk/all [split ss/* "-"]  'r]
-#assert [error? r: try [bulk [         ]]  'r]
-#assert [error? r: try [bulk [b/1      ]]  'r]					;-- no asterisk
-#assert [error? r: try [bulk [ss/*: a/*]]  'r]					;-- lengths do not match
-
+#localize [#assert [
+	(ss: ["ab-c" "-def"] a: [1 2 3] b: [2 3 4])			;-- init test vars
+	[2 3 4 ] = bulk/all [b/*           ]
+	[3 5 7 ] = bulk/all [a/* + b/*     ]
+	[2 6 12] = bulk/all [a/* * b/*     ]				;-- should not override multiply operator
+	[2 6 12] = bulk/all [(a/* * b/*)   ]				;-- should affect parens
+	[2 6 12] = bulk/all [do [a/* * b/*]]				;-- should affect inner blocks
+	12       = bulk     [a/* * b/*     ]
+	[2 4 6 ] = (bulk    [a/*: a/* * 2] a)				;-- set-words must work
+	[["ab" "c"] ["" "def"]] = bulk/all [split ss/* "-"]
+	error? try [bulk [         ]]
+	error? try [bulk [b/1      ]]						;-- no asterisk
+	error? try [bulk [ss/*: a/*]]						;-- lengths do not match
+]]
 

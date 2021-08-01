@@ -20,8 +20,10 @@ context [
 	][
 		buf: any [buf  make str length? str]
 		tab: any [tab 8]
-		#assert [tab > 0]
-		#assert [tail? spaces]
+		#assert [
+			tab > 0
+			tail? spaces
+		]
 		ok: parse/case s1: str [
 			collect into buf [
 				any [
@@ -47,8 +49,10 @@ context [
 	][
 		buf: any [buf  make str length? str]
 		tab: any [tab 8]  tab-1: tab - 1
-		#assert [tab > 0]
-		#assert [tail? spaces]
+		#assert [
+			tab > 0
+			tail? spaces
+		]
 		ok: parse/case str [
 			collect into buf [
 				any [
@@ -129,61 +133,63 @@ comment [
 ; clock/times [entab2/into s clear buf] 10000
 ; clock/times [entab3/into s clear buf] 10000
 
-#assert [""                 = r: detab ""            'r]
-#assert ["        "         = r: detab "^-"          'r]
-#assert ["                " = r: detab "^-^-"        'r]
-#assert ["1               " = r: detab "1^-^-"       'r]
-#assert ["1       1       " = r: detab "1^-1^-"      'r]
-#assert ["        1       " = r: detab "^-1^-"       'r]
-#assert ["1234567         " = r: detab "1234567^-^-" 'r]
-#assert ["12345678        " = r: detab "12345678^-"  'r]
-#assert ["123456789       " = r: detab "123456789^-" 'r]
-#assert ["123456789012345 " = r: detab "123456789012345^-" 'r]
-#assert ["        1234567 " = r: detab "^-1234567^-" 'r]
-#assert ["1   ^/    2   ^/    ^/" = r: detab/size "1^-^/^-2^-^/^-^/" 4 'r]
+#assert [
+	""                 = detab ""           
+	"        "         = detab "^-"         
+	"                " = detab "^-^-"       
+	"1               " = detab "1^-^-"      
+	"1       1       " = detab "1^-1^-"     
+	"        1       " = detab "^-1^-"      
+	"1234567         " = detab "1234567^-^-"
+	"12345678        " = detab "12345678^-" 
+	"123456789       " = detab "123456789^-"
+	"123456789012345 " = detab "123456789012345^-"
+	"        1234567 " = detab "^-1234567^-"
+	"1   ^/    2   ^/    ^/" = detab/size "1^-^/^-2^-^/^-^/" 4
 
-#assert [""                 = r: entab ""                 'r]
-#assert ["1"                = r: entab "1"                'r]
-#assert ["^-"               = r: entab "        "         'r]
-#assert ["^-^-"             = r: entab "                " 'r]
-#assert ["       1"         = r: entab "       1"         'r]
-#assert ["       1        " = r: entab "       1        " 'r]
-#assert ["^-1       "       = r: entab "        1       " 'r]
-#assert ["1               " = r: entab "1               " 'r]
-#assert ["^-       1"       = r: entab "               1" 'r]
-#assert ["^-      12"       = r: entab "              12" 'r]
-#assert ["^- 1234567"       = r: entab "         1234567" 'r]
-#assert ["^-12345678"       = r: entab "        12345678" 'r]
-#assert ["       123456789" = r: entab "       123456789" 'r]
-#assert ["1234567890123456" = r: entab "1234567890123456" 'r]
-#assert ["^-^-  1^/^-2"     = r: entab/size "^-      1^/    2" 4 'r]			;-- allows mixing tabs and spaces; resets at newlines
+	""                 = entab ""                
+	"1"                = entab "1"               
+	"^-"               = entab "        "        
+	"^-^-"             = entab "                "
+	"       1"         = entab "       1"        
+	"       1        " = entab "       1        "
+	"^-1       "       = entab "        1       "
+	"1               " = entab "1               "
+	"^-       1"       = entab "               1"
+	"^-      12"       = entab "              12"
+	"^- 1234567"       = entab "         1234567"
+	"^-12345678"       = entab "        12345678"
+	"       123456789" = entab "       123456789"
+	"1234567890123456" = entab "1234567890123456"
+	"^-^-  1^/^-2"     = entab/size "^-      1^/    2" 4			;-- allows mixing tabs and spaces; resets at newlines
 
 
-#assert [""                 = r: to "" detab to #{} ""            'r]
-#assert ["        "         = r: to "" detab to #{} "^-"          'r]
-#assert ["                " = r: to "" detab to #{} "^-^-"        'r]
-#assert ["1               " = r: to "" detab to #{} "1^-^-"       'r]
-#assert ["1       1       " = r: to "" detab to #{} "1^-1^-"      'r]
-#assert ["        1       " = r: to "" detab to #{} "^-1^-"       'r]
-#assert ["1234567         " = r: to "" detab to #{} "1234567^-^-" 'r]
-#assert ["12345678        " = r: to "" detab to #{} "12345678^-"  'r]
-#assert ["123456789       " = r: to "" detab to #{} "123456789^-" 'r]
-#assert ["123456789012345 " = r: to "" detab to #{} "123456789012345^-" 'r]
-#assert ["        1234567 " = r: to "" detab to #{} "^-1234567^-" 'r]
-#assert ["1   ^/    2   ^/    ^/" = r: to "" detab/size to #{} "1^-^/^-2^-^/^-^/" 4 'r]
+	""                 = to "" detab to #{} ""           
+	"        "         = to "" detab to #{} "^-"         
+	"                " = to "" detab to #{} "^-^-"       
+	"1               " = to "" detab to #{} "1^-^-"      
+	"1       1       " = to "" detab to #{} "1^-1^-"     
+	"        1       " = to "" detab to #{} "^-1^-"      
+	"1234567         " = to "" detab to #{} "1234567^-^-"
+	"12345678        " = to "" detab to #{} "12345678^-" 
+	"123456789       " = to "" detab to #{} "123456789^-"
+	"123456789012345 " = to "" detab to #{} "123456789012345^-"
+	"        1234567 " = to "" detab to #{} "^-1234567^-"
+	"1   ^/    2   ^/    ^/" = to "" detab/size to #{} "1^-^/^-2^-^/^-^/" 4
 
-#assert [""                 = r: to "" entab to #{} ""                 'r]
-#assert ["1"                = r: to "" entab to #{} "1"                'r]
-#assert ["^-"               = r: to "" entab to #{} "        "         'r]
-#assert ["^-^-"             = r: to "" entab to #{} "                " 'r]
-#assert ["       1"         = r: to "" entab to #{} "       1"         'r]
-#assert ["       1        " = r: to "" entab to #{} "       1        " 'r]
-#assert ["^-1       "       = r: to "" entab to #{} "        1       " 'r]
-#assert ["1               " = r: to "" entab to #{} "1               " 'r]
-#assert ["^-       1"       = r: to "" entab to #{} "               1" 'r]
-#assert ["^-      12"       = r: to "" entab to #{} "              12" 'r]
-#assert ["^- 1234567"       = r: to "" entab to #{} "         1234567" 'r]
-#assert ["^-12345678"       = r: to "" entab to #{} "        12345678" 'r]
-#assert ["       123456789" = r: to "" entab to #{} "       123456789" 'r]
-#assert ["1234567890123456" = r: to "" entab to #{} "1234567890123456" 'r]
-#assert ["^-^-  1^/^-2"     = r: to "" entab/size to #{} "^-      1^/    2" 4 'r]			;-- allows mixing tabs and spaces; resets at newlines
+	""                 = to "" entab to #{} ""                
+	"1"                = to "" entab to #{} "1"               
+	"^-"               = to "" entab to #{} "        "        
+	"^-^-"             = to "" entab to #{} "                "
+	"       1"         = to "" entab to #{} "       1"        
+	"       1        " = to "" entab to #{} "       1        "
+	"^-1       "       = to "" entab to #{} "        1       "
+	"1               " = to "" entab to #{} "1               "
+	"^-       1"       = to "" entab to #{} "               1"
+	"^-      12"       = to "" entab to #{} "              12"
+	"^- 1234567"       = to "" entab to #{} "         1234567"
+	"^-12345678"       = to "" entab to #{} "        12345678"
+	"       123456789" = to "" entab to #{} "       123456789"
+	"1234567890123456" = to "" entab to #{} "1234567890123456"
+	"^-^-  1^/^-2"     = to "" entab/size to #{} "^-      1^/    2" 4			;-- allows mixing tabs and spaces; resets at newlines
+]

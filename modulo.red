@@ -27,7 +27,8 @@ Red [
 ]
 
 
-; #include %assert.red
+#include %localize-macro.red
+#include %assert.red
 
 context [
 	abs: :absolute
@@ -90,302 +91,304 @@ context [
 
 ;@@ TODO: Linux and esp. ARM may produce different results for floats, and may need tests update
 
-;; need a few values defined
-#assert [-1.3877787807814457e-17 =? -x: 0.15 - 0.05 - 0.1  'x]	;-- comes from some test on the internet IIRC
-#assert [ 1.3877787807814457e-17 =? +x: 0 - -x]
-#assert [-a: -1e-16]											;-- just a few values near float/epsilon
-#assert [+a:  1e-16]
-#assert [-b: -1e-17]
-#assert [+b:  1e-17]
-#assert [-c: -1e-18]
-#assert [+c:  1e-18]
-#assert [+max:  2147483647]										;-- extreme integers
-#assert [-max: -2147483648]
-#assert [ 0.1 + -x =? +I:   0.09999999999999999 '+I]			;-- results of adding epsilon to a value near 1
-#assert [-0.1 + +x =? -I:  -0.09999999999999999 '-I]
-#assert [ 0.1 + -a =? +IA:  0.09999999999999991 '+IA]
-#assert [-0.1 + +a =? -IA: -0.09999999999999991 '-IA]
-#assert [+a + 0.1 - 0.1 =? +a':  9.71445146547012e-17 '+a']		;-- FP rounding errors distort original small value
-#assert [-a - 0.1 + 0.1 =? -a': -9.71445146547012e-17 '-a']
-#assert [+b + 0.1 - 0.1 =? +b':  1.3877787807814457e-17 '+b']
-#assert [-b - 0.1 + 0.1 =? -b': -1.3877787807814457e-17 '-b']
+#localize [#assert [
+	;; need a few values defined
+	-1.3877787807814457e-17 =? -x: 0.15 - 0.05 - 0.1		;-- comes from some test on the internet IIRC
+	 1.3877787807814457e-17 =? +x: 0 - -x
+	-a: -1e-16											;-- just a few values near float/epsilon
+	+a:  1e-16
+	-b: -1e-17
+	+b:  1e-17
+	-c: -1e-18
+	+c:  1e-18
+	+max:  2147483647									;-- extreme integers
+	-max: -2147483648
+	 0.1 + -x =? +I:   0.09999999999999999				;-- results of adding epsilon to a value near 1
+	-0.1 + +x =? -I:  -0.09999999999999999
+	 0.1 + -a =? +IA:  0.09999999999999991
+	-0.1 + +a =? -IA: -0.09999999999999991
+	+a + 0.1 - 0.1 =? +a':  9.71445146547012e-17 		;-- FP rounding errors distort original small value
+	-a - 0.1 + 0.1 =? -a': -9.71445146547012e-17 
+	+b + 0.1 - 0.1 =? +b':  1.3877787807814457e-17 
+	-b - 0.1 + 0.1 =? -b': -1.3877787807814457e-17 
 
-; #assert [ 0.1 + -c =? +C:  0.09999999999999991 '+C]
-; #assert [-0.1 + +c =? -C: -0.09999999999999991 '-C]
+	;  0.1 + -c =? +C:  0.09999999999999991
+	; -0.1 + +c =? -C: -0.09999999999999991
 
-;; euclidean definition - always nonnegative
-#assert [+I   =? r: modulo -x  0.1             'r]
-#assert [+I   =? r: modulo -x -0.1             'r]
-#assert [+x   =? r: modulo +x  0.1             'r]
-#assert [+x   =? r: modulo +x -0.1             'r]
+	;; euclidean definition - always nonnegative
+	+I   =? modulo -x  0.1            
+	+I   =? modulo -x -0.1            
+	+x   =? modulo +x  0.1            
+	+x   =? modulo +x -0.1            
 
-#assert [+IA  =? r: modulo -a  0.1             'r]
-#assert [+IA  =? r: modulo -a -0.1             'r]
-#assert [+a'  =? r: modulo +a  0.1             'r]		;-- gets distorted by addition/subtraction
-#assert [+a'  =? r: modulo +a -0.1             'r]
+	+IA  =? modulo -a  0.1            
+	+IA  =? modulo -a -0.1            
+	+a'  =? modulo +a  0.1            		;-- gets distorted by addition/subtraction
+	+a'  =? modulo +a -0.1            
 
-#assert [+I   =? r: modulo -b  0.1             'r]
-#assert [+I   =? r: modulo -b -0.1             'r]
-#assert [+b'  =? r: modulo +b  0.1             'r]		;-- gets distorted by addition/subtraction
-#assert [+b'  =? r: modulo +b -0.1             'r]
+	+I   =? modulo -b  0.1            
+	+I   =? modulo -b -0.1            
+	+b'  =? modulo +b  0.1            		;-- gets distorted by addition/subtraction
+	+b'  =? modulo +b -0.1            
 
-#assert [0.0  =? r: modulo -c  0.1             'r]		;-- small enough to disappear
-#assert [0.0  =? r: modulo -c -0.1             'r]
-#assert [0.0  =? r: modulo +c  0.1             'r]
-#assert [0.0  =? r: modulo +c -0.1             'r]
+	0.0  =? modulo -c  0.1            		;-- small enough to disappear
+	0.0  =? modulo -c -0.1            
+	0.0  =? modulo +c  0.1            
+	0.0  =? modulo +c -0.1            
 
-#assert [0.0  =? r: modulo/round -x  0.1       'r]
-#assert [0.0  =? r: modulo/round -x -0.1       'r]
-#assert [0.0  =? r: modulo/round +x  0.1       'r]
-#assert [0.0  =? r: modulo/round +x -0.1       'r]
+	0.0  =? modulo/round -x  0.1      
+	0.0  =? modulo/round -x -0.1      
+	0.0  =? modulo/round +x  0.1      
+	0.0  =? modulo/round +x -0.1      
 
-#assert [+IA  =? r: modulo/round -a  0.1       'r]		;-- big enough not to get rounded
-#assert [+IA  =? r: modulo/round -a -0.1       'r]
-#assert [+a'  =? r: modulo/round +a  0.1       'r]
-#assert [+a'  =? r: modulo/round +a -0.1       'r]
+	+IA  =? modulo/round -a  0.1      		;-- big enough not to get rounded
+	+IA  =? modulo/round -a -0.1      
+	+a'  =? modulo/round +a  0.1      
+	+a'  =? modulo/round +a -0.1      
 
-#assert [0.0  =? r: modulo/round -b  0.1       'r]
-#assert [0.0  =? r: modulo/round -b -0.1       'r]
-#assert [0.0  =? r: modulo/round +b  0.1       'r]
-#assert [0.0  =? r: modulo/round +b -0.1       'r]
+	0.0  =? modulo/round -b  0.1      
+	0.0  =? modulo/round -b -0.1      
+	0.0  =? modulo/round +b  0.1      
+	0.0  =? modulo/round +b -0.1      
 
-#assert [0.0  =? r: modulo/round -c  0.1       'r]
-#assert [0.0  =? r: modulo/round -c -0.1       'r]
-#assert [0.0  =? r: modulo/round +c  0.1       'r]
-#assert [0.0  =? r: modulo/round +c -0.1       'r]
-
-
-;; floored definition - same sign as divisor
-#assert [+I   =? r: modulo/floor -x  0.1       'r]
-#assert [-x   =? r: modulo/floor -x -0.1       'r]
-#assert [+x   =? r: modulo/floor +x  0.1       'r]
-#assert [-I   =? r: modulo/floor +x -0.1       'r]
-
-#assert [+IA  =? r: modulo/floor -a  0.1       'r]
-#assert [-a'  =? r: modulo/floor -a -0.1       'r]
-#assert [+a'  =? r: modulo/floor +a  0.1       'r]
-#assert [-IA  =? r: modulo/floor +a -0.1       'r]
-
-#assert [+I   =? r: modulo/floor -b  0.1       'r]
-#assert [-b'  =? r: modulo/floor -b -0.1       'r]
-#assert [+b'  =? r: modulo/floor +b  0.1       'r]
-#assert [-I   =? r: modulo/floor +b -0.1       'r]
-
-#assert [ 0.0 =? r: modulo/floor -c  0.1       'r]
-#assert [-0.0 =? r: modulo/floor -c -0.1       'r]		;-- =? (same?) allows to distinguish -0 from +0
-#assert [ 0.0 =? r: modulo/floor +c  0.1       'r]
-#assert [-0.0 =? r: modulo/floor +c -0.1       'r]
-
-#assert [ 0.0 =? r: modulo/floor/round -x  0.1 'r]
-#assert [-0.0 =? r: modulo/floor/round -x -0.1 'r]
-#assert [ 0.0 =? r: modulo/floor/round +x  0.1 'r]
-#assert [-0.0 =? r: modulo/floor/round +x -0.1 'r]
-
-#assert [+IA  =? r: modulo/floor/round -a  0.1 'r]
-#assert [-a'  =? r: modulo/floor/round -a -0.1 'r]
-#assert [+a'  =? r: modulo/floor/round +a  0.1 'r]
-#assert [-IA  =? r: modulo/floor/round +a -0.1 'r]
-
-#assert [ 0.0 =? r: modulo/floor/round -b  0.1 'r]
-#assert [-0.0 =? r: modulo/floor/round -b -0.1 'r]
-#assert [ 0.0 =? r: modulo/floor/round +b  0.1 'r]
-#assert [-0.0 =? r: modulo/floor/round +b -0.1 'r]
-
-#assert [ 0.0 =? r: modulo/floor/round -c  0.1 'r]
-#assert [-0.0 =? r: modulo/floor/round -c -0.1 'r]
-#assert [ 0.0 =? r: modulo/floor/round +c  0.1 'r]
-#assert [-0.0 =? r: modulo/floor/round +c -0.1 'r]
+	0.0  =? modulo/round -c  0.1      
+	0.0  =? modulo/round -c -0.1      
+	0.0  =? modulo/round +c  0.1      
+	0.0  =? modulo/round +c -0.1      
 
 
-;; truncated definition - same sign as dividend
-#assert [-x   =? r: modulo/trunc -x  0.1       'r]
-#assert [-x   =? r: modulo/trunc -x -0.1       'r]
-#assert [+x   =? r: modulo/trunc +x  0.1       'r]
-#assert [+x   =? r: modulo/trunc +x -0.1       'r]
+	;; floored definition - same sign as divisor
+	+I   =? modulo/floor -x  0.1      
+	-x   =? modulo/floor -x -0.1      
+	+x   =? modulo/floor +x  0.1      
+	-I   =? modulo/floor +x -0.1      
 
-#assert [-a   =? r: modulo/trunc -a  0.1       'r]
-#assert [-a   =? r: modulo/trunc -a -0.1       'r]
-#assert [+a   =? r: modulo/trunc +a  0.1       'r]
-#assert [+a   =? r: modulo/trunc +a -0.1       'r]
+	+IA  =? modulo/floor -a  0.1      
+	-a'  =? modulo/floor -a -0.1      
+	+a'  =? modulo/floor +a  0.1      
+	-IA  =? modulo/floor +a -0.1      
 
-#assert [-b   =? r: modulo/trunc -b  0.1       'r]
-#assert [-b   =? r: modulo/trunc -b -0.1       'r]
-#assert [+b   =? r: modulo/trunc +b  0.1       'r]
-#assert [+b   =? r: modulo/trunc +b -0.1       'r]
+	+I   =? modulo/floor -b  0.1      
+	-b'  =? modulo/floor -b -0.1      
+	+b'  =? modulo/floor +b  0.1      
+	-I   =? modulo/floor +b -0.1      
 
-#assert [-c   =? r: modulo/trunc -c  0.1       'r]
-#assert [-c   =? r: modulo/trunc -c -0.1       'r]
-#assert [+c   =? r: modulo/trunc +c  0.1       'r]
-#assert [+c   =? r: modulo/trunc +c -0.1       'r]
+	 0.0 =? modulo/floor -c  0.1      
+	-0.0 =? modulo/floor -c -0.1      		;-- =? (same?) allows to distinguish -0 from +0
+	 0.0 =? modulo/floor +c  0.1      
+	-0.0 =? modulo/floor +c -0.1      
 
-#assert [-0.0 =? r: modulo/trunc/round -x  0.1 'r]
-#assert [-0.0 =? r: modulo/trunc/round -x -0.1 'r]
-#assert [ 0.0 =? r: modulo/trunc/round +x  0.1 'r]
-#assert [ 0.0 =? r: modulo/trunc/round +x -0.1 'r]
+	 0.0 =? modulo/floor/round -x  0.1
+	-0.0 =? modulo/floor/round -x -0.1
+	 0.0 =? modulo/floor/round +x  0.1
+	-0.0 =? modulo/floor/round +x -0.1
 
-#assert [-a   =? r: modulo/trunc/round -a  0.1 'r]
-#assert [-a   =? r: modulo/trunc/round -a -0.1 'r]
-#assert [+a   =? r: modulo/trunc/round +a  0.1 'r]
-#assert [+a   =? r: modulo/trunc/round +a -0.1 'r]
+	+IA  =? modulo/floor/round -a  0.1
+	-a'  =? modulo/floor/round -a -0.1
+	+a'  =? modulo/floor/round +a  0.1
+	-IA  =? modulo/floor/round +a -0.1
 
-#assert [-0.0 =? r: modulo/trunc/round -b  0.1 'r]
-#assert [-0.0 =? r: modulo/trunc/round -b -0.1 'r]
-#assert [ 0.0 =? r: modulo/trunc/round +b  0.1 'r]
-#assert [ 0.0 =? r: modulo/trunc/round +b -0.1 'r]
+	 0.0 =? modulo/floor/round -b  0.1
+	-0.0 =? modulo/floor/round -b -0.1
+	 0.0 =? modulo/floor/round +b  0.1
+	-0.0 =? modulo/floor/round +b -0.1
 
-#assert [-0.0 =? r: modulo/trunc/round -c  0.1 'r]
-#assert [-0.0 =? r: modulo/trunc/round -c -0.1 'r]
-#assert [ 0.0 =? r: modulo/trunc/round +c  0.1 'r]
-#assert [ 0.0 =? r: modulo/trunc/round +c -0.1 'r]
-
-
-;; integer tests
-#assert [   0 = r: modulo       1000  500 'r]
-
-#assert [ 123 = r: modulo        123  500 'r]
-#assert [ 123 = r: modulo        123 -500 'r]
-#assert [ 377 = r: modulo       -123  500 'r]
-#assert [ 377 = r: modulo       -123 -500 'r]
-
-#assert [ 123 = r: modulo/floor  123  500 'r]
-#assert [-377 = r: modulo/floor  123 -500 'r]
-#assert [ 377 = r: modulo/floor -123  500 'r]
-#assert [-123 = r: modulo/floor -123 -500 'r]
-
-#assert [ 123 = r: modulo/trunc  123  500 'r]
-#assert [ 123 = r: modulo/trunc  123 -500 'r]
-#assert [-123 = r: modulo/trunc -123  500 'r]
-#assert [-123 = r: modulo/trunc -123 -500 'r]
-
-#assert [  23 = r: modulo        123  50  'r]
-#assert [  23 = r: modulo        123 -50  'r]
-#assert [  27 = r: modulo       -123  50  'r]
-#assert [  27 = r: modulo       -123 -50  'r]
-
-#assert [  23 = r: modulo/floor  123  50  'r]
-#assert [ -27 = r: modulo/floor  123 -50  'r]
-#assert [  27 = r: modulo/floor -123  50  'r]
-#assert [ -23 = r: modulo/floor -123 -50  'r]
-
-#assert [  23 = r: modulo/trunc  123  50  'r]
-#assert [  23 = r: modulo/trunc  123 -50  'r]
-#assert [ -23 = r: modulo/trunc -123  50  'r]
-#assert [ -23 = r: modulo/trunc -123 -50  'r]
-
-#assert [2    =? r: modulo       -max  10 'r]		;-- extreme ints produce ints, not floats
-#assert [2    =? r: modulo       -max -10 'r]
-#assert [7    =? r: modulo       +max  10 'r]
-#assert [7    =? r: modulo       +max -10 'r]
-
-#assert [ 2   =? r: modulo/floor -max  10 'r]
-#assert [-8   =? r: modulo/floor -max -10 'r]
-#assert [ 7   =? r: modulo/floor +max  10 'r]
-#assert [-3   =? r: modulo/floor +max -10 'r]
-
-#assert [-8   =? r: modulo/trunc -max  10 'r]
-#assert [-8   =? r: modulo/trunc -max -10 'r]
-#assert [ 7   =? r: modulo/trunc +max  10 'r]
-#assert [ 7   =? r: modulo/trunc +max -10 'r]
+	 0.0 =? modulo/floor/round -c  0.1
+	-0.0 =? modulo/floor/round -c -0.1
+	 0.0 =? modulo/floor/round +c  0.1
+	-0.0 =? modulo/floor/round +c -0.1
 
 
-;; time tests
-#assert [ 0:03:45 = r: modulo        1:23:45  0:10 'r]
-#assert [ 0:03:45 = r: modulo        1:23:45 -0:10 'r]
-#assert [ 0:06:15 = r: modulo       -1:23:45  0:10 'r]
-#assert [ 0:06:15 = r: modulo       -1:23:45 -0:10 'r]
+	;; truncated definition - same sign as dividend
+	-x   =? modulo/trunc -x  0.1      
+	-x   =? modulo/trunc -x -0.1      
+	+x   =? modulo/trunc +x  0.1      
+	+x   =? modulo/trunc +x -0.1      
 
-#assert [ 0:03:45 = r: modulo/floor  1:23:45  0:10 'r]
-#assert [-0:06:15 = r: modulo/floor  1:23:45 -0:10 'r]
-#assert [ 0:06:15 = r: modulo/floor -1:23:45  0:10 'r]
-#assert [-0:03:45 = r: modulo/floor -1:23:45 -0:10 'r]
+	-a   =? modulo/trunc -a  0.1      
+	-a   =? modulo/trunc -a -0.1      
+	+a   =? modulo/trunc +a  0.1      
+	+a   =? modulo/trunc +a -0.1      
 
-#assert [ 0:03:45 = r: modulo/trunc  1:23:45  0:10 'r]
-#assert [ 0:03:45 = r: modulo/trunc  1:23:45 -0:10 'r]
-#assert [-0:03:45 = r: modulo/trunc -1:23:45  0:10 'r]
-#assert [-0:03:45 = r: modulo/trunc -1:23:45 -0:10 'r]
+	-b   =? modulo/trunc -b  0.1      
+	-b   =? modulo/trunc -b -0.1      
+	+b   =? modulo/trunc +b  0.1      
+	+b   =? modulo/trunc +b -0.1      
 
+	-c   =? modulo/trunc -c  0.1      
+	-c   =? modulo/trunc -c -0.1      
+	+c   =? modulo/trunc +c  0.1      
+	+c   =? modulo/trunc +c -0.1      
 
-;; vector tests
-#assert [vec: func [x][make vector! x]]
-#assert [+v: vec[-4 -3 -2 -1 0 1 2 3 4]]
-#assert [-v: (copy +v) * -1]
+	-0.0 =? modulo/trunc/round -x  0.1
+	-0.0 =? modulo/trunc/round -x -0.1
+	 0.0 =? modulo/trunc/round +x  0.1
+	 0.0 =? modulo/trunc/round +x -0.1
 
-#assert [(vec[2 0 1 2 0 1 2 0 1])      = r: modulo        copy +v  3 'r]
-#assert [(vec[2 0 1 2 0 1 2 0 1])      = r: modulo        copy +v -3 'r]
-#assert [(vec[1 0 2 1 0 2 1 0 2])      = r: modulo        copy -v  3 'r]
-#assert [(vec[1 0 2 1 0 2 1 0 2])      = r: modulo        copy -v -3 'r]
+	-a   =? modulo/trunc/round -a  0.1
+	-a   =? modulo/trunc/round -a -0.1
+	+a   =? modulo/trunc/round +a  0.1
+	+a   =? modulo/trunc/round +a -0.1
 
-#assert [(vec[2 0 1 2 0 1 2 0 1])      = r: modulo/floor  copy +v  3 'r]
-#assert [(vec[1 0 2 1 0 2 1 0 2]) * -1 = r: modulo/floor  copy +v -3 'r]
-#assert [(vec[1 0 2 1 0 2 1 0 2])      = r: modulo/floor  copy -v  3 'r]
-#assert [(vec[2 0 1 2 0 1 2 0 1]) * -1 = r: modulo/floor  copy -v -3 'r]
+	-0.0 =? modulo/trunc/round -b  0.1
+	-0.0 =? modulo/trunc/round -b -0.1
+	 0.0 =? modulo/trunc/round +b  0.1
+	 0.0 =? modulo/trunc/round +b -0.1
 
-#assert [(vec[-1 0 -2 -1 0 1 2 0 1])   = r: modulo/trunc  copy +v  3 'r]
-#assert [(vec[-1 0 -2 -1 0 1 2 0 1])   = r: modulo/trunc  copy +v -3 'r]
-#assert [(vec[1 0 2 1 0 -1 -2 0 -1])   = r: modulo/trunc  copy -v  3 'r]
-#assert [(vec[1 0 2 1 0 -1 -2 0 -1])   = r: modulo/trunc  copy -v -3 'r]
-
-
-;; pair tests
-#assert [ 2x4  = r: modulo        12x34  5x10  'r]
-#assert [ 2x4  = r: modulo        12x34 -5x10  'r]
-#assert [ 3x4  = r: modulo       -12x34  5x10  'r]
-#assert [ 3x4  = r: modulo       -12x34 -5x10  'r]
-
-#assert [ 2x4  = r: modulo/floor  12x34  5x10  'r]
-#assert [-3x4  = r: modulo/floor  12x34 -5x10  'r]
-#assert [ 3x4  = r: modulo/floor -12x34  5x10  'r]
-#assert [-2x4  = r: modulo/floor -12x34 -5x10  'r]
-
-#assert [ 2x4  = r: modulo/trunc  12x34  5x10  'r]
-#assert [ 2x4  = r: modulo/trunc  12x34 -5x10  'r]
-#assert [-2x4  = r: modulo/trunc -12x34  5x10  'r]
-#assert [-2x4  = r: modulo/trunc -12x34 -5x10  'r]
+	-0.0 =? modulo/trunc/round -c  0.1
+	-0.0 =? modulo/trunc/round -c -0.1
+	 0.0 =? modulo/trunc/round +c  0.1
+	 0.0 =? modulo/trunc/round +c -0.1
 
 
-;; positives tests
-#assert [23.34.56.7 = r: modulo       123.234.56.7 100 'r]
-#assert [23.34.56.7 = r: modulo/floor 123.234.56.7 100 'r]
-#assert [23.34.56.7 = r: modulo/trunc 123.234.56.7 100 'r]
-#assert [23.34.56.7 = r: modulo       123.234.56.7 -100 'r]	;-- allow negative divisor when result will be positive
-#assert [23.34.56.7 = r: modulo/trunc 123.234.56.7 -100 'r]
+	;; integer tests
+	   0 = modulo       1000  500
 
-#assert [23.34.56.7 = r: modulo       123.234.56.7 50.100.200.250 'r]
-#assert [23.34.56.7 = r: modulo/floor 123.234.56.7 50.100.200.250 'r]
-#assert [23.34.56.7 = r: modulo/trunc 123.234.56.7 50.100.200.250 'r]
+	 123 = modulo        123  500
+	 123 = modulo        123 -500
+	 377 = modulo       -123  500
+	 377 = modulo       -123 -500
 
-#assert [#"^A" = r: modulo       #"^I" #"^D" 'r]
-#assert [#"^A" = r: modulo/floor #"^I" #"^D" 'r]
-#assert [#"^A" = r: modulo/trunc #"^I" #"^D" 'r]
-#assert [#"^A" = r: modulo       #"^I" 4 'r]
-#assert [#"^A" = r: modulo/floor #"^I" 4 'r]
-#assert [#"^A" = r: modulo/trunc #"^I" 4 'r]
-#assert [#"^A" = r: modulo       #"^I" -4 'r]	;-- allow negative divisor when result will be positive
-#assert [#"^A" = r: modulo/trunc #"^I" -4 'r]
-#assert [   1  = r: modulo       9 #"^D" 'r]
-#assert [   1  = r: modulo/floor 9 #"^D" 'r]
-#assert [   1  = r: modulo/trunc 9 #"^D" 'r]
+	 123 = modulo/floor  123  500
+	-377 = modulo/floor  123 -500
+	 377 = modulo/floor -123  500
+	-123 = modulo/floor -123 -500
 
-;; terminal cases tests
-#assert [0    = r: modulo       123  1      'r]
-#assert [0    = r: modulo/floor 123  1      'r]
-#assert [0    = r: modulo/trunc 123  1      'r]
-#assert [0.5  = r: modulo       12.5 1      'r]
-#assert [0.5  = r: modulo       12.5 1.0    'r]
-#assert [error? r: try [modulo       123 0] 'r]		;-- division by zero
-#assert [error? r: try [modulo/floor 123 0] 'r]
-#assert [error? r: try [modulo/trunc 123 0] 'r]
-#assert [nan?   r: modulo       123  0.0    'r]		;-- qnan
-#assert [nan?   r: modulo/floor 123  0.0    'r]
-#assert [nan?   r: modulo/trunc 123  0.0    'r]
-#assert [nan?   r: modulo       12.5 0      'r]
-#assert [nan?   r: modulo       12.5 0.0    'r]
-; #assert [nan?   r: modulo       123  1.#inf 'r]	;@@ bugged - see #4900
-; #assert [nan?   r: modulo/floor 123  1.#inf 'r]
-; #assert [nan?   r: modulo/trunc 123  1.#inf 'r]
-; #assert [nan?   r: modulo       123 -1.#inf 'r]
-; #assert [nan?   r: modulo/floor 123 -1.#inf 'r]
-; #assert [nan?   r: modulo/trunc 123 -1.#inf 'r]
-#assert [nan?   r: modulo       123  1.#nan 'r]
-#assert [nan?   r: modulo/floor 123  1.#nan 'r]
-#assert [nan?   r: modulo/trunc 123  1.#nan 'r]
+	 123 = modulo/trunc  123  500
+	 123 = modulo/trunc  123 -500
+	-123 = modulo/trunc -123  500
+	-123 = modulo/trunc -123 -500
+
+	  23 = modulo        123  50 
+	  23 = modulo        123 -50 
+	  27 = modulo       -123  50 
+	  27 = modulo       -123 -50 
+
+	  23 = modulo/floor  123  50 
+	 -27 = modulo/floor  123 -50 
+	  27 = modulo/floor -123  50 
+	 -23 = modulo/floor -123 -50 
+
+	  23 = modulo/trunc  123  50 
+	  23 = modulo/trunc  123 -50 
+	 -23 = modulo/trunc -123  50 
+	 -23 = modulo/trunc -123 -50 
+
+	2    =? modulo       -max  10		;-- extreme ints produce ints, not floats
+	2    =? modulo       -max -10
+	7    =? modulo       +max  10
+	7    =? modulo       +max -10
+
+	 2   =? modulo/floor -max  10
+	-8   =? modulo/floor -max -10
+	 7   =? modulo/floor +max  10
+	-3   =? modulo/floor +max -10
+
+	-8   =? modulo/trunc -max  10
+	-8   =? modulo/trunc -max -10
+	 7   =? modulo/trunc +max  10
+	 7   =? modulo/trunc +max -10
+
+
+	;; time tests
+	 0:03:45 = modulo        1:23:45  0:10
+	 0:03:45 = modulo        1:23:45 -0:10
+	 0:06:15 = modulo       -1:23:45  0:10
+	 0:06:15 = modulo       -1:23:45 -0:10
+
+	 0:03:45 = modulo/floor  1:23:45  0:10
+	-0:06:15 = modulo/floor  1:23:45 -0:10
+	 0:06:15 = modulo/floor -1:23:45  0:10
+	-0:03:45 = modulo/floor -1:23:45 -0:10
+
+	 0:03:45 = modulo/trunc  1:23:45  0:10
+	 0:03:45 = modulo/trunc  1:23:45 -0:10
+	-0:03:45 = modulo/trunc -1:23:45  0:10
+	-0:03:45 = modulo/trunc -1:23:45 -0:10
+
+
+	;; vector tests
+	vec: func [x][make vector! x]
+	+v: vec[-4 -3 -2 -1 0 1 2 3 4]
+	-v: (copy +v) * -1
+
+	(vec[2 0 1 2 0 1 2 0 1])      = modulo        copy +v  3
+	(vec[2 0 1 2 0 1 2 0 1])      = modulo        copy +v -3
+	(vec[1 0 2 1 0 2 1 0 2])      = modulo        copy -v  3
+	(vec[1 0 2 1 0 2 1 0 2])      = modulo        copy -v -3
+
+	(vec[2 0 1 2 0 1 2 0 1])      = modulo/floor  copy +v  3
+	(vec[1 0 2 1 0 2 1 0 2]) * -1 = modulo/floor  copy +v -3
+	(vec[1 0 2 1 0 2 1 0 2])      = modulo/floor  copy -v  3
+	(vec[2 0 1 2 0 1 2 0 1]) * -1 = modulo/floor  copy -v -3
+
+	(vec[-1 0 -2 -1 0 1 2 0 1])   = modulo/trunc  copy +v  3
+	(vec[-1 0 -2 -1 0 1 2 0 1])   = modulo/trunc  copy +v -3
+	(vec[1 0 2 1 0 -1 -2 0 -1])   = modulo/trunc  copy -v  3
+	(vec[1 0 2 1 0 -1 -2 0 -1])   = modulo/trunc  copy -v -3
+
+
+	;; pair tests
+	 2x4  = modulo        12x34  5x10 
+	 2x4  = modulo        12x34 -5x10 
+	 3x4  = modulo       -12x34  5x10 
+	 3x4  = modulo       -12x34 -5x10 
+
+	 2x4  = modulo/floor  12x34  5x10 
+	-3x4  = modulo/floor  12x34 -5x10 
+	 3x4  = modulo/floor -12x34  5x10 
+	-2x4  = modulo/floor -12x34 -5x10 
+
+	 2x4  = modulo/trunc  12x34  5x10 
+	 2x4  = modulo/trunc  12x34 -5x10 
+	-2x4  = modulo/trunc -12x34  5x10 
+	-2x4  = modulo/trunc -12x34 -5x10 
+
+
+	;; positives tests
+	23.34.56.7 = modulo       123.234.56.7 100
+	23.34.56.7 = modulo/floor 123.234.56.7 100
+	23.34.56.7 = modulo/trunc 123.234.56.7 100
+	23.34.56.7 = modulo       123.234.56.7 -100	;-- allow negative divisor when result will be positive
+	23.34.56.7 = modulo/trunc 123.234.56.7 -100
+
+	23.34.56.7 = modulo       123.234.56.7 50.100.200.250
+	23.34.56.7 = modulo/floor 123.234.56.7 50.100.200.250
+	23.34.56.7 = modulo/trunc 123.234.56.7 50.100.200.250
+
+	#"^A" = modulo       #"^I" #"^D"
+	#"^A" = modulo/floor #"^I" #"^D"
+	#"^A" = modulo/trunc #"^I" #"^D"
+	#"^A" = modulo       #"^I" 4
+	#"^A" = modulo/floor #"^I" 4
+	#"^A" = modulo/trunc #"^I" 4
+	#"^A" = modulo       #"^I" -4	;-- allow negative divisor when result will be positive
+	#"^A" = modulo/trunc #"^I" -4
+	   1  = modulo       9 #"^D"
+	   1  = modulo/floor 9 #"^D"
+	   1  = modulo/trunc 9 #"^D"
+
+	;; terminal cases tests
+	0    = modulo       123  1     
+	0    = modulo/floor 123  1     
+	0    = modulo/trunc 123  1     
+	0.5  = modulo       12.5 1     
+	0.5  = modulo       12.5 1.0   
+	error? try [modulo       123 0]		;-- division by zero
+	error? try [modulo/floor 123 0]
+	error? try [modulo/trunc 123 0]
+	nan?   modulo       123  0.0   		;-- qnan
+	nan?   modulo/floor 123  0.0   
+	nan?   modulo/trunc 123  0.0   
+	nan?   modulo       12.5 0     
+	nan?   modulo       12.5 0.0   
+	; nan?   modulo       123  1.#inf	;@@ bugged - see #4900
+	; nan?   modulo/floor 123  1.#inf
+	; nan?   modulo/trunc 123  1.#inf
+	; nan?   modulo       123 -1.#inf
+	; nan?   modulo/floor 123 -1.#inf
+	; nan?   modulo/trunc 123 -1.#inf
+	nan?   modulo       123  1.#nan
+	nan?   modulo/floor 123  1.#nan
+	nan?   modulo/trunc 123  1.#nan
+]]

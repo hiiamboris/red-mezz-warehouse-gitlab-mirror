@@ -186,9 +186,9 @@ context [
 
 ; inspect: func [e [block!] r [any-type!]] [print [pad mold/part/flat/only e 20 20 " => " mold/part/flat :r 40] :r]
 
-; #include %assert.red
+; #include %assert.red			;@@ assert uses this file; cyclic inclusion = crash
 
-; #assert [() = trace-deep :inspect []]
+; 	() = trace-deep :inspect []
 ; #assert [() = trace-deep :inspect [()]]
 ; #assert [() = trace-deep :inspect [1 ()]]
 ; #assert [3  = trace-deep :inspect [1 + 2]]
@@ -197,11 +197,13 @@ context [
 ; #assert [20 = trace-deep :inspect [f: func [x] [does [10]] g: f 1 g * 2]]
 ; #assert [20 = trace-deep :inspect [f: func [x] [does [10]] (g: f (1)) ((g) * 2)]]
 
-#assert [() = trace-deep func [x y [any-type!]][:y] []]
-#assert [() = trace-deep func [x y [any-type!]][:y] [()]]
-#assert [() = trace-deep func [x y [any-type!]][:y] [1 ()]]
-#assert [3  = trace-deep func [x y [any-type!]][:y] [1 + 2]]
-#assert [9  = trace-deep func [x y [any-type!]][:y] [1 + 2 * 3]]
-#assert [4  = trace-deep func [x y [any-type!]][:y] [x: y: 2 x + y]]
-#assert [20 = trace-deep func [x y [any-type!]][:y] [f: func [x] [does [10]] g: f 1 g * 2]]
-#assert [20 = trace-deep func [x y [any-type!]][:y] [f: func [x] [does [10]] x: f: :f (g: f (1)) ((g) * 2)]]
+#assert [
+	() = trace-deep func [x y [any-type!]][:y] []
+	() = trace-deep func [x y [any-type!]][:y] [()]
+	() = trace-deep func [x y [any-type!]][:y] [1 ()]
+	3  = trace-deep func [x y [any-type!]][:y] [1 + 2]
+	9  = trace-deep func [x y [any-type!]][:y] [1 + 2 * 3]
+	4  = trace-deep func [x y [any-type!]][:y] [x: y: 2 x + y]
+	20 = trace-deep func [x y [any-type!]][:y] [f: func [x] [does [10]] g: f 1 g * 2]
+	20 = trace-deep func [x y [any-type!]][:y] [f: func [x] [does [10]] x: f: :f (g: f (1)) ((g) * 2)]
+]

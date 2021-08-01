@@ -7,6 +7,7 @@ Red [
 ]
 
 
+; #include %localize-macro.red
 ; #include %assert.red
 
 ;@@ TODO: implement it in R/S to be more useful
@@ -34,7 +35,7 @@ context [
 		unless parse/case block [											;-- scan the block first - if no patterns are found, just return itself
 			to [
 				block! | paren! | '! | @ |
-				/if | /else | /do | /use | /mixin
+				/if | /else | /do | /use | /mixin ;| /skip
 			] p: to end
 		] [return block]
 
@@ -55,6 +56,7 @@ context [
 			|	               set x [block! | paren!] (append/only r     reshape x)
 			|	[['! | /use  ] set x           paren!] (append/only r  do reshape x)
 			|	[[ @ | /mixin] set x           paren!] (append r check do reshape x)
+			; |	[[     /skip ] set x skip            ] (append/only r :x)	@@ needs more design, I don't like it
 			|	set x skip (append/only r :x)
 			]
 			:line-end
@@ -106,97 +108,104 @@ context [
 	]
 ]
 
-#assert [[             ] = r: reshape [] 'r]
-#assert [( quote ()    ) = r: reshape quote () 'r]
-#assert [[ 1           ] = r: reshape [!(1)] 'r]
-#assert [[ []          ] = r: reshape [!([])] 'r]
-#assert [( reduce [()] ) = r: reshape [!(())] 'r]
-#assert [[ #[none]     ] = r: reshape [!(none)] 'r]
-#assert [[             ] = r: reshape [@([])] 'r]
-#assert [[             ] = r: reshape [@(())] 'r]
-#assert [[             ] = r: reshape [@(none)] 'r]
-#assert [[ #[false]    ] = r: reshape [@(false)] 'r]
-#assert [[ 1           ] = r: reshape [!(x) /do x: 1] 'r]
-#assert [[ []          ] = r: reshape [!(x) /do x: []] 'r]
-#assert [[             ] = r: reshape [@(x) /do x: []] 'r]
-#assert [[ ()          ] = r: reshape [!(x) /do x: quote ()] 'r]
-#assert [[             ] = r: reshape [@(x) /do x: quote ()] 'r]
-#assert [[             ] = r: reshape [@(:x) /do set/any 'x ()] 'r]
+#localize [#assert [
+	[             ] = reshape []
+	( quote ()    ) = reshape quote ()
+	[ 1           ] = reshape [!(1)]
+	[ []          ] = reshape [!([])]
+	( reduce [()] ) = reshape [!(())]
+	[ #[none]     ] = reshape [!(none)]
+	[             ] = reshape [@([])]
+	[             ] = reshape [@(())]
+	[             ] = reshape [@(none)]
+	[ #[false]    ] = reshape [@(false)]
+	[ 1           ] = reshape [!(x) /do x: 1]
+	[ []          ] = reshape [!(x) /do x: []]
+	[             ] = reshape [@(x) /do x: []]
+	[ ()          ] = reshape [!(x) /do x: quote ()]
+	[             ] = reshape [@(x) /do x: quote ()]
+	[             ] = reshape [@(:x) /do set/any 'x ()]
 
-;; conditional inclusion
-#assert [[             ] = r: reshape [1 2 /if no] 'r]
-#assert [[ 1 2         ] = r: reshape [1 2 /if yes] 'r]
-#assert [[ 1 2         ] = r: reshape [!(x) !(y) /if yes /do y: 1 + x: 1] 'r]
-#assert [[             ] = r: reshape [!(x) !(y) /if no  /do y: 1 + x: 1] 'r]
+	;; conditional inclusion
+	[             ] = reshape [1 2 /if no]
+	[ 1 2         ] = reshape [1 2 /if yes]
+	[ 1 2         ] = reshape [!(x) !(y) /if yes /do y: 1 + x: 1]
+	[             ] = reshape [!(x) !(y) /if no  /do y: 1 + x: 1]
 
-#assert [[ 2           ] = r: reshape [
-			/if no
-	1
-			/if yes
-	2
-			/else
-	3
-] 'r]
-#assert [[             ] = r: reshape [1 2 /else] 'r]
-
-;; global flags should not affect line flags; multiple /elses act like one
-#assert [[ 2 4         ] = r: reshape [
-			/if no
-	1			/if yes
-			/else
-	2			/if yes
-	3			/if no
-			/else
-	4
-] 'r]
-
-
-;; conditional /do
-#assert [[ 3           ] = r: reshape [
-			/do y: 3
-	!(x) 	/if no /do y: 1 + x: 1
-	!(y)
-] 'r]
-#assert [[ 1 2         ] = r: reshape [
-			/do y: 3
-	!(x) 	/if yes /do y: 1 + x: 1
-	!(y)
-] 'r]
-
-;; test that multi-line expressions are only evaluated once
-#assert [(
-	i: 0
-	reshape [
-		/do i:
-		i
-		+
+	[ 2           ] = reshape [
+				/if no
 		1
-		/do i: i + 1 /do i: i +
-		1
-	]
-	i = 3
-) 'i]
-
-;; should not skip everything before the first pattern
-#assert [[ x [3] x 7 ] = r: reshape [
-	x
-	[!(1 + 2)]
-	x
-	!(3 + 4)
-] 'r]
-
-;; should inline the inner block, expanded but not nested
-#assert [[ 1 2        ] = r: reshape [
-	@([	/if true
-		1
+				/if yes
 		2
-	])
-] 'r]
+				/else
+		3
+	]
+	[             ] = reshape [1 2 /else]
 
-;; one-liners should work
-#assert [[(1)     ] = r: reshape [ (1 /if yes)] 'r]
-#assert [[( )     ] = r: reshape [ (1 /if no )] 'r]
-#assert [[ 1      ] = r: reshape [@(1 /if yes)] 'r]
-#assert [[        ] = r: reshape [@(1 /if no )] 'r]
-#assert [[ 1      ] = r: reshape [!(1 /if yes)] 'r]
-#assert [unset? first r: reshape [!(1 /if no )] 'r]
+	;; global flags should not affect line flags; multiple /elses act like one
+	[ 2 4         ] = reshape [
+				/if no
+		1			/if yes
+				/else
+		2			/if yes
+		3			/if no
+				/else
+		4
+	]
+
+
+	;; conditional /do
+	[ 3           ] = reshape [
+				/do y: 3
+		!(x) 	/if no /do y: 1 + x: 1
+		!(y)
+	]
+	[ 1 2         ] = reshape [
+				/do y: 3
+		!(x) 	/if yes /do y: 1 + x: 1
+		!(y)
+	]
+
+	;; test that multi-line expressions are only evaluated once
+	(
+		i: 0
+		reshape [
+			/do i:
+			i
+			+
+			1
+			/do i: i + 1 /do i: i +
+			1
+		]
+		i = 3
+	)
+
+	;; should not skip everything before the first pattern
+	[ x [3] x 7 ] = reshape [
+		x
+		[!(1 + 2)]
+		x
+		!(3 + 4)
+	]
+
+	;; should inline the inner block, expanded but not nested
+	[ 1 2        ] = reshape [
+		@([	/if true
+			1
+			2
+		])
+	]
+
+	;; one-liners should work
+	[(1)     ] = reshape [ (1 /if yes)]
+	[( )     ] = reshape [ (1 /if no )]
+	[ 1      ] = reshape [@(1 /if yes)]
+	[        ] = reshape [@(1 /if no )]
+	[ 1      ] = reshape [!(1 /if yes)]
+	unset? first reshape [!(1 /if no )]
+
+	; ;; escape mechanism: needed when reshape block contains other calls to reshape
+	; [[! (1 + 2)]] = reshape [  /skip [!(1 + 2)] ]
+	; [ ! (1 + 2) ] = reshape [@(/skip [!(1 + 2)])]
+
+]]

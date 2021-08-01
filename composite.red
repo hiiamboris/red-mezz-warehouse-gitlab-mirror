@@ -129,7 +129,7 @@ context [
 				any [
 					s: to marker e: (keep copy/part s e)
 					[
-						"(\" (append last r #"(")
+						"(\" (append last r marker)
 					|	s: (keep wrap load-expr) :e
 					]
 				]
@@ -154,7 +154,7 @@ context [
 ;-- -- -- -- -- -- -- -- -- -- -- -- -- -- TESTS -- -- -- -- -- -- -- -- -- -- -- -- -- --
 
 #assert [
-	(b: [#composite %"()() - (1 + 2) - (<abc)))>) - (func)(1)()()"]) == [
+	[#composite %"()() - (1 + 2) - (<abc)))>) - (func)(1)()()"] == [
 		rejoin [
 			%""				;-- first string determines result type - should not be omitted
 			() ()			;-- () makes an unset, no empty strings inbetween
@@ -168,22 +168,22 @@ context [
 			() ()			;-- no unnecessary empty strings
 		]
 	]
-	'b
 ]
 
 #assert [
-	(b: [#composite <tag flag=(mold 1 + 2)/>]) == [
+	[#composite <tag flag=(mold 1 + 2)/>] == [
 		rejoin [
 			<tag flag=>		;-- result is a <tag>
 			(mold 1 + 2)
 			{/}				;-- other strings should be normal strings, or we'll have <<">> result
 		]
 	]
-	'b
 ]
 
-#assert [ [#composite <tag flag=(mold 1 + 2)/>] == [`<tag flag=(mold 1 + 2)/>`] ]
-#assert [ [#composite %"()() - (1 + 2) - (<abc)))>) - (func)(1)()()"] == [` %"()() - (1 + 2) - (<abc)))>) - (func)(1)()()" `] ]
+#assert [ 
+	[#composite <tag flag=(mold 1 + 2)/>] == [`<tag flag=(mold 1 + 2)/>`]
+	[#composite %"()() - (1 + 2) - (<abc)))>) - (func)(1)()()"] == [` %"()() - (1 + 2) - (<abc)))>) - (func)(1)()()" `]
+]
 
 
 ; #assert [			;-- this is unloadable because of tag limitations
@@ -197,44 +197,43 @@ context [
 ; ]
 
 
-#assert [%" - 3 - <abc)))> - func1" == s: composite[] %"()() - (1 + 2) - (<abc)))>) - ('func)(1)()()" 's]
-#assert [<tag flag=3/>              == s: composite[] <tag flag=(mold 1 + 2)/> 's]
-#assert ["((\\))"                   == s: composite[] "(\(\\\))" 's]
-#assert [""                         == s: composite[] "()" 's]
-#assert [""                         == s: composite[] "([])" 's]
-#assert ["*ERROR*"                  == s: composite/trap[] "(1 / 0)" "*ERROR*" 's]
-#assert ["zero-divide expect-arg"   == s: composite/trap[] "(1 / 0) ({a} + 1)" func [e][e/id] 's]
-#assert ["print"                    == s: composite/trap[] "(1 / 0)" func [e]['print] 's]		;-- no second error from double evaluation
-; #assert ["123"                      == s: composite[] "(append {1} #composite {2(1 + 2)})" 's]	;-- macro expansion within composite exprs
-
-
-#assert ["((\\))" == #composite "(\(\\\))"]
-#assert ["" == #composite "()"]
-#assert ["" == #composite "([])"]						;-- result is string not block
-
-#assert ["((\\))" == `"(\(\\\))"`]
-#assert ["" == `"()"`]
-#assert ["" == `"([])"`]
-
-#assert [(b: [#composite "(\(\\\))"]) == [rejoin ["((" "\\))"]] 'b]			;-- escaping
-#assert [(b: [#composite "()"      ]) == [rejoin ["" ()]      ] 'b]
-#assert [(b: [#composite "([])"    ]) == [rejoin ["" []]      ] 'b]			;-- paren removal from obvious cases
-#assert [(b: [#composite "(1)"     ]) == [rejoin ["" 1]       ] 'b]
-
-#assert ["123" == s: #composite "(append {1} #composite {2(1 + 2)})" 's]	;-- macro expansion within composite exprs
 #assert [
-	(b: [ #composite "(append {1} #composite {2(1 + 2)})" ])
+	%" - 3 - <abc)))> - func1" == composite[] %"()() - (1 + 2) - (<abc)))>) - ('func)(1)()()"
+	<tag flag=3/>              == composite[] <tag flag=(mold 1 + 2)/>
+	"((\\))"                   == composite[] "(\(\\\))"
+	""                         == composite[] "()"
+	""                         == composite[] "([])"
+	"*ERROR*"                  == composite/trap[] "(1 / 0)" "*ERROR*"
+	"zero-divide expect-arg"   == composite/trap[] "(1 / 0) ({a} + 1)" func [e][e/id]
+	"print"                    == composite/trap[] "(1 / 0)" func [e]['print]		;-- no second error from double evaluation
+	; "123"                      == composite[] "(append {1} #composite {2(1 + 2)})"	;-- macro expansion within composite exprs -- disabled for performance reasons
+
+	"((\\))" == #composite "(\(\\\))"
+	""       == #composite "()"
+	""       == #composite "([])"					;-- result is string not block
+
+	"((\\))" == `"(\(\\\))"`
+	""       == `"()"`
+	""       == `"([])"`
+
+	[#composite "(\(\\\))"] == [rejoin ["((" "\\))"]]			;-- escaping
+	[#composite "()"      ] == [rejoin ["" ()]      ]
+	[#composite "([])"    ] == [rejoin ["" []]      ]			;-- paren removal from obvious cases
+	[#composite "(1)"     ] == [rejoin ["" 1]       ]
+
+	"123" == #composite "(append {1} #composite {2(1 + 2)})"	;-- macro expansion within composite exprs
+	
+	[ #composite "(append {1} #composite {2(1 + 2)})" ]
 	== [ rejoin ["" (append "1" rejoin ["2" (1 + 2)])] ]
-'b]
 
-;-- line comments handling
-#assert ["9" == s: #composite {(;-- comment
-	1 + 2 * 3					;-- another
-)} 's]
-#assert ["9" == s:           `{(;-- comment
-	1 + 2 * 3					;-- another
-)}` 's]
-#assert ["9" == s: composite[] {(;-- comment
-	1 + 2 * 3					;-- another
-)} 's]
-
+	;-- line comments handling
+	"9" == #composite  {(;-- comment
+		1 + 2 * 3					;-- another
+	)}
+	"9" ==            `{(;-- comment
+		1 + 2 * 3					;-- another
+	)}`
+	"9" == composite[] {(;-- comment
+		1 + 2 * 3					;-- another
+	)}
+]

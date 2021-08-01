@@ -75,7 +75,7 @@ Red [
 ]
 
 
-#include %assert.red
+; #include %assert.red
 #include %trace.red
 #include %setters.red
 #include %format-readable.red

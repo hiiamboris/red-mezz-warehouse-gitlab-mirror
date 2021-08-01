@@ -35,17 +35,18 @@ count: function [
 	n
 ]
 
-#assert [0 = r: count              [          ] 1           'r]
-#assert [3 = r: count              [1 1 1     ] 1           'r]
-#assert [2 = r: count              [1 2 1     ] 1           'r]
-#assert [3 = r: count              [1 2 3     ] integer!    'r]
-#assert [2 = r: count/skip         [1 2 3 4   ] integer! 2  'r]
-#assert [0 = r: count/only         [1 2 3     ] integer!    'r]
-#assert [1 = r: count/only  reduce [1 integer!] integer!    'r]
-#assert [2 = r: count         next [1 2 3     ] integer!    'r]
-#assert [1 = r: count/reverse next [1 2 3     ] integer!    'r]
-#assert [3 = r: count/reverse tail [1 2 3     ] integer!    'r]
-#assert [2 = r: count              [1 [1] 1   ] [1]         'r]
-#assert [1 = r: count/only         [1 [1] 1   ] [1]         'r]
-
+#assert [
+	0 = count              [          ] 1
+	3 = count              [1 1 1     ] 1 
+	2 = count              [1 2 1     ] 1 
+	3 = count              [1 2 3     ] integer! 
+	2 = count/skip         [1 2 3 4   ] integer! 2 
+	0 = count/only         [1 2 3     ] integer! 
+	1 = count/only  reduce [1 integer!] integer! 
+	2 = count         next [1 2 3     ] integer! 
+	1 = count/reverse next [1 2 3     ] integer! 
+	3 = count/reverse tail [1 2 3     ] integer! 
+	2 = count              [1 [1] 1   ] [1]
+	1 = count/only         [1 [1] 1   ] [1]
+]
 

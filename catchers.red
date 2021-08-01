@@ -174,48 +174,49 @@ attempt: func [
 ]
 
 
-#assert [1 = r: catch [fcatch         [            ] [1      ]  ] 'r]		;-- normal result
-#assert [unset? catch [fcatch         [            ] [       ]  ] 'fcatch]
-#assert [unset? catch [fcatch         [true        ] [       ]  ] 'fcatch]
-#assert [2 = r: catch [fcatch         [            ] [throw 1] 2] 'r]		;-- unset is truthy, always catches
-#assert [1 = r: catch [fcatch         [no          ] [throw 1] 2] 'r]
-#assert [1 = r: catch [fcatch         [no          ] [throw/name 1 'abc] 2] 'r]
-#assert [2 = r: catch [fcatch         [yes         ] [throw 1] 2] 'r]
-#assert [1 = r: catch [fcatch         [even? thrown] [throw 1] 2] 'r]
-#assert [2 = r: catch [fcatch         [even? thrown] [throw 4] 2] 'r]
-#assert [3 = r: catch [fcatch/handler [even? thrown] [throw 3] [thrown * 2]] 'r]
-#assert [8 = r: catch [fcatch/handler [even? thrown] [throw 4] [thrown * 2]] 'r]
-#assert [9 = r: catch [loop 3 [fcatch/handler [] [throw 4] [break/return 9]]] 'r]			;-- break test
-#assert [8 = r: catch [loop 3 [fcatch/handler [continue] [throw 4] [break/return 9]] 8] 'r]	;-- continue test
+#assert [
+	1 =    catch [fcatch         [            ] [1      ]  ]	;-- normal result
+	unset? catch [fcatch         [            ] [       ]  ]
+	unset? catch [fcatch         [true        ] [       ]  ]
+	2 =    catch [fcatch         [            ] [throw 1] 2]	;-- unset is truthy, always catches
+	1 =    catch [fcatch         [no          ] [throw 1] 2]
+	1 =    catch [fcatch         [no          ] [throw/name 1 'abc] 2]
+	2 =    catch [fcatch         [yes         ] [throw 1] 2]
+	1 =    catch [fcatch         [even? thrown] [throw 1] 2]
+	2 =    catch [fcatch         [even? thrown] [throw 4] 2]
+	3 =    catch [fcatch/handler [even? thrown] [throw 3] [thrown * 2]]
+	8 =    catch [fcatch/handler [even? thrown] [throw 4] [thrown * 2]]
+	9 =    catch [loop 3 [fcatch/handler [] [throw 4] [break/return 9]]]			;-- break test
+	8 =    catch [loop 3 [fcatch/handler [continue] [throw 4] [break/return 9]] 8]	;-- continue test
 
-#assert [1 = r: catch [pcatch [              ] [throw 1] 2] 'r]				;-- no patterns matched, should rethrow
-#assert [3 = r: catch [pcatch [true [3]      ] [throw 1]  ] 'r]				;-- catch-all
-#assert [3 = r: catch [pcatch [true [throw 3]] [throw 1] 2] 'r]				;-- catch-all with custom throw
-#assert [1 = r: catch [pcatch [even? thrown [thrown * 2]] [throw 1]] 'r]
-#assert [4 = r: catch [pcatch [even? thrown [thrown * 2]] [throw 2]] 'r]
-#assert [4 = r: catch [pcatch [even? thrown [thrown * 2] thrown < 5 [0]] [throw 2]] 'r]
-#assert [0 = r: catch [pcatch [even? thrown [thrown * 2] thrown < 5 [0]] [throw 3]] 'r]
-#assert [5 = r: catch [pcatch [even? thrown [thrown * 2] thrown < 5 [0]] [throw 5]] 'r]
-#assert [9 = r: catch [repeat i 4 [pcatch [thrown < 3 [] 'else [break/return 9]] [throw i]]] 'r]	;-- break test
-#assert [9 = r: catch [repeat i 4 [pcatch [thrown < 3 [continue] 'else [break/return 9]] [throw i]]] 'r]
+	1 =    catch [pcatch [              ] [throw 1] 2]			;-- no patterns matched, should rethrow
+	3 =    catch [pcatch [true [3]      ] [throw 1]  ]			;-- catch-all
+	3 =    catch [pcatch [true [throw 3]] [throw 1] 2]			;-- catch-all with custom throw
+	1 =    catch [pcatch [even? thrown [thrown * 2]] [throw 1]]
+	4 =    catch [pcatch [even? thrown [thrown * 2]] [throw 2]]
+	4 =    catch [pcatch [even? thrown [thrown * 2] thrown < 5 [0]] [throw 2]]
+	0 =    catch [pcatch [even? thrown [thrown * 2] thrown < 5 [0]] [throw 3]]
+	5 =    catch [pcatch [even? thrown [thrown * 2] thrown < 5 [0]] [throw 5]]
+	9 =    catch [repeat i 4 [pcatch [thrown < 3 [] 'else [break/return 9]] [throw i]]]		;-- break test
+	9 =    catch [repeat i 4 [pcatch [thrown < 3 [continue] 'else [break/return 9]] [throw i]]]
 
-#assert [unset?       trap []]							;-- native try compatibility tests
-#assert [1       = r: trap [1] 'r]
-#assert [3       = r: trap [1 + 2] 'r]
-#assert [error?    r: trap [1 + none] 'r]
-#assert [error?    r: trap/all [throw 3 1] 'r]
-#assert [error?    r: trap/all [continue 1] 'r]
-#assert [10      = r: trap/catch [1 + none] [10] 'r]	;-- /catch tests
-#assert ['script = r: trap/catch [1 + none] [select thrown 'type] 'r]
-#assert [6       = r: trap/all/catch [throw 3 1] [2 * select thrown 'arg1] 'r]
+	unset?    trap []									;-- native try compatibility tests
+	1       = trap [1]
+	3       = trap [1 + 2]
+	error?    trap [1 + none]
+	error?    trap/all [throw 3 1]
+	error?    trap/all [continue 1]
+	10      = trap/catch [1 + none] [10]				;-- /catch tests
+	'script = trap/catch [1 + none] [select thrown 'type]
+	6       = trap/all/catch [throw 3 1] [2 * select thrown 'arg1]
 
-#assert [unset? attempt []]
-#assert [3    = r: attempt [1 + 2] 'r]
-#assert [none = r: attempt [1 + none] 'r]
-#assert [error? r: attempt [make error! "oops"] 'r]		;-- this is where it's different from native attempt
-#assert [none = r: attempt/safer [throw 123] 'r]
-#assert [none = r: attempt/safer [continue] 'r]
-
+	unset? attempt []
+	3    = attempt [1 + 2]
+	none = attempt [1 + none]
+	error? attempt [make error! "oops"]				;-- this is where it's different from native attempt
+	none = attempt/safer [throw 123]
+	none = attempt/safer [continue]
+]
 
 {
 	;-- this version is simpler but requires explicit `true [throw thrown]` to rethrow values that fail all case tests

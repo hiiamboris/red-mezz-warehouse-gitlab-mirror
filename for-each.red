@@ -20,8 +20,12 @@ Red [
 			`x` (normal word) will be set to the next item, akin to native `foreach`
 			`x [type!]` and `x [typeset!]` work the same, but check that the type of item matches
 			   if type check fails for at least one of the items, `continue` is executed right away
+			   Q: allow multiple types or not?
+			   it's not very fast, to create typeset every time loop is initiated
+			   OTOH sometimes this is nothing compared to convenience
 			`:value` does not set any word, but checks that the item `x = get/any 'value`
 			   if value check fails for at least one of the items, `continue` is executed right away
+TODO: (expr) form instead of less general :value (latter can still be supported)
 			`/i` will hold an index (not a counter!) of first item fetched
 			   this index is relative to given series index, not to it's head:
 			   `x = pick series i` rather than `x = pick head series i`
@@ -88,7 +92,8 @@ Red [
 	}
 ]
 
-; #include %assert.red
+#include %localize-macro.red
+#include %assert.red
 #include %error-macro.red
 #include %bind-only.red
 
@@ -122,7 +127,7 @@ context [
 		]
 		yes
 	]
-	#assert [r: values-match? [1 2 3] [3 3 3] [#[none] #[none] 3] := 'r]
+	#assert [values-match? [1 2 3] [3 3 3] [#[none] #[none] 3] :=]
 
 	set-able!: make typeset! [block! paren! hash!]		;-- `set` vs `foreach` - see below
 	ranges!:   make typeset! [integer! pair!]			;-- supported non-series types
@@ -192,9 +197,11 @@ context [
 		filtered?: yes = any [use-types? use-values?]
 		values: reduce values-mask
 		size: length? spec												;-- number of values to set/check each time
-		#assert [size = length? values-mask]
-		#assert [size = length? values]
-		#assert [size = length? types]
+		#assert [
+			size = length? values-mask
+			size = length? values
+			size = length? types
+		]
 		range?: is-range? series
 		case [
 			range? [if index-word [ERROR "Can't use indexes with integer/pair ranges"]]
@@ -328,128 +335,130 @@ context [
 
 
 ;; return value tests
-#assert [error? try [for-each [] [1] [1]]]
-#assert [unset? for-each x [] [1]]
-#assert [unset? for-each x [1 2 3] [continue]]
-#assert [unset? for-each x [1 2 3] [break]]
-#assert [123 =  for-each x [1 2 3] [break/return 123]]
-#assert [3 =    for-each x [1 2 3] [x]]
+#localize [#assert [
+	error? try [for-each [] [1] [1]]
+	unset? for-each x [] [1]
+	unset? for-each x [1 2 3] [continue]
+	unset? for-each x [1 2 3] [break]
+	123 =  for-each x [1 2 3] [break/return 123]
+	3 =    for-each x [1 2 3] [x]
 
-;; spec unfolding tests
-#assert [empty?    b: collect [for-each  x  [     ] [keep x]] 'b]
-#assert [[1    ] = b: collect [for-each  x  [1    ] [keep x]] 'b]
-#assert [[1 2  ] = b: collect [for-each  x  [1 2  ] [keep x]] 'b]
-#assert [[1 2 3] = b: collect [for-each  x  [1 2 3] [keep x]] 'b]
-#assert [[1    ] = b: collect [for-each [x] [1    ] [keep x]] 'b]
-#assert [[1 2  ] = b: collect [for-each [x] [1 2  ] [keep x]] 'b]
-#assert [[1 2 3] = b: collect [for-each [x] [1 2 3] [keep x]] 'b]
-#assert [[[1 2] [3 #[none]]      ] = b: collect [for-each [x y] [1 2 3    ] [keep/only reduce [x y]]] 'b]
-#assert [[[1 2] [3 4]            ] = b: collect [for-each [x y] [1 2 3 4  ] [keep/only reduce [x y]]] 'b]
-#assert [[[1 2] [3 4] [5 #[none]]] = b: collect [for-each [x y] [1 2 3 4 5] [keep/only reduce [x y]]] 'b]
+	;; spec unfolding tests
+	empty?    collect [for-each  x  [     ] [keep x]]
+	[1    ] = collect [for-each  x  [1    ] [keep x]]
+	[1 2  ] = collect [for-each  x  [1 2  ] [keep x]]
+	[1 2 3] = collect [for-each  x  [1 2 3] [keep x]]
+	[1    ] = collect [for-each [x] [1    ] [keep x]]
+	[1 2  ] = collect [for-each [x] [1 2  ] [keep x]]
+	[1 2 3] = collect [for-each [x] [1 2 3] [keep x]]
+	[[1 2] [3 #[none]]      ] = collect [for-each [x y] [1 2 3    ] [keep/only reduce [x y]]]
+	[[1 2] [3 4]            ] = collect [for-each [x y] [1 2 3 4  ] [keep/only reduce [x y]]]
+	[[1 2] [3 4] [5 #[none]]] = collect [for-each [x y] [1 2 3 4 5] [keep/only reduce [x y]]]
 
-;; `continue` & `break` support
-#assert [[1 2 3] = b: collect [for-each  x [1 2 3] [keep x continue]] 'b]
-#assert [[     ] = b: collect [for-each  x [1 2 3] [continue keep x]] 'b]
-#assert [[1    ] = b: collect [for-each  x [1 2 3] [keep x break]   ] 'b]
+	;; `continue` & `break` support
+	[1 2 3] = collect [for-each  x [1 2 3] [keep x continue]]
+	[     ] = collect [for-each  x [1 2 3] [continue keep x]]
+	[1    ] = collect [for-each  x [1 2 3] [keep x break]   ]
 
-;; indexes & /reverse
-#assert [[1 2 3] = b: collect [for-each [/i x]   [x y z]     [keep i       ]] 'b]
-#assert [[1 2 3] = b: collect [for-each [p: x]   [x y z]     [keep index? p]] 'b]
-#assert [[1 3 5] = b: collect [for-each [/i x y] [a b c d e] [keep i       ]] 'b]
-#assert [[1 3 5] = b: collect [for-each [p: x y] [a b c d e] [keep index? p]] 'b]
-#assert [[3 2 1] = b: collect [for-each/reverse [/i x]   [x y z]     [keep i       ]] 'b]
-#assert [[3 2 1] = b: collect [for-each/reverse [p: x]   [x y z]     [keep index? p]] 'b]
-#assert [[5 3 1] = b: collect [for-each/reverse [/i x y] [a b c d e] [keep i       ]] 'b]
-#assert [[5 3 1] = b: collect [for-each/reverse [p: x y] [a b c d e] [keep index? p]] 'b]
+	;; indexes & /reverse
+	[1 2 3] = collect [for-each [/i x]   [x y z]     [keep i       ]]
+	[1 2 3] = collect [for-each [p: x]   [x y z]     [keep index? p]]
+	[1 3 5] = collect [for-each [/i x y] [a b c d e] [keep i       ]]
+	[1 3 5] = collect [for-each [p: x y] [a b c d e] [keep index? p]]
+	[3 2 1] = collect [for-each/reverse [/i x]   [x y z]     [keep i       ]]
+	[3 2 1] = collect [for-each/reverse [p: x]   [x y z]     [keep index? p]]
+	[5 3 1] = collect [for-each/reverse [/i x y] [a b c d e] [keep i       ]]
+	[5 3 1] = collect [for-each/reverse [p: x y] [a b c d e] [keep index? p]]
 
-;; /stride
-#assert [[1 2 3] = b: collect [for-each/stride [x]           [1 2 3] [keep x]] 'b]
-#assert [[1 2 3] = b: collect [for-each/stride [/i x]        [x y z] [keep i]] 'b]
-#assert [[x y z] = b: collect [for-each/stride [/i x]        [x y z] [keep x]] 'b]
-#assert [[1 2 3] = b: collect [for-each/stride [p: x]        [x y z] [keep index? p]] 'b]
-#assert [[x y z] = b: collect [for-each/stride [p: x]        [x y z] [keep x]] 'b]
-#assert [[[x y] [y z]] = b: collect [for-each/stride [x y]   [x y z] [keep/only reduce [x y]]] 'b]
-#assert [[[x y z]    ] = b: collect [for-each/stride [x y z] [x y z] [keep/only reduce [x y z]]] 'b]
-#assert [empty?          b: collect [for-each/stride [x y z] [x y]   [keep/only reduce [x y z]]] 'b]		;-- too short to fit in
-#assert [[3 2 1] = b: collect [for-each/stride/reverse [x]           [1 2 3] [keep x]] 'b]
-#assert [[3 2 1] = b: collect [for-each/stride/reverse [/i x]        [x y z] [keep i]] 'b]
-#assert [[z y x] = b: collect [for-each/stride/reverse [/i x]        [x y z] [keep x]] 'b]
-#assert [[3 2 1] = b: collect [for-each/stride/reverse [p: x]        [x y z] [keep index? p]] 'b]
-#assert [[z y x] = b: collect [for-each/stride/reverse [p: x]        [x y z] [keep x]] 'b]
-#assert [[[y z] [x y]] = b: collect [for-each/stride/reverse [x y]   [x y z] [keep/only reduce [x y]]] 'b]
-#assert [[[x y z]    ] = b: collect [for-each/stride/reverse [x y z] [x y z] [keep/only reduce [x y z]]] 'b]
-#assert [empty?          b: collect [for-each/stride/reverse [x y z] [x y]   [keep/only reduce [x y z]]] 'b]		;-- too short to fit in
+	;; /stride
+	[1 2 3] = collect [for-each/stride [x]           [1 2 3] [keep x]]
+	[1 2 3] = collect [for-each/stride [/i x]        [x y z] [keep i]]
+	[x y z] = collect [for-each/stride [/i x]        [x y z] [keep x]]
+	[1 2 3] = collect [for-each/stride [p: x]        [x y z] [keep index? p]]
+	[x y z] = collect [for-each/stride [p: x]        [x y z] [keep x]]
+	[[x y] [y z]] = collect [for-each/stride [x y]   [x y z] [keep/only reduce [x y]]]
+	[[x y z]    ] = collect [for-each/stride [x y z] [x y z] [keep/only reduce [x y z]]]
+	empty?          collect [for-each/stride [x y z] [x y]   [keep/only reduce [x y z]]]		;-- too short to fit in
+	[3 2 1] = collect [for-each/stride/reverse [x]           [1 2 3] [keep x]]
+	[3 2 1] = collect [for-each/stride/reverse [/i x]        [x y z] [keep i]]
+	[z y x] = collect [for-each/stride/reverse [/i x]        [x y z] [keep x]]
+	[3 2 1] = collect [for-each/stride/reverse [p: x]        [x y z] [keep index? p]]
+	[z y x] = collect [for-each/stride/reverse [p: x]        [x y z] [keep x]]
+	[[y z] [x y]] = collect [for-each/stride/reverse [x y]   [x y z] [keep/only reduce [x y]]]
+	[[x y z]    ] = collect [for-each/stride/reverse [x y z] [x y z] [keep/only reduce [x y z]]]
+	empty?          collect [for-each/stride/reverse [x y z] [x y]   [keep/only reduce [x y z]]]		;-- too short to fit in
 
-;; any-string support
-#assert [[#"a" #"b" #"c"] = b: collect [for-each c "abc" [keep c]] 'b]
-#assert [[#"a" #"b" #"c"] = b: collect [for-each c <abc> [keep c]] 'b]
-#assert [[#"a" #"b" #"c"] = b: collect [for-each c %abc  [keep c]] 'b]
-#assert [[#"a" #"@" #"b"] = b: collect [for-each c a@b   [keep c]] 'b]
-#assert [[#"a" #":" #"b"] = b: collect [for-each c a:b   [keep c]] 'b]
+	;; any-string support
+	[#"a" #"b" #"c"] = collect [for-each c "abc" [keep c]]
+	[#"a" #"b" #"c"] = collect [for-each c <abc> [keep c]]
+	[#"a" #"b" #"c"] = collect [for-each c %abc  [keep c]]
+	[#"a" #"@" #"b"] = collect [for-each c a@b   [keep c]]
+	[#"a" #":" #"b"] = collect [for-each c a:b   [keep c]]
 
-;; image support
-#assert [im: make image! [2x2 #{111111 222222 333333 444444}]]
-; #assert [[17.17.17.0 34.34.34.0 51.51.51.0 78.78.78.0] = b: collect [for-each c i [keep c]] 'b]		;@@ uncomment me when #4421 gets fixed
-#assert [[1x1 2x1 1x2 2x2] = b: collect [for-each [/i c] im  [keep i]] 'b]				;-- special index for images - pair
-#assert [[1 2 3 4        ] = b: collect [for-each [p: c] im  [keep index? p]] 'b]
+	;; image support
+	im: make image! [2x2 #{111111 222222 333333 444444}]
+	; [17.17.17.0 34.34.34.0 51.51.51.0 78.78.78.0] = collect [for-each c i [keep c]]		;@@ uncomment me when #4421 gets fixed
+	[1x1 2x1 1x2 2x2] = collect [for-each [/i c] im  [keep i]]				;-- special index for images - pair
+	[1 2 3 4        ] = collect [for-each [p: c] im  [keep index? p]]
 
-;; 1D/2D ranges support
-#assert [error? e: try [for-each [/i x] 2x2 []] 'e]										;-- indexes with ranges forbidden
-#assert [error? e: try [for-each [p: x] 2x2 []] 'e]
-#assert [[1x1 2x1 1x2 2x2] = b: collect [for-each i     2x2 [keep i]] 'b]				;-- unfold size into pixel coordinates
-#assert [[1x1 1x2        ] = b: collect [for-each [i j] 2x2 [keep i]] 'b]
-#assert [[1 3 5 7 9      ] = b: collect [for-each [i j] 10  [keep i]] 'b]				;-- unfold length into integers
+	;; 1D/2D ranges support
+	error? try [for-each [/i x] 2x2 []]										;-- indexes with ranges forbidden
+	error? try [for-each [p: x] 2x2 []]
+	[1x1 2x1 1x2 2x2] = collect [for-each i     2x2 [keep i]]				;-- unfold size into pixel coordinates
+	[1x1 1x2        ] = collect [for-each [i j] 2x2 [keep i]]
+	[1 3 5 7 9      ] = collect [for-each [i j] 10  [keep i]]				;-- unfold length into integers
 
-;; maps support
-#assert [error? e: try [for-each [p: x] #(1 2 3 4) []] 'e]								;-- no indexes for maps allowed
-#assert [error? e: try [for-each [/i x] #(1 2 3 4) []] 'e]
-#assert [[1 2 3 4        ] = b: collect [for-each [k v]       #(1 2 3 4) [keep k keep v]] 'b]		;-- map iteration is very relaxed
-#assert [[1 2 3 4        ] = b: collect [for-each x           #(1 2 3 4) [keep x]]        'b]
-#assert [[1 2 3 4 #[none]] = b: collect [for-each [a b c d e] #(1 2 3 4) [keep reduce [a b c d e]]] 'b]
+	;; maps support
+	error? try [for-each [p: x] #(1 2 3 4) []]								;-- no indexes for maps allowed
+	error? try [for-each [/i x] #(1 2 3 4) []]
+	[1 2 3 4        ] = collect [for-each [k v]       #(1 2 3 4) [keep k keep v]]		;-- map iteration is very relaxed
+	[1 2 3 4        ] = collect [for-each x           #(1 2 3 4) [keep x]]       
+	[1 2 3 4 #[none]] = collect [for-each [a b c d e] #(1 2 3 4) [keep reduce [a b c d e]]]
 
-;; vectors support
-#assert [v: make vector! [1 2 3 4 5]]
-#assert [[1 2 3 4 5              ] = b: collect [for-each  x    v [keep x]]                 'b]
-#assert [[[1 2] [3 4] [5 #[none]]] = b: collect [for-each [x y] v [keep/only reduce [x y]]] 'b]
+	;; vectors support
+	v: make vector! [1 2 3 4 5]
+	[1 2 3 4 5              ] = collect [for-each  x    v [keep x]]                
+	[[1 2] [3 4] [5 #[none]]] = collect [for-each [x y] v [keep/only reduce [x y]]]
 
-;; any-block support
-#assert [[[1 2] [3 4] [5 #[none]]] = b: collect [for-each [x y] make hash!   [1 2 3 4 5] [keep/only reduce [x y]]] 'b]
-#assert [[[1 2] [3 4] [5 #[none]]] = b: collect [for-each [x y] as paren!    [1 2 3 4 5] [keep/only reduce [x y]]] 'b]
-; #assert [[[1 2] [3 4] [5 #[none]]] = b: collect [for-each [x y] as path!     [1 2 3 4 5] [keep/only reduce [x y]]] 'b]		;@@ uncomment me when #4421 gets fixed
-; #assert [[[1 2] [3 4] [5 #[none]]] = b: collect [for-each [x y] as lit-path! [1 2 3 4 5] [keep/only reduce [x y]]] 'b]		;@@ uncomment me when #4421 gets fixed
-; #assert [[[1 2] [3 4] [5 #[none]]] = b: collect [for-each [x y] as set-path! [1 2 3 4 5] [keep/only reduce [x y]]] 'b]		;@@ uncomment me when #4421 gets fixed
-; #assert [[[1 2] [3 4] [5 #[none]]] = b: collect [for-each [x y] as get-path! [1 2 3 4 5] [keep/only reduce [x y]]] 'b]		;@@ uncomment me when #4421 gets fixed
+	;; any-block support
+	[[1 2] [3 4] [5 #[none]]] = collect [for-each [x y] make hash!   [1 2 3 4 5] [keep/only reduce [x y]]]
+	[[1 2] [3 4] [5 #[none]]] = collect [for-each [x y] as paren!    [1 2 3 4 5] [keep/only reduce [x y]]]
+	; [[1 2] [3 4] [5 #[none]]] = collect [for-each [x y] as path!     [1 2 3 4 5] [keep/only reduce [x y]]]		;@@ uncomment me when #4421 gets fixed
+	; [[1 2] [3 4] [5 #[none]]] = collect [for-each [x y] as lit-path! [1 2 3 4 5] [keep/only reduce [x y]]]		;@@ uncomment me when #4421 gets fixed
+	; [[1 2] [3 4] [5 #[none]]] = collect [for-each [x y] as set-path! [1 2 3 4 5] [keep/only reduce [x y]]]		;@@ uncomment me when #4421 gets fixed
+	; [[1 2] [3 4] [5 #[none]]] = collect [for-each [x y] as get-path! [1 2 3 4 5] [keep/only reduce [x y]]]		;@@ uncomment me when #4421 gets fixed
 
-;; pattern matching support
-#assert [[#"3" 4       ] = b: collect [v: 4         for-each [x  :v                    ] [1 2.0 #"3" 4 'e] [keep reduce [x :v] ]] 'b]
-#assert [[#"3" 4       ] = b: collect [v: #"3" w: 4 for-each [:v :w                    ] [1 2.0 #"3" 4 'e] [keep reduce [:v :w]]] 'b]
-#assert [[1 2.0        ] = b: collect [             for-each [x [integer!]  y          ] [1 2.0 #"3" 4 'e] [keep reduce [x y]  ]] 'b]
-#assert [[1 2.0 #"3" 4 ] = b: collect [             for-each [x             y [number!]] [1 2.0 #"3" 4 'e] [keep reduce [x y]  ]] 'b]
-#assert [[1 2.0 #"3" 4 ] = b: collect [             for-each [x [any-type!] y [number!]] [1 2.0 #"3" 4 'e] [keep reduce [x y]  ]] 'b]
-#assert [[#"3" 4       ] = b: collect [             for-each [x [char!]     y [number!]] [1 2.0 #"3" 4 'e] [keep reduce [x y]  ]] 'b]
-#assert [[#"3" 4       ] = b: collect [v: #"3"      for-each [:v            y [number!]] [1 2.0 #"3" 4 'e] [keep reduce [:v y] ]] 'b]
-#assert [[2 2 2 2      ] = b: collect [v: 2         for-each [:v   ]                     [2 2.0 #"^B" 2]   [keep :v] ] 'b]
-#assert [[2 2.0 #"^B" 2] = b: collect [v: 2         for-each [p: :v]                     [2 2.0 #"^B" 2]   [keep p/1]] 'b]
+	;; pattern matching support
+	[#"3" 4       ] = collect [v: 4         for-each [x  :v                    ] [1 2.0 #"3" 4 'e] [keep reduce [x :v] ]]
+	[#"3" 4       ] = collect [v: #"3" w: 4 for-each [:v :w                    ] [1 2.0 #"3" 4 'e] [keep reduce [:v :w]]]
+	[1 2.0        ] = collect [             for-each [x [integer!]  y          ] [1 2.0 #"3" 4 'e] [keep reduce [x y]  ]]
+	[1 2.0 #"3" 4 ] = collect [             for-each [x             y [number!]] [1 2.0 #"3" 4 'e] [keep reduce [x y]  ]]
+	[1 2.0 #"3" 4 ] = collect [             for-each [x [any-type!] y [number!]] [1 2.0 #"3" 4 'e] [keep reduce [x y]  ]]
+	[#"3" 4       ] = collect [             for-each [x [char!]     y [number!]] [1 2.0 #"3" 4 'e] [keep reduce [x y]  ]]
+	[#"3" 4       ] = collect [v: #"3"      for-each [:v            y [number!]] [1 2.0 #"3" 4 'e] [keep reduce [:v y] ]]
+	[2 2 2 2      ] = collect [v: 2         for-each [:v   ]                     [2 2.0 #"^B" 2]   [keep :v] ]
+	[2 2.0 #"^B" 2] = collect [v: 2         for-each [p: :v]                     [2 2.0 #"^B" 2]   [keep p/1]]
 
-;; /same & /case value filters
-#assert [[2 2            ] =  b: collect [v: 2 for-each/case [p: :v] [2 2.0 #"^B" 2] [keep p/1]] 'b]
-#assert [[2 2            ] =  b: collect [v: 2 for-each/same [p: :v] [2 2.0 #"^B" 2] [keep p/1]] 'b]
-#assert [r: reduce [v: "v" w: "v" w uppercase copy v]]
-#assert [["v" "v" "v" "V"] == b: collect [for-each           [p: :v] r [keep p/1]] 'b]
-#assert [["v" "v" "v"    ] == b: collect [for-each/case      [p: :v] r [keep p/1]] 'b]
-#assert [["v" "v"        ] == b: collect [for-each/same      [p: :w] r [keep p/1]] 'b]
-#assert [["v"            ] == b: collect [for-each/same      [p: :v] r [keep p/1]] 'b]
+	;; /same & /case value filters
+	[2 2            ] =  collect [v: 2 for-each/case [p: :v] [2 2.0 #"^B" 2] [keep p/1]]
+	[2 2            ] =  collect [v: 2 for-each/same [p: :v] [2 2.0 #"^B" 2] [keep p/1]]
+	r: reduce [v: "v" w: "v" w uppercase copy v]
+	["v" "v" "v" "V"] == collect [for-each           [p: :v] r [keep p/1]]
+	["v" "v" "v"    ] == collect [for-each/case      [p: :v] r [keep p/1]]
+	["v" "v"        ] == collect [for-each/same      [p: :w] r [keep p/1]]
+	["v"            ] == collect [for-each/same      [p: :v] r [keep p/1]]
 
-;; `advance` support
-#assert [[[2 3] #[none]] = b: collect [for-each  x    [1 2 3    ] [        keep/only advance]] 'b]
-#assert [[[2 3 4] [4]  ] = b: collect [for-each  x    [1 2 3 4  ] [        keep/only advance]] 'b]
-#assert [[[3 4] #[none]] = b: collect [for-each  x    [1 2 3 4  ] [advance keep/only advance]] 'b]
-#assert [[[3 4]        ] = b: collect [for-each [x y] [1 2 3 4  ] [        keep/only advance]] 'b]
-#assert [[[5]          ] = b: collect [for-each [x y] [1 2 3 4 5] [advance keep/only advance]] 'b]
-#assert [[4 #[none]    ] = b: collect [for-each [x [integer!]] [1 2.0 #"3" 4 'e 6] [set [x] advance keep x]] 'b]	;-- jumps to next match
-#assert [[2.0 6        ] = b: collect [for-each [x [number!] ] [1 2.0 #"3" 4 'e 6] [set [x] advance keep x]] 'b]
-#assert [[1 6          ] = b: collect [for-each [x [integer!]] [1 2.0 #"3" 4 'e 6] [advance keep x]] 'b]			;-- does not affect the `x`
+	;; `advance` support
+	[[2 3] #[none]] = collect [for-each  x    [1 2 3    ] [        keep/only advance]]
+	[[2 3 4] [4]  ] = collect [for-each  x    [1 2 3 4  ] [        keep/only advance]]
+	[[3 4] #[none]] = collect [for-each  x    [1 2 3 4  ] [advance keep/only advance]]
+	[[3 4]        ] = collect [for-each [x y] [1 2 3 4  ] [        keep/only advance]]
+	[[5]          ] = collect [for-each [x y] [1 2 3 4 5] [advance keep/only advance]]
+	[4 #[none]    ] = collect [for-each [x [integer!]] [1 2.0 #"3" 4 'e 6] [set [x] advance keep x]]	;-- jumps to next match
+	[2.0 6        ] = collect [for-each [x [number!] ] [1 2.0 #"3" 4 'e 6] [set [x] advance keep x]]
+	[1 6          ] = collect [for-each [x [integer!]] [1 2.0 #"3" 4 'e 6] [advance keep x]]			;-- does not affect the `x`
 
-;; confirm that there's no leakage
-#assert [(x: 1     for-each x     [2 3 4] [x: x * x]  x = 1) 'x]
-#assert [(x: y: 1  for-each [x y] [2 3 4] [x: y: 0]   all [x = 1 y = 1]) 'x]
+	;; confirm that there's no leakage
+	(x: 1     for-each x     [2 3 4] [x: x * x]  x = 1)
+	(x: y: 1  for-each [x y] [2 3 4] [x: y: 0]   all [x = 1 y = 1])
+]]

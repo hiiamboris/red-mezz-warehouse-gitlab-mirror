@@ -4,6 +4,7 @@ Red [
 	author:  @hiiamboris
 ]
 
+#include %include-once.red
 #include %assert.red									;-- including it first will expand embedded assertions in the other scripts
 ; #assert off												;-- optionally uncomment this to disable assertions 
 #include %debug.red
@@ -27,8 +28,8 @@ Red [
 ; #include %bind-only.red								;-- included by for-each.red
 ; #include %for-each.red								;-- included by map-each.red
 #include %map-each.red
-; #include %xyloop.red									;-- included by explore.red
-; #include %relativity.red								;-- included by explore.red
+#include %xyloop.red									;-- included by explore.red
+#include %relativity.red								;-- included by explore.red
 ; #include %explore.red									;@@ temporary
 
 #include %clock.red

@@ -9,6 +9,7 @@ Red [
 ]
 
 ; recycle/off
+#include %localize-macro.red
 #include %assert.red
 #include %error-macro.red
 ; #include %bind-only.red
@@ -574,353 +575,353 @@ context [
 ]
 
 
+#localize [#assert [
 
-;---------------------------- FOR-EACH -----------------------------
+	;---------------------------- FOR-EACH -----------------------------
 
-;; return value tests
-#assert [error? try [for-each [] [1] [1]]]
-#assert [unset? for-each x [] [1]]
-#assert [unset? for-each x [1 2 3] [continue]]
-#assert [unset? for-each x [1 2 3] [break]]
-; #assert [123 =  for-each x [1 2 3] [break/return 123]]	;@@ broken in Red
-#assert [3 =    r: for-each x [1 2 3] [x] 'r]
+	;; return value tests
+	error? try [for-each [] [1] [1]]
+	unset? for-each x [] [1]
+	unset? for-each x [1 2 3] [continue]
+	unset? for-each x [1 2 3] [break]
+	; 123 =  for-each x [1 2 3] [break/return 123]	;@@ broken in Red
+	3 =    for-each x [1 2 3] [x]
 
-;; spec unfolding tests
-#assert [empty?    b: collect [for-each  x  [     ] [keep x]] 'b]
-#assert [[1    ] = b: collect [for-each  x  [1    ] [keep x]] 'b]
-#assert [[1 2  ] = b: collect [for-each  x  [1 2  ] [keep x]] 'b]
-#assert [[1 2 3] = b: collect [for-each  x  [1 2 3] [keep x]] 'b]
-#assert [[1    ] = b: collect [for-each [x] [1    ] [keep x]] 'b]
-#assert [[1 2  ] = b: collect [for-each [x] [1 2  ] [keep x]] 'b]
-#assert [[1 2 3] = b: collect [for-each [x] [1 2 3] [keep x]] 'b]
-#assert [[[1 2] [3 #[none]]      ] = b: collect [for-each [x y] [1 2 3    ] [keep/only reduce [x y]]] 'b]
-#assert [[[1 2] [3 4]            ] = b: collect [for-each [x y] [1 2 3 4  ] [keep/only reduce [x y]]] 'b]
-#assert [[[1 2] [3 4] [5 #[none]]] = b: collect [for-each [x y] [1 2 3 4 5] [keep/only reduce [x y]]] 'b]
+	;; spec unfolding tests
+	empty?    collect [for-each  x  [     ] [keep x]]
+	[1    ] = collect [for-each  x  [1    ] [keep x]]
+	[1 2  ] = collect [for-each  x  [1 2  ] [keep x]]
+	[1 2 3] = collect [for-each  x  [1 2 3] [keep x]]
+	[1    ] = collect [for-each [x] [1    ] [keep x]]
+	[1 2  ] = collect [for-each [x] [1 2  ] [keep x]]
+	[1 2 3] = collect [for-each [x] [1 2 3] [keep x]]
+	[[1 2] [3 #[none]]      ] = collect [for-each [x y] [1 2 3    ] [keep/only reduce [x y]]]
+	[[1 2] [3 4]            ] = collect [for-each [x y] [1 2 3 4  ] [keep/only reduce [x y]]]
+	[[1 2] [3 4] [5 #[none]]] = collect [for-each [x y] [1 2 3 4 5] [keep/only reduce [x y]]]
 
-;; `continue` & `break` support
-#assert [[1 2 3] = b: collect [for-each  x [1 2 3] [keep x continue]] 'b]
-#assert [[     ] = b: collect [for-each  x [1 2 3] [continue keep x]] 'b]
-#assert [[1    ] = b: collect [for-each  x [1 2 3] [keep x break]   ] 'b]
+	;; `continue` & `break` support
+	[1 2 3] = collect [for-each  x [1 2 3] [keep x continue]]
+	[     ] = collect [for-each  x [1 2 3] [continue keep x]]
+	[1    ] = collect [for-each  x [1 2 3] [keep x break]   ]
 
-;; indexes & /reverse
-#assert [[1 2 3  ] = b: collect [for-each [/i x]   [x y z]     [keep i       ]] 'b]
-#assert [[1 2 3  ] = b: collect [for-each [p: x]   [x y z]     [keep index? p]] 'b]
-#assert [[1 2 3  ] = b: collect [for-each [/i x y] [a b c d e] [keep i       ]] 'b]
-#assert [[1 3 5  ] = b: collect [for-each [p: x y] [a b c d e] [keep index? p]] 'b]
-#assert [[1 3 4 5] = b: collect [for-each [p: x y] [a b c d e] [keep index? p p: back p]] 'b]	;-- 1st `back` fails
-#assert [[1 4    ] = b: collect [for-each [p: x y] [a b c d e] [keep index? p p: next p]] 'b]
-#assert [error? set/any 'e try  [for-each [p: x] [a b c] [p: 1]]  'e]
-#assert [error? set/any 'e try  [for-each [p: x] [a b c] [p: ""]] 'e]
-#assert [[1 2 3  ] = b: collect [for-each/reverse [/i x]   [x y z]     [keep i       ]] 'b]
-#assert [[3 2 1  ] = b: collect [for-each/reverse [p: x]   [x y z]     [keep index? p]] 'b]
-#assert [[1 2 3  ] = b: collect [for-each/reverse [/i x y] [a b c d e] [keep i       ]] 'b]
-#assert [[5 3 1  ] = b: collect [for-each/reverse [p: x y] [a b c d e] [keep index? p]] 'b]
-#assert [[3 2 1  ] = b: collect [for-each/reverse x 3                  [keep x ]] 'b]
-#assert [[3 4 1 2] = b: collect [for-each/reverse [x y] 4              [keep reduce [x y]]] 'b]
-#assert [[3 #[none] 1 2] = b: collect [for-each/reverse [x y] 3        [keep reduce [x y]]] 'b]
-#assert [empty?      b: collect [for-each/reverse x            0       [keep x]] 'b]
-#assert [empty?      b: collect [for-each/reverse x           -1       [keep x]] 'b]
-#assert [[3 2    ] = b: collect [for-each/reverse x next      [1 2 3]  [keep x]] 'b]		;-- should stop at initial index
-#assert [[2 3    ] = b: collect [for-each/reverse [x y]  next [1 2 3]  [keep reduce [x y]]] 'b]
-#assert [[3      ] = b: collect [for-each/reverse x next next [1 2 3]  [keep x]] 'b]
-#assert [empty?      b: collect [for-each/reverse x next next [1 2]    [keep x]] 'b]
-#assert [[1 4    ] = b: collect [for-each         [/i x [word!]  ] [a 2 3 b 5] [keep i]] 'b]	;-- iteration number counts even if not matched
-#assert [[2 5    ] = b: collect [for-each/reverse [/i x [word!]  ] [a 2 3 b 5] [keep i]] 'b]	;-- /reverse reorders iteration number
-#assert [[2      ] = b: collect [for-each/reverse [/i x y [word!]] [a 2 3 b 5] [keep i]] 'b]	;-- iteration number accounts for step size
-#assert [[1      ] = b: collect [for-each/reverse [/i x y [word!]] [a 2 3 b  ] [keep i]] 'b]
+	;; indexes & /reverse
+	[1 2 3  ] = collect [for-each [/i x]   [x y z]     [keep i       ]]
+	[1 2 3  ] = collect [for-each [p: x]   [x y z]     [keep index? p]]
+	[1 2 3  ] = collect [for-each [/i x y] [a b c d e] [keep i       ]]
+	[1 3 5  ] = collect [for-each [p: x y] [a b c d e] [keep index? p]]
+	[1 3 4 5] = collect [for-each [p: x y] [a b c d e] [keep index? p p: back p]]	;-- 1st `back` fails
+	[1 4    ] = collect [for-each [p: x y] [a b c d e] [keep index? p p: next p]]
+	error?         try  [for-each [p: x] [a b c] [p: 1]] 
+	error?         try  [for-each [p: x] [a b c] [p: ""]]
+	[1 2 3  ] = collect [for-each/reverse [/i x]   [x y z]     [keep i       ]]
+	[3 2 1  ] = collect [for-each/reverse [p: x]   [x y z]     [keep index? p]]
+	[1 2 3  ] = collect [for-each/reverse [/i x y] [a b c d e] [keep i       ]]
+	[5 3 1  ] = collect [for-each/reverse [p: x y] [a b c d e] [keep index? p]]
+	[3 2 1  ] = collect [for-each/reverse x 3                  [keep x ]]
+	[3 4 1 2] = collect [for-each/reverse [x y] 4              [keep reduce [x y]]]
+	[3 #[none] 1 2] = collect [for-each/reverse [x y] 3        [keep reduce [x y]]]
+	empty?      collect [for-each/reverse x            0       [keep x]]
+	empty?      collect [for-each/reverse x           -1       [keep x]]
+	[3 2    ] = collect [for-each/reverse x next      [1 2 3]  [keep x]]		;-- should stop at initial index
+	[2 3    ] = collect [for-each/reverse [x y]  next [1 2 3]  [keep reduce [x y]]]
+	[3      ] = collect [for-each/reverse x next next [1 2 3]  [keep x]]
+	empty?      collect [for-each/reverse x next next [1 2]    [keep x]]
+	[1 4    ] = collect [for-each         [/i x [word!]  ] [a 2 3 b 5] [keep i]]	;-- iteration number counts even if not matched
+	[2 5    ] = collect [for-each/reverse [/i x [word!]  ] [a 2 3 b 5] [keep i]]	;-- /reverse reorders iteration number
+	[2      ] = collect [for-each/reverse [/i x y [word!]] [a 2 3 b 5] [keep i]]	;-- iteration number accounts for step size
+	[1      ] = collect [for-each/reverse [/i x y [word!]] [a 2 3 b  ] [keep i]]
 
-;; pipe
-#assert [[1 2 3] = b: collect [for-each [x |]           [1 2 3] [keep x]] 'b]
-#assert [[1 2 3] = b: collect [for-each [/i x |]        [x y z] [keep i]] 'b]
-#assert [[x y z] = b: collect [for-each [/i x |]        [x y z] [keep x]] 'b]
-#assert [[1 2 3] = b: collect [for-each [p: x |]        [x y z] [keep index? p]] 'b]
-#assert [[x y z] = b: collect [for-each [p: x |]        [x y z] [keep x]] 'b]
-#assert [[x y z] = b: collect [for-each [p: | x]        [x y z] [keep x p: next p]] 'b]			;-- zero step, manual advance
-#assert [error? set/any 'r try [for-each [p: |] [x y z] [p: next p]] 'e]						;-- no mandatory words
-#assert [[[x y] [y z]] = b: collect [for-each [x | y]   [x y z] [keep/only reduce [x y]]] 'b]
-#assert [[[x y z]    ] = b: collect [for-each [x | y z] [x y z] [keep/only reduce [x y z]]] 'b]
-#assert [empty?          b: collect [for-each [x | y z] [x y]   [keep/only reduce [x y z]]] 'b]		;-- too short to fit in
-#assert [[1 2 3]       = b: collect [for-each [x y | z] [1 2 3]       [keep reduce [x y z]]] 'b]
-#assert [[1 2 3]       = b: collect [for-each [x y | z] [1 2 3 4]     [keep reduce [x y z]]] 'b]
-#assert [[1 2 3 3 4 5] = b: collect [for-each [x y | z] [1 2 3 4 5]   [keep reduce [x y z]]] 'b]
-#assert [[1 2 3 3 4 5] = b: collect [for-each [x y | z] [1 2 3 4 5 6] [keep reduce [x y z]]] 'b]
-#assert [[3 2 1] = b: collect [for-each/reverse [x |]           [1 2 3] [keep x]] 'b]
-#assert [[1 2 3] = b: collect [for-each/reverse [/i x |]        [x y z] [keep i]] 'b]
-#assert [[z y x] = b: collect [for-each/reverse [/i x |]        [x y z] [keep x]] 'b]
-#assert [[3 2 1] = b: collect [for-each/reverse [p: x |]        [x y z] [keep index? p]] 'b]
-#assert [[z y x] = b: collect [for-each/reverse [p: x |]        [x y z] [keep x]] 'b]
-#assert [[[y z] [x y]] = b: collect [for-each/reverse [x | y]   [x y z] [keep/only reduce [x y]]] 'b]
-#assert [[[x y z]    ] = b: collect [for-each/reverse [x | y z] [x y z] [keep/only reduce [x y z]]] 'b]
-#assert [empty?          b: collect [for-each/reverse [x | y z] [x y]   [keep/only reduce [x y z]]] 'b]		;-- too short to fit in
+	;; pipe
+	[1 2 3] = collect [for-each [x |]           [1 2 3] [keep x]]
+	[1 2 3] = collect [for-each [/i x |]        [x y z] [keep i]]
+	[x y z] = collect [for-each [/i x |]        [x y z] [keep x]]
+	[1 2 3] = collect [for-each [p: x |]        [x y z] [keep index? p]]
+	[x y z] = collect [for-each [p: x |]        [x y z] [keep x]]
+	[x y z] = collect [for-each [p: | x]        [x y z] [keep x p: next p]]			;-- zero step, manual advance
+	error?        try [for-each [p: |] [x y z] [p: next p]]							;-- no mandatory words
+	[[x y] [y z]] = collect [for-each [x | y]   [x y z] [keep/only reduce [x y]]]
+	[[x y z]    ] = collect [for-each [x | y z] [x y z] [keep/only reduce [x y z]]]
+	empty?          collect [for-each [x | y z] [x y]   [keep/only reduce [x y z]]]		;-- too short to fit in
+	[1 2 3]       = collect [for-each [x y | z] [1 2 3]       [keep reduce [x y z]]]
+	[1 2 3]       = collect [for-each [x y | z] [1 2 3 4]     [keep reduce [x y z]]]
+	[1 2 3 3 4 5] = collect [for-each [x y | z] [1 2 3 4 5]   [keep reduce [x y z]]]
+	[1 2 3 3 4 5] = collect [for-each [x y | z] [1 2 3 4 5 6] [keep reduce [x y z]]]
+	[3 2 1] = collect [for-each/reverse [x |]           [1 2 3] [keep x]]
+	[1 2 3] = collect [for-each/reverse [/i x |]        [x y z] [keep i]]
+	[z y x] = collect [for-each/reverse [/i x |]        [x y z] [keep x]]
+	[3 2 1] = collect [for-each/reverse [p: x |]        [x y z] [keep index? p]]
+	[z y x] = collect [for-each/reverse [p: x |]        [x y z] [keep x]]
+	[[y z] [x y]] = collect [for-each/reverse [x | y]   [x y z] [keep/only reduce [x y]]]
+	[[x y z]    ] = collect [for-each/reverse [x | y z] [x y z] [keep/only reduce [x y z]]]
+	empty?          collect [for-each/reverse [x | y z] [x y]   [keep/only reduce [x y z]]]		;-- too short to fit in
 
-;; any-string support
-#assert [[#"a" #"b" #"c"] = b: collect [for-each c "abc" [keep c]] 'b]
-#assert [[#"a" #"b" #"c"] = b: collect [for-each c <abc> [keep c]] 'b]
-#assert [[#"a" #"b" #"c"] = b: collect [for-each c %abc  [keep c]] 'b]
-#assert [[#"a" #"@" #"b"] = b: collect [for-each c a@b   [keep c]] 'b]
-#assert [[#"a" #":" #"b"] = b: collect [for-each c a:b   [keep c]] 'b]
+	;; any-string support
+	[#"a" #"b" #"c"] = collect [for-each c "abc" [keep c]]
+	[#"a" #"b" #"c"] = collect [for-each c <abc> [keep c]]
+	[#"a" #"b" #"c"] = collect [for-each c %abc  [keep c]]
+	[#"a" #"@" #"b"] = collect [for-each c a@b   [keep c]]
+	[#"a" #":" #"b"] = collect [for-each c a:b   [keep c]]
 
-;; image support
-#assert [im: make image! [2x2 #{111111 222222 333333 444444}]]
-; #assert [[17.17.17.0 34.34.34.0 51.51.51.0 78.78.78.0] = b: collect [for-each c i [keep c]] 'b]		;@@ uncomment me when #4421 gets fixed
-; #assert [[1x1 2x1 1x2 2x2] = b: collect [for-each [/i c] im  [keep i]] 'b]				;-- special index for images - pair
-#assert [[1 2 3 4        ] = b: collect [for-each [p: c] im  [keep index? p]] 'b]
+	;; image support
+	im: make image! [2x2 #{111111 222222 333333 444444}]
+	; [17.17.17.0 34.34.34.0 51.51.51.0 78.78.78.0] = collect [for-each c i [keep c]]		;@@ uncomment me when #4421 gets fixed
+	; [1x1 2x1 1x2 2x2] = collect [for-each [/i c] im  [keep i]]				;-- special index for images - pair
+	[1 2 3 4        ] = collect [for-each [p: c] im  [keep index? p]]
 
-;; 1D/2D ranges support
-#assert [not error? set/any 'e try [for-each [/i x] 2x2 []] 'e]
-#assert [error? set/any 'e try [for-each [p: x] 2x2 []] 'e]								;-- series indexes with ranges forbidden
-#assert [[1x1 2x1 1x2 2x2] = b: collect [for-each i     2x2 [keep i]] 'b]				;-- unfold size into pixel coordinates
-#assert [[1x1 1x2        ] = b: collect [for-each [i j] 2x2 [keep i]] 'b]
-#assert [[1 3 5 7 9      ] = b: collect [for-each [i j] 10  [keep i]] 'b]				;-- unfold length into integers
+	;; 1D/2D ranges support
+	not error?              try [for-each [/i x] 2x2 []]
+	    error?              try [for-each [p: x] 2x2 []]					;-- series indexes with ranges forbidden
+	[1x1 2x1 1x2 2x2] = collect [for-each i     2x2 [keep i]]				;-- unfold size into pixel coordinates
+	[1x1 1x2        ] = collect [for-each [i j] 2x2 [keep i]]
+	[1 3 5 7 9      ] = collect [for-each [i j] 10  [keep i]]				;-- unfold length into integers
 
-;; maps support
-#assert [error? set/any 'e try [for-each [p: x] #(1 2 3 4) []] 'e]						;-- no series index for maps allowed
-#assert [not error? set/any 'e try [for-each [/i x] #(1 2 3 4) []] 'e]
-#assert [[1 2 3 4        ] = b: collect [for-each [k v]       #(1 2 3 4) [keep k keep v]] 'b]		;-- map iteration is very relaxed
-#assert [[1 2 3 4        ] = b: collect [for-each x           #(1 2 3 4) [keep x]]        'b]
-#assert [[1 2 3 4 #[none]] = b: collect [for-each [a b c d e] #(1 2 3 4) [keep reduce [a b c d e]]] 'b]
+	;; maps support
+	    error?              try [for-each [p: x] #(1 2 3 4) []]							;-- no series index for maps allowed
+	not error?              try [for-each [/i x] #(1 2 3 4) []]
+	[1 2 3 4        ] = collect [for-each [k v]       #(1 2 3 4) [keep k keep v]]		;-- map iteration is very relaxed
+	[1 2 3 4        ] = collect [for-each x           #(1 2 3 4) [keep x]]       
+	[1 2 3 4 #[none]] = collect [for-each [a b c d e] #(1 2 3 4) [keep reduce [a b c d e]]]
 
-;; vectors support
-#assert [v: make vector! [1 2 3 4 5]]
-#assert [[1 2 3 4 5              ] = b: collect [for-each  x    v [keep x]]                 'b]
-#assert [[[1 2] [3 4] [5 #[none]]] = b: collect [for-each [x y] v [keep/only reduce [x y]]] 'b]
+	;; vectors support
+	v: make vector! [1 2 3 4 5]
+	[1 2 3 4 5              ] = collect [for-each  x    v [keep x]]                
+	[[1 2] [3 4] [5 #[none]]] = collect [for-each [x y] v [keep/only reduce [x y]]]
 
-;; any-block support
-#assert [[[1 2] [3 4] [5 #[none]]] = b: collect [for-each [x y] make hash!   [1 2 3 4 5] [keep/only reduce [x y]]] 'b]
-#assert [[[1 2] [3 4] [5 #[none]]] = b: collect [for-each [x y] as paren!    [1 2 3 4 5] [keep/only reduce [x y]]] 'b]
-; #assert [[[1 2] [3 4] [5 #[none]]] = b: collect [for-each [x y] as path!     [1 2 3 4 5] [keep/only reduce [x y]]] 'b]		;@@ uncomment me when #4421 gets fixed
-; #assert [[[1 2] [3 4] [5 #[none]]] = b: collect [for-each [x y] as lit-path! [1 2 3 4 5] [keep/only reduce [x y]]] 'b]		;@@ uncomment me when #4421 gets fixed
-; #assert [[[1 2] [3 4] [5 #[none]]] = b: collect [for-each [x y] as set-path! [1 2 3 4 5] [keep/only reduce [x y]]] 'b]		;@@ uncomment me when #4421 gets fixed
-; #assert [[[1 2] [3 4] [5 #[none]]] = b: collect [for-each [x y] as get-path! [1 2 3 4 5] [keep/only reduce [x y]]] 'b]		;@@ uncomment me when #4421 gets fixed
+	;; any-block support
+	[[1 2] [3 4] [5 #[none]]] = collect [for-each [x y] make hash!   [1 2 3 4 5] [keep/only reduce [x y]]]
+	[[1 2] [3 4] [5 #[none]]] = collect [for-each [x y] as paren!    [1 2 3 4 5] [keep/only reduce [x y]]]
+	; [[1 2] [3 4] [5 #[none]]] = collect [for-each [x y] as path!     [1 2 3 4 5] [keep/only reduce [x y]]]		;@@ uncomment me when #4421 gets fixed
+	; [[1 2] [3 4] [5 #[none]]] = collect [for-each [x y] as lit-path! [1 2 3 4 5] [keep/only reduce [x y]]]		;@@ uncomment me when #4421 gets fixed
+	; [[1 2] [3 4] [5 #[none]]] = collect [for-each [x y] as set-path! [1 2 3 4 5] [keep/only reduce [x y]]]		;@@ uncomment me when #4421 gets fixed
+	; [[1 2] [3 4] [5 #[none]]] = collect [for-each [x y] as get-path! [1 2 3 4 5] [keep/only reduce [x y]]]		;@@ uncomment me when #4421 gets fixed
 
-;; pattern matching support
-#assert [[#"3" 4       ] = b: collect [v: 4         for-each [x   (v)                  ] [1 2.0 #"3" 4 'e] [keep reduce [x v] ]] 'b]
-#assert [[#"3" 4       ] = b: collect [v: #"3" w: 4 for-each [(v) (w)                  ] [1 2.0 #"3" 4 'e] [keep reduce [v w]]] 'b]
-#assert [[1 2.0        ] = b: collect [             for-each [x [integer!]  y          ] [1 2.0 #"3" 4 'e] [keep reduce [x y]  ]] 'b]
-#assert [[1 2.0 #"3" 4 ] = b: collect [             for-each [x             y [number!]] [1 2.0 #"3" 4 'e] [keep reduce [x y]  ]] 'b]
-#assert [[1 2.0 #"3" 4 ] = b: collect [             for-each [x [any-type!] y [number!]] [1 2.0 #"3" 4 'e] [keep reduce [x y]  ]] 'b]
-#assert [[#"3" 4       ] = b: collect [             for-each [x [char!]     y [number!]] [1 2.0 #"3" 4 'e] [keep reduce [x y]  ]] 'b]
-#assert [[#"3" 4       ] = b: collect [v: #"3"      for-each [(v)           y [number!]] [1 2.0 #"3" 4 'e] [keep reduce [v y] ]] 'b]
-; #assert [[2 2 2 2      ] = b: collect [v: 2         for-each [(v)  ]                     [2 2.0 #"^B" 2]   [keep v] ] 'b]	;@@ FIXME: affected by #4327
-; #assert [[2 2.0 #"^B" 2] = b: collect [v: 2         for-each [p: (v)]                    [2 2.0 #"^B" 2]   [keep p/1]] 'b]	;@@ FIXME: affected by #4327
+	;; pattern matching support
+	[#"3" 4       ] = collect [v: 4         for-each [x   (v)                  ] [1 2.0 #"3" 4 'e] [keep reduce [x v] ]]
+	[#"3" 4       ] = collect [v: #"3" w: 4 for-each [(v) (w)                  ] [1 2.0 #"3" 4 'e] [keep reduce [v w] ]]
+	[1 2.0        ] = collect [             for-each [x [integer!]  y          ] [1 2.0 #"3" 4 'e] [keep reduce [x y] ]]
+	[1 2.0 #"3" 4 ] = collect [             for-each [x             y [number!]] [1 2.0 #"3" 4 'e] [keep reduce [x y] ]]
+	[1 2.0 #"3" 4 ] = collect [             for-each [x [any-type!] y [number!]] [1 2.0 #"3" 4 'e] [keep reduce [x y] ]]
+	[#"3" 4       ] = collect [             for-each [x [char!]     y [number!]] [1 2.0 #"3" 4 'e] [keep reduce [x y] ]]
+	[#"3" 4       ] = collect [v: #"3"      for-each [(v)           y [number!]] [1 2.0 #"3" 4 'e] [keep reduce [v y] ]]
+	; [2 2 2 2      ] = collect [v: 2         for-each [(v)  ]                     [2 2.0 #"^B" 2]   [keep v] ]	;@@ FIXME: affected by #4327
+	; [2 2.0 #"^B" 2] = collect [v: 2         for-each [p: (v)]                    [2 2.0 #"^B" 2]   [keep p/1]]	;@@ FIXME: affected by #4327
 
-;; /same & /case value filters
-#assert [[2 2            ] =  b: collect [v: 2 for-each/case [p: (v)] [2 2.0 #"^B" 2] [keep p/1]] 'b]
-#assert [[2 2            ] =  b: collect [v: 2 for-each/same [p: (v)] [2 2.0 #"^B" 2] [keep p/1]] 'b]
-#assert [r: reduce [v: "v" w: "v" w uppercase copy v]]
-#assert [["v" "v" "v" "V"] == b: collect [for-each           [p: (v)] r [keep p/1]] 'b]
-#assert [["v" "v" "v"    ] == b: collect [for-each/case      [p: (v)] r [keep p/1]] 'b]
-#assert [["v" "v"        ] == b: collect [for-each/same      [p: (w)] r [keep p/1]] 'b]
-#assert [["v"            ] == b: collect [for-each/same      [p: (v)] r [keep p/1]] 'b]
+	;; /same & /case value filters
+	[2 2            ] =  collect [v: 2 for-each/case [p: (v)] [2 2.0 #"^B" 2] [keep p/1]]
+	[2 2            ] =  collect [v: 2 for-each/same [p: (v)] [2 2.0 #"^B" 2] [keep p/1]]
+	r: reduce [v: "v" w: "v" w uppercase copy v]
+	["v" "v" "v" "V"] == collect [for-each           [p: (v)] r [keep p/1]]
+	["v" "v" "v"    ] == collect [for-each/case      [p: (v)] r [keep p/1]]
+	["v" "v"        ] == collect [for-each/same      [p: (w)] r [keep p/1]]
+	["v"            ] == collect [for-each/same      [p: (v)] r [keep p/1]]
 
-;; `advance` support
-; #assert [[[2 3] #[none]] = b: collect [for-each  x    [1 2 3    ] [        keep/only advance]] 'b]
-; #assert [[[2 3 4] [4]  ] = b: collect [for-each  x    [1 2 3 4  ] [        keep/only advance]] 'b]
-; #assert [[[3 4] #[none]] = b: collect [for-each  x    [1 2 3 4  ] [advance keep/only advance]] 'b]
-; #assert [[[3 4]        ] = b: collect [for-each [x y] [1 2 3 4  ] [        keep/only advance]] 'b]
-; #assert [[[5]          ] = b: collect [for-each [x y] [1 2 3 4 5] [advance keep/only advance]] 'b]
-; #assert [[4 #[none]    ] = b: collect [for-each [x [integer!]] [1 2.0 #"3" 4 'e 6] [set [x] advance keep x]] 'b]	;-- jumps to next match
-; #assert [[2.0 6        ] = b: collect [for-each [x [number!] ] [1 2.0 #"3" 4 'e 6] [set [x] advance keep x]] 'b]
-; #assert [[1 6          ] = b: collect [for-each [x [integer!]] [1 2.0 #"3" 4 'e 6] [advance keep x]] 'b]			;-- does not affect the `x`
+	;; `advance` support
+	; [[2 3] #[none]] = collect [for-each  x    [1 2 3    ] [        keep/only advance]]
+	; [[2 3 4] [4]  ] = collect [for-each  x    [1 2 3 4  ] [        keep/only advance]]
+	; [[3 4] #[none]] = collect [for-each  x    [1 2 3 4  ] [advance keep/only advance]]
+	; [[3 4]        ] = collect [for-each [x y] [1 2 3 4  ] [        keep/only advance]]
+	; [[5]          ] = collect [for-each [x y] [1 2 3 4 5] [advance keep/only advance]]
+	; [4 #[none]    ] = collect [for-each [x [integer!]] [1 2.0 #"3" 4 'e 6] [set [x] advance keep x]]	;-- jumps to next match
+	; [2.0 6        ] = collect [for-each [x [number!] ] [1 2.0 #"3" 4 'e 6] [set [x] advance keep x]]
+	; [1 6          ] = collect [for-each [x [integer!]] [1 2.0 #"3" 4 'e 6] [advance keep x]]			;-- does not affect the `x`
 
-;; confirm that there's no leakage
-#assert [(x: 1     for-each x     [2 3 4] [x: x * x]  x = 1) 'x]
-#assert [(x: y: 1  for-each [x y] [2 3 4] [x: y: 0]   all [x = 1 y = 1]) 'x]
-
-
-
-
-
-;---------------------------- MAP-EACH -----------------------------
-
-;; spec unfolding tests
-#assert [empty?    b: map-each  x  [     ] [x] 'b]
-#assert [[1    ] = b: map-each  x  [1    ] [x] 'b]
-#assert [[1 2  ] = b: map-each  x  [1 2  ] [x] 'b]
-#assert [[1 2 3] = b: map-each  x  [1 2 3] [x] 'b]
-#assert [[1    ] = b: map-each [x] [1    ] [x] 'b]
-#assert [[1 2  ] = b: map-each [x] [1 2  ] [x] 'b]
-#assert [[1 2 3] = b: map-each [x] [1 2 3] [x] 'b]
-#assert [[[1 2] [3 #[none]]      ] = b: map-each/only [x y] [1 2 3    ] [reduce [x y]] 'b]
-#assert [[[1 2] [3 4]            ] = b: map-each/only [x y] [1 2 3 4  ] [reduce [x y]] 'b]
-#assert [[[1 2] [3 4] [5 #[none]]] = b: map-each/only [x y] [1 2 3 4 5] [reduce [x y]] 'b]
-
-;; decomposition of strings
-#assert [[#"a" #"b" #"c"]    = b: map-each  x    "abc"   [x] 'b]
-#assert [[#"a" #"c" #"e"]    = b: map-each [x y] "abcde" [x] 'b]
-#assert [[#"b" #"d" #[none]] = b: map-each [x y] "abcde" [y] 'b]
-#assert [[#"b" #"d"]         = b: map-each [x y] "abcd"  [y] 'b]
-#assert [[#"a" #"b" #"c"]    = b: map-each  x     <abc>  [x] 'b]
-#assert [[#"a" #"b" #"c"]    = b: map-each  x     %abc   [x] 'b]
-#assert [[#"a" #"@" #"b"]    = b: map-each  x     a@b    [x] 'b]
-#assert [[#"a" #":" #"b"]    = b: map-each  x     a:b    [x] 'b]
-
-;; indexes
-#assert [[1 2 3    ] = b: map-each      [/i x]         [x y z]     [i       ] 'b]
-#assert [[1 2 3    ] = b: map-each      [p: x]         [x y z]     [index? p] 'b]
-#assert [[1 2 3    ] = b: map-each      [/i x y]       [a b c d e] [i       ] 'b]
-#assert [[1 3 5    ] = b: map-each      [p: x y]       [a b c d e] [index? p] 'b]
-#assert [[1 4      ] = b: map-each/drop [/i x [word!]] [a 2 3 b 5] [i       ] 'b]	;-- iteration number counts even if not matched
-#assert [[1 2 3 4 5] = b: map-each      [/i x [word!]] [a 2 3 b 5] [i       ] 'b]
-#assert [[1        ] = b: map-each/drop [/i x [word!] y] [a 2 3 b 5] [i       ] 'b]
-#assert [[2        ] = b: map-each/drop [/i x y [word!]] [a 2 3 b 5] [i       ] 'b]	;-- iteration number accounts for step size
-
-;; image support
-#assert [im: make image! [2x2 #{111111 222222 333333 444444}]]
-; #assert [[17.17.17.0 34.34.34.0 51.51.51.0 78.78.78.0] = b: map-each c i [c] 'b]		;@@ uncomment me when #4421 gets fixed
-; #assert [[1x1 2x1 1x2 2x2] = b: map-each [/i c] im  [i] 'b]				;-- special index for images - pair
-#assert [[1 2 3 4        ] = b: map-each [p: c] im  [index? p] 'b]
-
-;; 1D/2D ranges support
-; #assert [error? e: try [map-each [/i x] 2x2 []] 'e]						;-- indexes with ranges forbidden
-#assert [error? e: try [map-each [p: x] 2x2 []] 'e]
-#assert [[1x1 2x1 1x2 2x2] = b: map-each  i    2x2 [i] 'b]				;-- unfold size into pixel coordinates
-#assert [[1x1 1x2        ] = b: map-each [i j] 2x2 [i] 'b]
-#assert [[1 2 3 4        ] = b: map-each  i    4   [i] 'b]
-#assert [[1 3 5 7 9      ] = b: map-each [i j] 10  [i] 'b]				;-- unfold length into integers
-#assert [[               ] = b: map-each  i    0   [i] 'b]				;-- zero length
-#assert [[               ] = b: map-each  i    -10 [i] 'b]				;-- negative length
-#assert [[               ] = b: map-each  i    0x0 [i] 'b]				;-- zero length
-#assert [[               ] = b: map-each  i    0x5 [i] 'b]				;-- zero length
-#assert [[               ] = b: map-each  i    5x0 [i] 'b]				;-- zero length
-#assert [[               ] = b: map-each  i  -5x-5 [i] 'b]				;-- negative length
-
-;; maps support
-#assert [error? e: try [map-each [p: x] #(1 2 3 4) []] 'e]								;-- no indexes for maps allowed
-; #assert [error? e: try [map-each [/i x] #(1 2 3 4) []] 'e]
-#assert [[1 2 3 4        ] = b: map-each [k v]       #(1 2 3 4) [reduce [k v]] 'b]		;-- map iteration is very relaxed
-#assert [[1 2 3 4        ] = b: map-each x           #(1 2 3 4) [x]        'b]
-#assert [[1 2 3 4 #[none]] = b: map-each [a b c d e] #(1 2 3 4) [reduce [a b c d e]] 'b]
-
-;; vectors support
-#assert [v: make vector! [1 2 3 4 5]]
-#assert [[1 2 3 4 5               ] = b: map-each       x    v [x]            'b]
-#assert [[[1 2] [3 4] [5 #[none]] ] = b: map-each/only [x y] v [reduce [x y]] 'b]
-#assert [[1 2 6 4 5               ] = b: map-each      [(3)] v [6] 'b]			;-- vectors get appended as /only by default - need to ensure it's not the case
-#assert [(make vector! [1 2 6 4 5]) = b: map-each/self [(3)] copy v [6] 'b]
-
-;; any-block support
-#assert [[[1 2] [3 4] [5 #[none]]] = b: map-each/only [x y] make hash!   [1 2 3 4 5] [reduce [x y]] 'b]
-#assert [[[1 2] [3 4] [5 #[none]]] = b: map-each/only [x y] as paren!    [1 2 3 4 5] [reduce [x y]] 'b]
-; #assert [[[1 2] [3 4] [5 #[none]]] = b: map-each/only [x y] as path!     [1 2 3 4 5] [reduce [x y]] 'b]		;@@ uncomment me when #4421 gets fixed
-; #assert [[[1 2] [3 4] [5 #[none]]] = b: map-each/only [x y] as lit-path! [1 2 3 4 5] [reduce [x y]] 'b]		;@@ uncomment me when #4421 gets fixed
-; #assert [[[1 2] [3 4] [5 #[none]]] = b: map-each/only [x y] as set-path! [1 2 3 4 5] [reduce [x y]] 'b]		;@@ uncomment me when #4421 gets fixed
-; #assert [[[1 2] [3 4] [5 #[none]]] = b: map-each/only [x y] as get-path! [1 2 3 4 5] [reduce [x y]] 'b]		;@@ uncomment me when #4421 gets fixed
-
-;; `continue` & `break` support
-#assert [[1 2 3] = b: map-each       x [1 2 3] [continue x] 'b]
-#assert [[     ] = b: map-each/drop  x [1 2 3] [continue x] 'b]
-#assert [[1 2 3] = b: map-each       x [1 2 3] [if x > 1 [break] x] 'b]
-#assert [[1    ] = b: map-each/drop  x [1 2 3] [if x > 1 [break] x] 'b]
-#assert [[1 2 3] = b: map-each       x [1 2 3] [break] 'b]
-#assert [[     ] = b: map-each/drop  x [1 2 3] [break] 'b]
-
-;; /eval
-#assert [[1 2 3 4]           = b: map-each/eval      x [1 2 3 4] [x] 'b]
-#assert [[1 2 3 4]           = b: map-each/eval      x [1 2 3 4] [[x]] 'b]
-#assert [[[1] [2] [3] [4]]   = b: map-each/eval/only x [1 2 3 4] [[x]] 'b]
-#assert [[(1) (2) (3) (4)]   = b: map-each/only      x [1 2 3 4] [to paren! x] 'b]
-#assert [[(1) (2) (3) (4)]   = b: map-each/eval      x [1 2 3 4] [[to paren! x]] 'b]
-#assert [[1 [x y] 2 [x y]]   = b: map-each/eval      x [1 2    ] [[ x map-each x [x y] [x] ]] 'b]
-#assert [[1 [x y] 2 [x y]]   = b: map-each           x [1 2    ] [reduce [ x map-each      x [x y]  [x] ]] 'b]
-#assert [[1 [x y] 2 [x y]]   = b: map-each           x [1 2    ] [reduce [ x map-each/eval x [x y] [[x]] ]] 'b]
-
-;; filtering (pattern matching)
-#assert [[1 2 3 4 5 6]             = b: map-each            x             [1 "2" "3" 4 5 "6"] [to integer! x] 'b]
-#assert [["1" "2" "3" "4" "5" "6"] = b: map-each           [x [integer!]] [1 "2" "3" 4 5 "6"] [form x]        'b]
-#assert [[1 2 3 4 5 6]             = b: map-each           [x [string!]]  [1 "2" "3" 4 5 "6"] [to integer! x] 'b]
-#assert [[1 [2] [3] 4 5 [6]]       = b: map-each/only/eval [x [string!]]  [1 "2" "3" 4 5 "6"] [[to integer! x]] 'b]
-#assert [[[1] "2" "3" [4] [5] "6"] = b: map-each/only/eval [x [integer!]] [1 "2" "3" 4 5 "6"] [[x]] 'b]
-#assert [[2 4 6]                   = b: map-each/drop      [x [integer!]] make vector! [1 2 3] [x * 2] 'b]	;-- vectors are no problem for type filter
-#assert [[]                        = b: map-each/drop      [x [float!]]   make vector! [1 2 3] [x * 2] 'b]
-#assert [[1 4 3]                   = b: map-each           [(2)]          make vector! [1 2 3] [4] 'b]
-
-;; /same & /case value filters
-#assert [[2 2          ] = (v: 2 b: map-each/case/drop [p: (v)] [2 2.0 #"^B" 2] [p/1]) 'b]
-#assert [[2 2          ] = (v: 2 b: map-each/same/drop [p: (v)] [2 2.0 #"^B" 2] [p/1]) 'b]
-#assert [[2 2.0 #"^B" 2] = (v: 2 b: map-each/case      [p: (v)] [2 2.0 #"^B" 2] [p/1]) 'b]
-#assert [[2 2.0 #"^B" 2] = (v: 2 b: map-each/same      [p: (v)] [2 2.0 #"^B" 2] [p/1]) 'b]
-#assert [r: reduce [v: "v" w: "v" w uppercase copy v]]
-#assert [["v" "v" "v" "V"] == b: map-each           [p: (v)] r [p/1] 'b]
-#assert [["v" "v" "v"    ] == b: map-each/case/drop [p: (v)] r [p/1] 'b]
-#assert [["v" "v"        ] == b: map-each/same/drop [p: (w)] r [p/1] 'b]
-#assert [["v"            ] == b: map-each/same/drop [p: (v)] r [p/1] 'b]
-#assert [["V" "V" "V" "V"] == b: map-each/case      [p: (v)] r [uppercase copy p/1] 'b]
-#assert [["v" "V" "V" "V"] == b: map-each/same      [p: (w)] r [uppercase copy p/1] 'b]
-#assert [["V" "v" "v" "V"] == b: map-each/same      [p: (v)] r [uppercase copy p/1] 'b]
-
-;; /self
-#assert [error? try     [b: map-each/self x 4             [x]]                 'b]		;-- incompatible with ranges & maps
-#assert [error? try     [b: map-each/self x 2x2           [x]]                 'b]
-#assert [[1 2 3 4]     = b: map-each/self x [11 22 33 44] [x / 11]             'b]
-#assert ["1234"        = s: map-each/self x "abcd"        [x - #"a" + #"1"]    's]		;-- string in, string out
-#assert ["a1b2c3d4"    = s: map-each/self/eval x "abcd"  [[x x - #"a" + #"1"]] 's]
-#assert ["c1d2"        = s: map-each/self/eval [/i x] skip "abcd" 2 [[x i]] 's]			;-- retains original index
-#assert ["abc1d2" = s: head map-each/self/eval [/i x] skip "abcd" 2 [[x i]] 's]			;-- does not affect series before it's index
-#assert ["abef"        =    map-each/self x s: "abCDef" [either x < #"a" [][x]] 's]		;-- unset should silently be formed into empty string
-#assert [#(1 2 3 4   ) = m: map-each/self [k v]  #(1 2 3 4) [reduce [k v]] 'm]			;-- preserves map type
-#assert [#(2 4       ) = m: map-each/self [k v]  #(1 2 3 4) [v]            'm]
-
-; ;; `advance` support (NOTE: without /drop - advance makes little sense and hard to think about)
-; #assert [[[2 3] #[none]] = b: map-each/drop/only  x    [1 2 3    ] [        advance] 'b]
-; #assert [[[2 3 4] [4]  ] = b: map-each/drop/only  x    [1 2 3 4  ] [        advance] 'b]
-; #assert [[[3 4] #[none]] = b: map-each/drop/only  x    [1 2 3 4  ] [advance advance] 'b]
-; #assert [[[3 4]        ] = b: map-each/drop/only [x y] [1 2 3 4  ] [        advance] 'b]
-; #assert [[[5]          ] = b: map-each/drop/only [x y] [1 2 3 4 5] [advance advance] 'b]
-; #assert [[4 #[none]    ] = b: map-each/drop [x [integer!]] [1 2.0 #"3" 4 'e 6] [set [x] advance x] 'b]	;-- jumps to next match
-; #assert [[2.0 6        ] = b: map-each/drop [x [number!] ] [1 2.0 #"3" 4 'e 6] [set [x] advance x] 'b]
-; #assert [[1 6          ] = b: map-each/drop [x [integer!]] [1 2.0 #"3" 4 'e 6] [advance x] 'b]			;-- does not affect the `x`
-; #assert [[4 'e #[none] ] = b: map-each [x [integer!]] [1 2.0 #"3" 4 'e 6] [set [x] advance x] 'b]		;-- without /drop includes skipped items
-; #assert [[2.0 #"3" 6   ] = b: map-each [x [number!] ] [1 2.0 #"3" 4 'e 6] [set [x] advance x] 'b]
-; #assert [[1 'e 6       ] = b: map-each [x [integer!]] [1 2.0 #"3" 4 'e 6] [advance x] 'b]
-
-;; pipe
-#assert [[1 2 3          ] = b: map-each      [x |]     [1 2 3]   [x] 'b]
-#assert [[1 2 3          ] = b: map-each      [/i x |]  [x y z]   [i] 'b]
-#assert [[x y z          ] = b: map-each      [/i x |]  [x y z]   [x] 'b]
-#assert [[1 2 3          ] = b: map-each      [p: x |]  [x y z]   [index? p] 'b]
-#assert [[x y z          ] = b: map-each      [p: x |]  [x y z]   [x] 'b]
-#assert [[x y z          ] = b: map-each      [p: | x]  [x y z]   [p: next p x] 'b]			;-- zero step, manual advance
-#assert [[x y z          ] = b: map-each/drop [p: | x]  [x y z]   [p: next p x] 'b]
-#assert [error? set/any 'r try [map-each [p: |] [x y z] [p: next p]] 'e]					;-- no mandatory words
-#assert [[[x y]  [y z] z ] = b: map-each/only/eval      [x | y]   [x y z] [[x y]] 'b]
-#assert [[[x y]  [y z]   ] = b: map-each/only/eval/drop [x | y]   [x y z] [[x y]] 'b]
-#assert [[[x y z] y z    ] = b: map-each/only/eval      [x | y z] [x y z] [[x y z]] 'b]
-#assert [[[x y z]        ] = b: map-each/only/eval/drop [x | y z] [x y z] [[x y z]] 'b]
-#assert [[x y            ] = b: map-each/only/eval      [x | y z] [x y]   [[x y z]] 'b]		;-- too short to fit in
-#assert [empty?              b: map-each/only/eval/drop [x | y z] [x y]   [[x y z]] 'b]		;-- too short to fit in
-#assert [[1 2 3 3        ] = b: map-each/eval           [x y | z] [1 2 3]       [[x y z]] 'b]
-#assert [[1 2 3          ] = b: map-each/eval/drop      [x y | z] [1 2 3]       [[x y z]] 'b]
-#assert [[1 2 3 3 4      ] = b: map-each/eval           [x y | z] [1 2 3 4]     [[x y z]] 'b]
-#assert [[1 2 3          ] = b: map-each/eval/drop      [x y | z] [1 2 3 4]     [[x y z]] 'b]
-#assert [[1 2 3 3 4 5 5  ] = b: map-each/eval           [x y | z] [1 2 3 4 5]   [[x y z]] 'b]
-#assert [[1 2 3 3 4 5    ] = b: map-each/eval/drop      [x y | z] [1 2 3 4 5]   [[x y z]] 'b]
-#assert [[1 2 3 3 4 5 5 6] = b: map-each/eval           [x y | z] [1 2 3 4 5 6] [[x y z]] 'b]
-#assert [[1 2 3 3 4 5    ] = b: map-each/eval/drop      [x y | z] [1 2 3 4 5 6] [[x y z]] 'b]
-
-;; confirm that there's no leakage
-#assert [(x: 1     map-each x     [2 3 4]   [x: x * x]  x = 1) 'x]
-#assert [(x: y: 1  map-each [x y] [2 3 4 5] [x: y * x]  all [x = 1 y = 1]) 'x]
+	;; confirm that there's no leakage
+	(x: 1     for-each x     [2 3 4] [x: x * x]  x = 1)
+	(x: y: 1  for-each [x y] [2 3 4] [x: y: 0]   all [x = 1 y = 1])
 
 
 
 
 
-;---------------------------- REMOVE-EACH -----------------------------
-#assert [#(a b c d) = m: remove-each x #(a 1 b 2 c 3 d 4) [integer? x] 'm]
-#assert [#(1 2 3 4) = m: remove-each x #(a 1 b 2 c 3 d 4) [word? x] 'm]
-#assert [[2x1 3x1 1x2 3x2 1x3 2x3] = remove-each p 3x3 [p/x = p/y]]
-#assert [[1 2 3]    = b: remove-each x  3 [no]     'b]
-#assert [[2]        = b: remove-each x  3 [odd? x] 'b]
-#assert [[1]        = b: remove-each x  1 [no]     'b]
-#assert [[]         = b: remove-each x  0 [no]     'b]
-#assert [[]         = b: remove-each x -1 [no]     'b]
-#assert ["ac"       = s: remove-each x "abc" [#"b" = x] 's]
-#assert [["" ""]    = b: remove-each x ["abc" "def"] [remove-each x x [yes] no] 'b]
-#assert [["ac" "df"]= b: remove-each x ["abc" "def"] [remove-each x x [find "be" x] no] 'b]
-#assert [[2 3 4   ] = b: remove-each [/i x [word!]] [a 2 3 b 4] [yes] 'b]
-#assert ["cf"       = s: remove-each x skip "abcdef" 2 [find "de" x] 's]	;-- retains original index
-#assert ["abcf"= s: head remove-each x skip "abcdef" 2 [find "de" x] 's]
+	;---------------------------- MAP-EACH -----------------------------
+
+	;; spec unfolding tests
+	empty?    map-each  x  [     ] [x]
+	[1    ] = map-each  x  [1    ] [x]
+	[1 2  ] = map-each  x  [1 2  ] [x]
+	[1 2 3] = map-each  x  [1 2 3] [x]
+	[1    ] = map-each [x] [1    ] [x]
+	[1 2  ] = map-each [x] [1 2  ] [x]
+	[1 2 3] = map-each [x] [1 2 3] [x]
+	[[1 2] [3 #[none]]      ] = map-each/only [x y] [1 2 3    ] [reduce [x y]]
+	[[1 2] [3 4]            ] = map-each/only [x y] [1 2 3 4  ] [reduce [x y]]
+	[[1 2] [3 4] [5 #[none]]] = map-each/only [x y] [1 2 3 4 5] [reduce [x y]]
+
+	;; decomposition of strings
+	[#"a" #"b" #"c"]    = map-each  x    "abc"   [x]
+	[#"a" #"c" #"e"]    = map-each [x y] "abcde" [x]
+	[#"b" #"d" #[none]] = map-each [x y] "abcde" [y]
+	[#"b" #"d"]         = map-each [x y] "abcd"  [y]
+	[#"a" #"b" #"c"]    = map-each  x     <abc>  [x]
+	[#"a" #"b" #"c"]    = map-each  x     %abc   [x]
+	[#"a" #"@" #"b"]    = map-each  x     a@b    [x]
+	[#"a" #":" #"b"]    = map-each  x     a:b    [x]
+
+	;; indexes
+	[1 2 3    ] = map-each      [/i x]           [x y z]     [i       ]
+	[1 2 3    ] = map-each      [p: x]           [x y z]     [index? p]
+	[1 2 3    ] = map-each      [/i x y]         [a b c d e] [i       ]
+	[1 3 5    ] = map-each      [p: x y]         [a b c d e] [index? p]
+	[1 4      ] = map-each/drop [/i x [word!]]   [a 2 3 b 5] [i       ]	;-- iteration number counts even if not matched
+	[1 2 3 4 5] = map-each      [/i x [word!]]   [a 2 3 b 5] [i       ]
+	[1        ] = map-each/drop [/i x [word!] y] [a 2 3 b 5] [i       ]
+	[2        ] = map-each/drop [/i x y [word!]] [a 2 3 b 5] [i       ]	;-- iteration number accounts for step size
+
+	;; image support
+	im: make image! [2x2 #{111111 222222 333333 444444}]
+	; [17.17.17.0 34.34.34.0 51.51.51.0 78.78.78.0] = map-each c i [c]		;@@ uncomment me when #4421 gets fixed
+	; [1x1 2x1 1x2 2x2] = map-each [/i c] im  [i]				;-- special index for images - pair
+	[1 2 3 4        ] = map-each [p: c] im  [index? p]
+
+	;; 1D/2D ranges support
+	; error?         try [map-each [/i x] 2x2 []]						;-- indexes with ranges forbidden
+	error?         try [map-each [p: x] 2x2 []]
+	[1x1 2x1 1x2 2x2] = map-each  i    2x2 [i]				;-- unfold size into pixel coordinates
+	[1x1 1x2        ] = map-each [i j] 2x2 [i]
+	[1 2 3 4        ] = map-each  i    4   [i]
+	[1 3 5 7 9      ] = map-each [i j] 10  [i]				;-- unfold length into integers
+	[               ] = map-each  i    0   [i]				;-- zero length
+	[               ] = map-each  i    -10 [i]				;-- negative length
+	[               ] = map-each  i    0x0 [i]				;-- zero length
+	[               ] = map-each  i    0x5 [i]				;-- zero length
+	[               ] = map-each  i    5x0 [i]				;-- zero length
+	[               ] = map-each  i  -5x-5 [i]				;-- negative length
+
+	;; maps support
+	error?         try [map-each [p: x] #(1 2 3 4) []]								;-- no indexes for maps allowed
+	; error?         try [map-each [/i x] #(1 2 3 4) []]
+	[1 2 3 4        ] = map-each [k v]       #(1 2 3 4) [reduce [k v]]		;-- map iteration is very relaxed
+	[1 2 3 4        ] = map-each x           #(1 2 3 4) [x]       
+	[1 2 3 4 #[none]] = map-each [a b c d e] #(1 2 3 4) [reduce [a b c d e]]
+
+	;; vectors support
+	v: make vector! [1 2 3 4 5]
+	[1 2 3 4 5               ] = map-each       x    v [x]           
+	[[1 2] [3 4] [5 #[none]] ] = map-each/only [x y] v [reduce [x y]]
+	[1 2 6 4 5               ] = map-each      [(3)] v [6]			;-- vectors get appended as /only by default - need to ensure it's not the case
+	(make vector! [1 2 6 4 5]) = map-each/self [(3)] copy v [6]
+
+	;; any-block support
+	[[1 2] [3 4] [5 #[none]]] = map-each/only [x y] make hash!   [1 2 3 4 5] [reduce [x y]]
+	[[1 2] [3 4] [5 #[none]]] = map-each/only [x y] as paren!    [1 2 3 4 5] [reduce [x y]]
+	; [[1 2] [3 4] [5 #[none]]] = map-each/only [x y] as path!     [1 2 3 4 5] [reduce [x y]]		;@@ uncomment me when #4421 gets fixed
+	; [[1 2] [3 4] [5 #[none]]] = map-each/only [x y] as lit-path! [1 2 3 4 5] [reduce [x y]]		;@@ uncomment me when #4421 gets fixed
+	; [[1 2] [3 4] [5 #[none]]] = map-each/only [x y] as set-path! [1 2 3 4 5] [reduce [x y]]		;@@ uncomment me when #4421 gets fixed
+	; [[1 2] [3 4] [5 #[none]]] = map-each/only [x y] as get-path! [1 2 3 4 5] [reduce [x y]]		;@@ uncomment me when #4421 gets fixed
+
+	;; `continue` & `break` support
+	[1 2 3] = map-each       x [1 2 3] [continue x]
+	[     ] = map-each/drop  x [1 2 3] [continue x]
+	[1 2 3] = map-each       x [1 2 3] [if x > 1 [break] x]
+	[1    ] = map-each/drop  x [1 2 3] [if x > 1 [break] x]
+	[1 2 3] = map-each       x [1 2 3] [break]
+	[     ] = map-each/drop  x [1 2 3] [break]
+
+	;; /eval
+	[1 2 3 4]           = map-each/eval      x [1 2 3 4] [x]
+	[1 2 3 4]           = map-each/eval      x [1 2 3 4] [[x]]
+	[[1] [2] [3] [4]]   = map-each/eval/only x [1 2 3 4] [[x]]
+	[(1) (2) (3) (4)]   = map-each/only      x [1 2 3 4] [to paren! x]
+	[(1) (2) (3) (4)]   = map-each/eval      x [1 2 3 4] [[to paren! x]]
+	[1 [x y] 2 [x y]]   = map-each/eval      x [1 2    ] [[ x map-each x [x y] [x] ]]
+	[1 [x y] 2 [x y]]   = map-each           x [1 2    ] [reduce [ x map-each      x [x y]  [x] ]]
+	[1 [x y] 2 [x y]]   = map-each           x [1 2    ] [reduce [ x map-each/eval x [x y] [[x]] ]]
+
+	;; filtering (pattern matching)
+	[1 2 3 4 5 6]             = map-each            x             [1 "2" "3" 4 5 "6"] [to integer! x]
+	["1" "2" "3" "4" "5" "6"] = map-each           [x [integer!]] [1 "2" "3" 4 5 "6"] [form x]       
+	[1 2 3 4 5 6]             = map-each           [x [string!]]  [1 "2" "3" 4 5 "6"] [to integer! x]
+	[1 [2] [3] 4 5 [6]]       = map-each/only/eval [x [string!]]  [1 "2" "3" 4 5 "6"] [[to integer! x]]
+	[[1] "2" "3" [4] [5] "6"] = map-each/only/eval [x [integer!]] [1 "2" "3" 4 5 "6"] [[x]]
+	[2 4 6]                   = map-each/drop      [x [integer!]] make vector! [1 2 3] [x * 2]	;-- vectors are no problem for type filter
+	[]                        = map-each/drop      [x [float!]]   make vector! [1 2 3] [x * 2]
+	[1 4 3]                   = map-each           [(2)]          make vector! [1 2 3] [4]
+
+	;; /same & /case value filters
+	[2 2          ] = (v: 2 map-each/case/drop [p: (v)] [2 2.0 #"^B" 2] [p/1])
+	[2 2          ] = (v: 2 map-each/same/drop [p: (v)] [2 2.0 #"^B" 2] [p/1])
+	[2 2.0 #"^B" 2] = (v: 2 map-each/case      [p: (v)] [2 2.0 #"^B" 2] [p/1])
+	[2 2.0 #"^B" 2] = (v: 2 map-each/same      [p: (v)] [2 2.0 #"^B" 2] [p/1])
+	r: reduce [v: "v" w: "v" w uppercase copy v]
+	["v" "v" "v" "V"] == map-each           [p: (v)] r [p/1]
+	["v" "v" "v"    ] == map-each/case/drop [p: (v)] r [p/1]
+	["v" "v"        ] == map-each/same/drop [p: (w)] r [p/1]
+	["v"            ] == map-each/same/drop [p: (v)] r [p/1]
+	["V" "V" "V" "V"] == map-each/case      [p: (v)] r [uppercase copy p/1]
+	["v" "V" "V" "V"] == map-each/same      [p: (w)] r [uppercase copy p/1]
+	["V" "v" "v" "V"] == map-each/same      [p: (v)] r [uppercase copy p/1]
+
+	;; /self
+	error? try     [map-each/self x 4             [x]]                		;-- incompatible with ranges & maps
+	error? try     [map-each/self x 2x2           [x]]                
+	[1 2 3 4]     = map-each/self x [11 22 33 44] [x / 11]            
+	"1234"        = map-each/self x "abcd"        [x - #"a" + #"1"]   		;-- string in, string out
+	"a1b2c3d4"    = map-each/self/eval x "abcd"  [[x x - #"a" + #"1"]]
+	"c1d2"        = map-each/self/eval [/i x] skip "abcd" 2 [[x i]]			;-- retains original index
+	"abc1d2" = head map-each/self/eval [/i x] skip "abcd" 2 [[x i]]			;-- does not affect series before it's index
+	"abef"        = map-each/self x "abCDef" [either x < #"a" [][x]]		;-- unset should silently be formed into empty string
+	#(1 2 3 4   ) = map-each/self [k v]  #(1 2 3 4) [reduce [k v]]			;-- preserves map type
+	#(2 4       ) = map-each/self [k v]  #(1 2 3 4) [v]           
+
+	; ;; `advance` support (NOTE: without /drop - advance makes little sense and hard to think about)
+	; [[2 3] #[none]] = map-each/drop/only  x    [1 2 3    ] [        advance]
+	; [[2 3 4] [4]  ] = map-each/drop/only  x    [1 2 3 4  ] [        advance]
+	; [[3 4] #[none]] = map-each/drop/only  x    [1 2 3 4  ] [advance advance]
+	; [[3 4]        ] = map-each/drop/only [x y] [1 2 3 4  ] [        advance]
+	; [[5]          ] = map-each/drop/only [x y] [1 2 3 4 5] [advance advance]
+	; [4 #[none]    ] = map-each/drop [x [integer!]] [1 2.0 #"3" 4 'e 6] [set [x] advance x]	;-- jumps to next match
+	; [2.0 6        ] = map-each/drop [x [number!] ] [1 2.0 #"3" 4 'e 6] [set [x] advance x]
+	; [1 6          ] = map-each/drop [x [integer!]] [1 2.0 #"3" 4 'e 6] [advance x]			;-- does not affect the `x`
+	; [4 'e #[none] ] = map-each [x [integer!]] [1 2.0 #"3" 4 'e 6] [set [x] advance x]		;-- without /drop includes skipped items
+	; [2.0 #"3" 6   ] = map-each [x [number!] ] [1 2.0 #"3" 4 'e 6] [set [x] advance x]
+	; [1 'e 6       ] = map-each [x [integer!]] [1 2.0 #"3" 4 'e 6] [advance x]
+
+	;; pipe
+	[1 2 3          ] = map-each      [x |]     [1 2 3]   [x]
+	[1 2 3          ] = map-each      [/i x |]  [x y z]   [i]
+	[x y z          ] = map-each      [/i x |]  [x y z]   [x]
+	[1 2 3          ] = map-each      [p: x |]  [x y z]   [index? p]
+	[x y z          ] = map-each      [p: x |]  [x y z]   [x]
+	[x y z          ] = map-each      [p: | x]  [x y z]   [p: next p x]			;-- zero step, manual advance
+	[x y z          ] = map-each/drop [p: | x]  [x y z]   [p: next p x]
+	error?         try [map-each [p: |] [x y z] [p: next p]]					;-- no mandatory words
+	[[x y]  [y z] z ] = map-each/only/eval      [x | y]   [x y z] [[x y]]
+	[[x y]  [y z]   ] = map-each/only/eval/drop [x | y]   [x y z] [[x y]]
+	[[x y z] y z    ] = map-each/only/eval      [x | y z] [x y z] [[x y z]]
+	[[x y z]        ] = map-each/only/eval/drop [x | y z] [x y z] [[x y z]]
+	[x y            ] = map-each/only/eval      [x | y z] [x y]   [[x y z]]		;-- too short to fit in
+	empty?              map-each/only/eval/drop [x | y z] [x y]   [[x y z]]		;-- too short to fit in
+	[1 2 3 3        ] = map-each/eval           [x y | z] [1 2 3]       [[x y z]]
+	[1 2 3          ] = map-each/eval/drop      [x y | z] [1 2 3]       [[x y z]]
+	[1 2 3 3 4      ] = map-each/eval           [x y | z] [1 2 3 4]     [[x y z]]
+	[1 2 3          ] = map-each/eval/drop      [x y | z] [1 2 3 4]     [[x y z]]
+	[1 2 3 3 4 5 5  ] = map-each/eval           [x y | z] [1 2 3 4 5]   [[x y z]]
+	[1 2 3 3 4 5    ] = map-each/eval/drop      [x y | z] [1 2 3 4 5]   [[x y z]]
+	[1 2 3 3 4 5 5 6] = map-each/eval           [x y | z] [1 2 3 4 5 6] [[x y z]]
+	[1 2 3 3 4 5    ] = map-each/eval/drop      [x y | z] [1 2 3 4 5 6] [[x y z]]
+
+	;; confirm that there's no leakage
+	(x: 1     map-each x     [2 3 4]   [x: x * x]  x = 1)
+	(x: y: 1  map-each [x y] [2 3 4 5] [x: y * x]  all [x = 1 y = 1])
 
 
 
+
+
+	;---------------------------- REMOVE-EACH -----------------------------
+	#(a b c d) = remove-each x #(a 1 b 2 c 3 d 4) [integer? x]
+	#(1 2 3 4) = remove-each x #(a 1 b 2 c 3 d 4) [word? x]
+	[2x1 3x1 1x2 3x2 1x3 2x3] = remove-each p 3x3 [p/x = p/y]
+	[1 2 3]    = remove-each x  3 [no]    
+	[2]        = remove-each x  3 [odd? x]
+	[1]        = remove-each x  1 [no]    
+	[]         = remove-each x  0 [no]    
+	[]         = remove-each x -1 [no]    
+	"ac"       = remove-each x "abc" [#"b" = x]
+	["" ""]    = remove-each x ["abc" "def"] [remove-each x x [yes] no]
+	["ac" "df"]= remove-each x ["abc" "def"] [remove-each x x [find "be" x] no]
+	[2 3 4   ] = remove-each [/i x [word!]] [a 2 3 b 4] [yes]
+	"cf"       = remove-each x skip "abcdef" 2 [find "de" x]	;-- retains original index
+	"abcf"= head remove-each x skip "abcdef" 2 [find "de" x]
+
+]]
