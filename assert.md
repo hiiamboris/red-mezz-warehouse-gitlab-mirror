@@ -145,6 +145,12 @@ More real world uses can be found in my [mezz-warehouse repo](https://gitlab.com
 - clearly denotes assertion code start and end, making it possible to remove it on load (where meaning of many words may be unknown, so is arity)
 - gets silently ignored in case `assert.red` fails to include, works almost as if assertions were disabled: issue and block get skipped, leaving only a tiny performance impact
 
+**Why a macro and not a function?**
+
+- Each Red token takes some time (e.g. ~80ns on my laptop) to evaluate and sets interpreter's baseline speed. If we can remove assertions during load phase, we can speed the code up. Effectively this means users will more readily use it, extending tests coverage.
+- Reduced compiled binary size.
+- Ability to have both mandatory and optional assertions: `#assert` can be switched on/off, `assert` is always evaluated.
+
 **Failure behavior**
 
 It's not enough to show that assertion failed. If we did, one would have to litter assertion with `probe`s to find out what exactly went wrong. Not a desirable workflow.
