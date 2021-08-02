@@ -132,6 +132,8 @@ More real world uses can be found in my [mezz-warehouse repo](https://gitlab.com
 
 6. Keep test expressions **side-effect free** if possible. See Repeatability clause below for more info.
 
+7. Use `assert` function directly (not as a macro) if you want to **test unconditionally** (even in release code).
+
 ## Design
 
 **What's in `#assert block!` form**
