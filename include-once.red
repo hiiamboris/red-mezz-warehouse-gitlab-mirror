@@ -38,7 +38,7 @@ Red [
 		]
 		
 		unless block? :included-scripts [included-scripts: copy []]
-		file: clean-path :s/2							;-- use absolute paths to ensure uniqueness
+		file: clean-path to-red-file :s/2				;-- use absolute paths to ensure uniqueness
 		if find included-scripts file [					;-- if already included, skip it
 			return remove/part s 2
 		]
