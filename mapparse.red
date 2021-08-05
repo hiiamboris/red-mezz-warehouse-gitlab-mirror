@@ -64,11 +64,10 @@ mapparse: func [
 	spec	[block!] "Parse expression to search for"
 	srs		[any-block! any-string!] "Series to parse"
 	body	[block!] "Will be evaluated whenever SPEC rule matches"
-	/local r
 ][
 	catch-a-break [
 		parse srs [any thru [
-			change spec (set/any 'r catch-continue body)		;-- set r to result of last iteration
+			change spec (catch-continue body)
 		]]
 	]
 	srs
