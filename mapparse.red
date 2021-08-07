@@ -55,22 +55,55 @@ Red [
 
 
 #include %selective-catch.red
+#include %new-apply.red
 
 ;@@ BUG: this traps exit & return - can't use them inside forparse
 ;@@ BUG: break/return will return nothing, because - see #4416
-;@@ modifies series in place (undecided if it's good or not)
-mapparse: func [
-	"Change every SPEC found in SRS with the result of BODY evaluation"
-	spec	[block!] "Parse expression to search for"
-	srs		[any-block! any-string!] "Series to parse"
-	body	[block!] "Will be evaluated whenever SPEC rule matches"
+;@@ modifies series in place, similar to replace (undecided if it's good or not)
+
+;@@ or name it `rewrite`? but `mapparse` name is consistent with `forparse`
+mapparse: function [
+	"Changes every match of pattern in series with result of body evaluation"
+	;-- pattern then series rather than series then pattern: follows other loops and forparse in particular
+    pattern [any-type!] "Parse rule to match"
+    series  [any-block! any-string! binary!] "The series to be modified in place"	;-- types accepted by parse
+    body    [block!] "Block of code to evaluate"
+    ; /all   "Replace all matches, not just the first"
+    ; /deep  "Replace pattern in all sub-lists as well (implies /all)"
+    /once  "Replace only first match, return position after replacement"	;-- makes no sense with /deep, returns series unchanged if no match
+    /only  "Treat series result of body evaluation as single value"			;-- no effect on pattern
+    /deep  "Replace pattern in all sub-lists as well"
+    /case  "Search for pattern case-sensitively"
+    /part  "Limit the length of replacement"
+    	length [number! series!]
 ][
+	; if deep [all: true]									;-- /deep doesn't make sense without /all
+	; if deep [once: false]								;-- /deep doesn't make sense with /once
+	if all [deep once] [do make error! "/deep and /once refinements are mutually exclusive"]
+	unless any-block? :series [deep: no]
+
+	=else=: pick [
+		[ahead any-list! into =rule= | skip]
+		[skip]
+	] deep
+	=change=: pick [
+		[change only pattern (catch-continue body)]
+		[change      pattern (catch-continue body)]
+	] only
+	=rule=: pick [
+		[thru =change= series:]
+		[any [=change= | =else=]]
+	] once
 	catch-a-break [
-		parse srs [any thru [
-			change spec (catch-continue body)
-		]]
+		apply (in system/words 'parse) [
+			input:  series
+			rules:  =rule=
+			case:   case
+			part:   part
+			length: length
+		]
 	]
-	srs
+	series
 ]
 
 
