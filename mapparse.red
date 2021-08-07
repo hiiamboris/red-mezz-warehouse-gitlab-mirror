@@ -71,11 +71,12 @@ mapparse: function [
     ; /all   "Replace all matches, not just the first"
     ; /deep  "Replace pattern in all sub-lists as well (implies /all)"
     /once  "Replace only first match, return position after replacement"	;-- makes no sense with /deep, returns series unchanged if no match
+    																		;-- not sure /once is even needed as we have break
     /only  "Treat series result of body evaluation as single value"			;-- no effect on pattern
     /deep  "Replace pattern in all sub-lists as well"
     /case  "Search for pattern case-sensitively"
     /part  "Limit the length of replacement"
-    	length [number! series!]
+    	length [number! any-block! any-string! binary!]
 ][
 	; if deep [all: true]									;-- /deep doesn't make sense without /all
 	; if deep [once: false]								;-- /deep doesn't make sense with /once
