@@ -62,21 +62,39 @@ Red [
 
 
 #include %selective-catch.red
+#include %new-apply.red
 
 ;@@ BUG: this traps exit & return - can't use them inside forparse
 ;@@ BUG: break/return will return nothing, because - see #4416
-forparse: func [
-	"Evaluate BODY for every SPEC found in SRS"
-	spec	[block!] "Parse expression to search for"
-	srs		[any-block! any-string!] "Series to parse"
-	body	[block!] "Will be evaluated whenever SPEC rule matches"
+forparse: function [
+	"Evaluate body for every match of pattern in series"
+	pattern	[block!] "Parse rule to match"
+	series	[any-block! any-string! binary!] "Series to parse"
+    body    [block!] "Block of code to evaluate"
+    /deep  "Match inside all sub-lists as well"
+    /case  "Search for pattern case-sensitively"
+    /part  "Limit the length of iteration"
+    	length [number! any-block! any-string! binary!]
 	/local r
 ][
 	unset 'r											;-- unset if never matched the spec
+	unless any-block? :series [deep: no]
+
+	=else=: pick [
+		[ahead any-list! into =rule= | skip]
+		[skip]
+	] deep
+	=rule=: [any thru [
+		pattern (set/any 'r catch-continue body)		;-- set r to result of last iteration
+	]]
 	if error? catch-a-break [
-		parse srs [any thru [
-			spec (set/any 'r catch-continue body)		;-- set r to result of last iteration
-		]]
+		apply (in system/words 'parse) [
+			input:  series
+			rules:  =rule=
+			case:   case
+			part:   part
+			length: length
+		]
 	][
 		unset 'r										;-- break should return unset
 	]
