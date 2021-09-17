@@ -154,13 +154,13 @@ context [
 		
 		;-- determine the rounding digit and round it
 		do renew: [
-			e0: -50 + any [exponent-of num'  50]		;-- extract original exponent
+			e0: -50 + any [exponent-of num'  50]			;-- extract original exponent
 			if 'auto = e [e: e0]
 			formed: form num'
-			ext: make 1 extend and (#"1" = formed/1)	;-- add a digit for 1.xx numbers
-			n-digits: max								;-- determine the number of digits for rounding
-				n + ext									;-- requested size + possibly extended by 1
-				e0 - e + 1								;-- number of whole digits which we don't want to zero out
+			ext: make integer! extend and (#"1" = formed/1)	;-- add a digit for 1.xx numbers
+			n-digits: max									;-- determine the number of digits for rounding
+				n + ext										;-- requested size + possibly extended by 1
+				e0 - e + 1									;-- number of whole digits which we don't want to zero out
 		]
 		num': round/to num' 10 ** (e0 - n-digits + 1) * 1e50
 
