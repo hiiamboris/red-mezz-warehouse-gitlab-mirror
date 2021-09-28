@@ -53,6 +53,7 @@ Notes:
 | Source file                                | Description |
 | ---                                        | --- |
 | [extremi](extremi.red)                     | Find minimum and maximum points over a series |
+| [median](median.red)                       | Find median value of a sample |
 | [count](count.red)                         | Count occurences of an item in the series |
 | [keep-type](keep-type.red)                 | Filter list using accepted type or typeset |
 | [collect-set-words](collect-set-words.red) | Deeply collect set-words from a block of code |
