@@ -83,6 +83,9 @@ context [
 			random     [f word target part no  yes]
 			randomized [f word target part yes yes]
 			
+			remove     [f word target part no  no]
+			removed    []									;-- no insertion phase for 'remove'
+			
 			reverse    [f word target part no  yes]
 			reversed   [f word target part yes yes]
 			
