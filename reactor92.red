@@ -46,64 +46,64 @@ context [
 	reduce-deep-change-92: function [owner word target action new index part] [
 		f: :owner/on-deep-change-92*
 		switch/default action [
-			insert     []									;-- no removal phase
-			inserted   [f word target part yes no]
+			insert     []								;-- no removal phase
+			inserted   [f word target part yes no yes]
 			
 			;; append's bug is: `append "abc" 123` will have part=1,
 			;; and in `append/part` part is related to the appended value
 			;; so have to use `length?` to obtain the size of change
-			append     []									;-- no removal phase
-			appended   [f word (p: skip head target index) length? p yes no]
+			append     []								;-- no removal phase
+			appended   [f word (p: skip head target index) length? p yes no yes]
 			
 			;; change is buggy: 'change' event never happens
-			change     [f word (skip head target index) part no  no]	;-- so this won't fire at all
-			changed    [f word (skip head target index) part yes no]	;-- target for some reason is at change's tail
+			change     [f word (skip head target index) part no  no no]		;-- so this won't fire at all
+			changed    [f word (skip head target index) part yes no yes]	;-- target for some reason is at change's tail
 			
-			clear      [f word target part no  no]
-			cleared    []									;-- no insertion phase for 'clear'
+			clear      [f word target part no  no no]   ;-- user code should remember 'part' given (if needed)
+			cleared    [f word target part no  no yes]	;-- part argument is invalid (zero)
 			
 			;; move is buggy: into another series it does not report anything at all
 			;; so we have to assume it's the same series
 			;; tried `same? head new head target` but 'moved' reports new=none so won't work
-			move       [f word new    part no  yes]			;-- new is used here as source for some reason
-			moved      [f word target part yes yes]
+			move       [f word new    part no  yes no]	;-- new is used here as source for some reason
+			moved      [f word target part yes yes yes]
 			
 			;; poke has a bug: `poke "abc" 1 123` will report removal of "b" but will throw an error before insertion
 			;; so it's not 100% reliable and I don't have a workaround
-			poke       [f word (skip head target index) part no  no]
-			poked      [f word (skip head target index) part yes no]
+			poke       [f word (skip head target index) part no  no no]
+			poked      [f word (skip head target index) part yes no yes]
 			
 			put [
-				unless tail? next target [  				;-- put reports found item as target, not the one being changed
-					f word next target part no  no			;-- but removed item is not present at tail, so we don't have to report it
+				unless tail? next target [  			;-- put reports found item as target, not the one being changed
+					f word next target part no  no no	;-- but removed item is not present at tail, so we don't have to report it
 				]
 			]
-			put-ed [f word next target part yes no]
+			put-ed [f word next target part yes no yes]
 			
-			random     [f word target part no  yes]
-			randomized [f word target part yes yes]
+			random     [f word target part no  yes no]
+			randomized [f word target part yes yes yes]
 			
-			remove     [f word target part no  no]
-			removed    []									;-- no insertion phase for 'remove'
+			remove     [f word target part no  no  no]	;-- user code should remember 'part' given (if needed)
+			removed    [f word target part no  no  yes]	;-- part argument is invalid (zero)
 			
-			reverse    [f word target part no  yes]
-			reversed   [f word target part yes yes]
+			reverse    [f word target part no  yes no]
+			reversed   [f word target part yes yes yes]
 			
 			;; sort is buggy in that it reports part=0 regardless of the /part argument
 			;; so we have to assume the worst case
-			sort       [f word target (length? target) no  yes]
-			sorted     [f word target (length? target) yes yes]
+			sort       [f word target (length? target) no  yes no]
+			sorted     [f word target (length? target) yes yes yes]
 			
-			swap       [f word target part no  no]			;-- swap may be used on the same buffer, but we have no way of telling
-			swaped     [f word target part yes no]
+			swap       [f word target part no  no no]	;-- swap may be used on the same buffer, but we have no way of telling
+			swaped     [f word target part yes no yes]
 			
-			take       [f word target part no  no]
-			taken      []									;-- no insertion phase for 'take'
+			take       [f word target part no  no no]	;-- user code should remember 'part' given (if needed)
+			taken      [f word target part no  no yes]	;-- part argument is invalid (zero)
 	
 			;; trim does not provide enough info to precisely pinpoint changes
 			;; so we should consider it as global change from current index
-			trim       [f word target (length? target) no  no]	;-- about to remove everything
-			trimmed    [f word target (length? target) yes no]	;-- already filled with new stuff
+			trim       [f word target (length? target) no  no no]	;-- about to remove everything
+			trimmed    [f word target (length? target) yes no yes]	;-- already filled with new stuff
 		][
 			do make error! "Unsupported action in on-deep-change*!"
 		] 
@@ -116,6 +116,7 @@ context [
 			part        [integer!] "length of removal or insertion"
 			insert?     [logic!]   "true = just inserted, false = about to remove"
 			reordering? [logic!]   "removed/inserted items belong to the same series"
+			done?       [logic!]   "signifies that series is in it's final state (after removal/insertion)"
 		][
 			;; placeholder to override
 		]
@@ -144,6 +145,7 @@ comment {
 			part        [integer!] "length of removal or insertion"
 			insert?     [logic!]   "true = just inserted, false = about to remove"
 			reordering? [logic!]   "removed items won't leave the series, inserted items came from the same series"
+			done?       [logic!]   "signifies that series is in it's final state (after removal/insertion)"
 		][
 			; ...your code to handle changes... e.g.:
 			print [
@@ -152,10 +154,14 @@ comment {
 				"at" mold/flat target
 				part "items"
 				either reordering? ["(reordering)"][""]
+				either done? ["(done)"][""]
 			]
 		]
 	]
 	
+	?? r/x
 	insert/part next r/x [1 0 1] 2
 	reverse/part next r/x 2
+	remove/part next next next r/x 3
+	?? r/x
 }
