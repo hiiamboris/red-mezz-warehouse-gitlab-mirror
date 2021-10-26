@@ -56,6 +56,7 @@ Red [
 		   these always require 2 events:
 		   - before removal
 		   - after insertion
+		   this type of event can have `reordering? = true` (reverse, random, sort actions, move on the same buffer)
 		consequently, `done?: any [insert? part = 0]` is enough to check if series is in it's final state
 	}
 ]
