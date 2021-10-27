@@ -58,6 +58,7 @@ Notes:
 | [count](count.red)                         | Count occurences of an item in the series |
 | [keep-type](keep-type.red)                 | Filter list using accepted type or typeset |
 | [collect-set-words](collect-set-words.red) | Deeply collect set-words from a block of code |
+| [morph](morph.red)                         | Dialect for persistent local series mapping [Read more](morph.md) |
 
 ### Loops
 | Source file                                | Description |
