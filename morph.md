@@ -1,4 +1,4 @@
-# MORPH DSL - A dialect for efficient local series conversion
+# [MORPH DSL - A dialect for efficient local series conversion](morph.red)
 
 ## Status
 
