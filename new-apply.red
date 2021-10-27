@@ -23,7 +23,7 @@ Red [
 					compose [(spec-of :find) /my-ref]
 					[
 						..handle /my-ref..
-						apply find 'local
+						apply find 'my-ref				;) if no /local refinement, use what have you
 					]
 				my-find/my-ref/same/skip/only series needle n
 
