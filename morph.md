@@ -170,7 +170,7 @@ This data tree acts as *output* for the scanner and as *input* for the emitter. 
 The **hardcoded** syntax:
 - At the heart of data model is ruleset (like `csv-src` above).
 - Ruleset consists of named rule groups (like `value: [value-char ...]`).
-- **Groups** are denoted by `()` and `[]` markers (see [type rules](#scanner-type-rules)).
+- **Groups** are denoted by `()` and `[]` markers (see block and paren in [type rules](#scanner-type-rules)).
 - Groups can define **single rules** (default) or **loops** (denoted by `...` before the closing brace).\
   loops never fail, i.e. they evaluate zero or more times, similar to Parse's `any`
 - Groups can contain **alternatives** (denoted by `|` as in Parse).\
