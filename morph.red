@@ -997,6 +997,8 @@ emit-rules: construct/only compose with morph-ctx [
 
 ;;============ test code ============
 
+comment [
+
 csv-src: context with scan-rules [
 	; source: system/words/quote (word (#" " |) ...)
 	; word:   system/words/quote ('x ? x <> #" " ...)
@@ -1074,4 +1076,4 @@ do with morph-ctx [
 	; ^ morph      text csv-src csv-tree
 ; ]
 
-
+]
