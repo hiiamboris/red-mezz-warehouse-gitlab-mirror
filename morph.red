@@ -208,7 +208,8 @@ morph-ctx: context [
 			])
 			
 			any-type!: (function [input token] [				;-- catch-all special case
-				either :token = :input/1 [1x0][-1x0]
+				end: find/match/tail input :token 
+				1x0 * either end [offset? input end][-1]
 			])
 		]
 				
@@ -1074,16 +1075,3 @@ do with morph-ctx [
 ; ]
 
 
-csv-src: context with scan-rules [
-	value-char: negate charset "^/,"
-	d: [#","]						;) delimiter
-	value: [value-char ...]
-	line:  [value (d value ...)]
-	return [line (lf line ...)]
-]
-csv-blk: context with emit-rules [
-	line: [load 'value ...]
-	return [line ...]
-]
-probe morph text csv-src csv-blk
-probe morph text csv-src csv-blk
