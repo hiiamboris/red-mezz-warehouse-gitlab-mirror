@@ -294,6 +294,7 @@ But this is a lot of work, so only sketched so far...
 ## Further considerations
 
 These features weren't designed but were considered for later:
+- Functions to work with the data tree, so user-defined rules could call them too.  
 - Inline declaration of named rules, e.g. `[x: rule1 x x y: rule2 y y]`. Should be possible to define all rules on the go, without prior context creation.
 - Multiple sources/targets could be combined later in the single `morph` call using likely `from source ...` and `into target ...` rules.
 - Macros to rewrite rules in place. E.g. `opt rule` -> `[rule |]`, or `some rule` -> `rule any rule`.\
