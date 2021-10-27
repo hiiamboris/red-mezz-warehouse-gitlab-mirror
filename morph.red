@@ -295,7 +295,7 @@ morph-ctx: context [
 		scan: function [								;-- conflicts with lexer's `scan`, so has to be in it's own context
 			"Parse the INPUT with a given scan RULE"
 			input [series!]
-			rule [block! paren!] "Written in Morph/Scan DSL"
+			rule [block! paren!] "Uses scanner's type rules"
 			/from "STUB: pick up scanning from given offsets"				;@@
 				input-path [vector!] scan-path [vector!]
 			/trace "STUB: report each scan result to the trace function"	;@@
@@ -540,7 +540,7 @@ morph-ctx: context [
 		emit: function [
 			"Run emit RULE against scanned DATA and return produced result" 
 			data [object!] "Result of previous SCAN call"
-			rule [block! paren!] "Written in Morph/Emit DSL"
+			rule [block! paren!] "Uses emitter's type rules"
 			/into output [series!] "Specify a target to append to (default: new block)"
 			/from "STUB: pick up emission from given offsets"				;@@
 				output-path [vector!] emit-path [vector!]
