@@ -7,6 +7,7 @@
 - Partial change propagation designed but not fully implemented.
 - Performance considerations were put into design, but no optimization was done whatsoever. Once finished, this project will closely compete with Parse's performance.
 - Macros design is unfinished.
+- No test suite yet.
 
 ## Goals
 
@@ -56,9 +57,9 @@ Obviously this is a complex example, but it's good as an illustration. Most of t
 
 ## Examples
 
-`morph` function takes 3 arguments: `input`, `scan-rule` and `emit-rule`.
+> `morph` function takes 3 arguments: `input`, `scan-rule` and `emit-rule`.
 
-Reordering of items:
+**Reordering** of items:
 ```
 >> morph [1 2 3 4] ['x 'y ...] ['y 'x ...]
 == [2 1 4 3]
@@ -68,7 +69,7 @@ Here, each `x` and `y` get set to next item, then get emitted in reverse order.\
 
 ---
 
-Filtering:
+**Filtering**:
 ```
 >> morph/auto [1 2 3 4] ['x ? even? x | skip ...] ['x ...]
 == [2 4]
@@ -78,7 +79,7 @@ Here, `? even? x` evaluates `even? x` expression and fails if it returns `none` 
 
 ---
 
-Delimiting:
+**Delimiting**:
 ```
 >> morph "1 2 3 4" context with scan-rules [
 [    		token: [not #" " skip ...]
@@ -92,19 +93,21 @@ Rules above are all similar to Parse, except `()` is equivalent to Parse's `[]` 
 
 ---
 
-Joining:
+**Joining**:
 ```  
 >> morph/auto/into [1 2 3 4] ['x ...] ['x (not 'x | " ") ...] ""
 == "1 2 3 4"
 ```
-Since intermediate data model is not a sequence, but a tree of named branches (explained below), we cannot check for tail of input during emission. So we use `not 'x` rule to see if there are more `x`s or not, so we don't get close the output with space.\
+Since intermediate data model is not a sequence, but a tree of named branches (explained below), we cannot check for tail of input during emission. So we use `not 'x` rule to see if there are more `x`s or not, so we don't get close the output with space.
+
 `/into` lets us emit directly into a new string.
 
 ---
 
-Simple CSV-like codec.
+Simple **CSV-like codec**.
 
-First we define a few rules:
+First we define a few rules.
+
 ```
 csv-src: context with scan-rules [
 	value-char: negate charset "^/,"
@@ -113,7 +116,7 @@ csv-src: context with scan-rules [
 	return [line (lf line ...)]
 ]
 ```
-The above ruleset defines the textual structure of a CSV file.
+The above ruleset defines how to **interpret** the textual structure of a CSV file.
 
 ```
 csv-blk: context with emit-rules [
@@ -125,9 +128,9 @@ csv-txt: context with emit-rules [
 	return [line :lf ...]
 ]
 ```
-The above two rulesets define how to emit CSV as block and as text back. `load` rule, well, `load`s the result of the next rule, so we get `10` instead of `"10"` and so on.
+The above two rulesets define how to **emit** CSV as block and as text back. `load` rule, well, `load`s the result of the next rule, so we get `10` instead of `"10"` and so on.
 
-Now I can transform text CSV into a block or back into itself: 
+Now we can transform text CSV into a block or back into itself: 
 ```
 >> text: {a,b,c^/10,20,30}
 >> morph/into text csv-src csv-txt ""
@@ -135,7 +138,7 @@ Now I can transform text CSV into a block or back into itself:
 >> morph text csv-src csv-blk
 == [[a b c] [10 20 30]]
 ```
-Look closely at the rules again.\
+Look closely at the rules again.
 - They are purely **declarative**: there is **zero bookkeeping, index-juggling, imperatives to do this'n'that, only the data layout**.
 - They are also **refined**: there is not a single thing that can be omitted, as otherwise we would not have enough info about the data.
 - There's clear **distinction** between input and output, so we can look at a ruleset and imagine the data model. No need to visually scan the rules for `keep` or `append` anymore to figure out what comes from where.
@@ -156,7 +159,7 @@ csv-src: context with scan-rules [
 	return [line (lf line ...)]
 ]
 ``` 
-<img src=https://i.gyazo.com/28ecb51fc94775b5b79dd34c849c3873.png width=400>data model diagram</img>
+<img src=https://i.gyazo.com/28ecb51fc94775b5b79dd34c849c3873.png width=700></img>
 
 During scanning phase, a data tree is built with **unordered named branches** containing **ordered sets of values**. This makes it possible to reorder or omit any branches during emission, but keep the order of values in them.
 
@@ -217,7 +220,7 @@ Rule functions should **return** a pair value in `ATExUSED` format, where:
 |-|-|
 | word! | Polymorphic. Gets the word value and redispatches it by value type. The only exception is `any-word!` values, which are fed to `any-type!` sink, thus forbidding function and rule aliasing |
 | get-word! | Literally matches the value referred to by the word |
-| lit-word! | `'x` acts as a shortcut to `x: skip`, defining a named rule that eats a single token, but also sets the word so it can be inspected e.g. using `? (? x)` combo |
+| lit-word! | `'x` acts as a shortcut to `x: skip`, defining a named rule that eats a single token, but also sets the word so it can be inspected e.g. using `?? x` rule |
 | set-word! | Defines a named rule: rule that follows the set-word will be included into the output tree. Loosely similar to `copy word! rule` in Parse | 
 | paren! | Matches paren value as a single rule group (with alternatives and looping possibility). Used for flow control. | 
 | block! | If it meets `any-list!` in the input, it matches itself against contents of that list. Otherwise, same as `paren!`. Used to scan input of any nesting level |
@@ -293,8 +296,7 @@ But this is a lot of work, so only sketched so far...
 These features weren't designed but were considered for later:
 - Inline declaration of named rules, e.g. `[x: rule1 x x y: rule2 y y]`. Should be possible to define all rules on the go, without prior context creation.
 - Multiple sources/targets could be combined later in the single `morph` call using likely `from source ...` and `into target ...` rules.
-- Macros to rewrite rules in place. E.g. `opt rule` -> `[rule |]`, or `some rule` -> `rule any rule`.
-
+- Macros to rewrite rules in place. E.g. `opt rule` -> `[rule |]`, or `some rule` -> `rule any rule`.\
   Problem with these is that arity of each rule is only known at the moment of it's evaluation, but macros cannot evaluate anything, so they are limited by their knowledge and need extra clues. And then there's a question of how to spell them. If with issues, e.g. `#opt rule`, then is this better than using Red preprocessor? And won't we be conflicting with the preprocessor?
 - Natives and actions could be used as rule functions of simpler form. They would take the series and possibly single argument and return series at a new offset (or none). Thus `find` could be used as `to`, `next` as `skip`, maybe something else. I'm not sure how much use this idea is.
 - How to track partial updates to integral transformations, e.g. if we transform each item in a series into a sum of it and all previous items?
