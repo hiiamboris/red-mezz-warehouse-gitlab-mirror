@@ -201,8 +201,8 @@ All arguments are optional, i.e. `func [input args]` is a valid rule function. N
   for emit rules: subtree of the data tree (contains named branches with other subtrees)
 - `args` rule after the current token (which is the name of the function)\
   rule function can read it's arguments from `args`; to treat arguments as another rule, use `morph-ctx/scanner/eval-next-rule` and `morph-ctx/emitter/eval-next-rule` functions
-- `output`:
-  for scan rules: subtree of the data tree
+- `output`:\
+  for scan rules: subtree of the data tree\
   for emit rules: current sub-block of the output, or output itself if it's shallow
 - `data`: object of unspecified format, needed only to pass it to `eval-next-rule`
 
