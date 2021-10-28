@@ -209,6 +209,7 @@ morph-ctx: context [
 			
 			datatype!: (function [input token] [
 				either all [
+					any-block? input
 					not tail? input
 					token = type? :input/1
 				] [1x0][-1x0]

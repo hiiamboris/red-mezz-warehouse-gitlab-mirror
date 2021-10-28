@@ -261,7 +261,8 @@ Rule functions should **return** a pair value in `ATExUSED` format, where:
 | paren! | Matches paren value as a single rule group (with alternatives and looping possibility). Used for flow control. | 
 | block! | If it meets `any-list!` in the input, it matches itself against contents of that list. Otherwise, same as `paren!`. Used to scan input of any nesting level |
 | function! and routine! | Call rule functions (explained above) |
-| bitset! | Matches next item in the input againstt given bitset |
+| bitset! | Matches next item in the input against given bitset (string input only) |
+| datatype! | Matches type of next item in the input against given one (block input only) |
 | any-type! | Used as a fallback if no other type dispatcher can handle it. Literally matches the value against the input | 
 
 ## Emitter type rules
@@ -299,13 +300,14 @@ SCAN-RULES is an object! with the following words and values:
 
 >> ? emit-rules
 EMIT-RULES is an object! with the following words and values:
+     quote  function!     Emit next token as is.
+     lit    function!     Emit contents of next block/paren (or word referr...
      opt    function!     Try to match next rule, but succeed anyway, simil...
      ahead  function!     Look ahead if next rule succeeds.
      not    function!     Look ahead if next rule fails.
      to     function!     [to datatype! rule...] Convert result of rule mat...
      load   function!     [load rule...] Load result of next rule match.
 ```
-</details>
 
 Play in console to get a feel of it ;) Though most of it is similar to Parse. `? expr` is similar to Parse's `if (expr)`, `lit` can be used to match multiple items, e.g. `lit [1 2 3]` would be equivalent to Parse's `quote 1 quote 2 quote 3`, and also supports words. The rest should be obvious. 
 
