@@ -104,6 +104,42 @@ Since intermediate data model is not a sequence, but a tree of named branches (e
 
 ---
 
+Emission of values **literally** when those value
+```
+>> morph/auto [] [] ["str" 123 quote x: lit [y: z:]]
+== ["str" 123 x: y: z:]
+```
+`"str"` and `123` are not recognized as rules, so they are treated literally, while set-words demonstrate the work of `quote` and `lit` rules.
+
+---
+
+**Object** creation:
+```
+>> morph/auto ["x" "y" 10 20] [name: string! | value: integer! ...] [to object! [to set-word! 'name 'value] ...]
+== [make object! [
+    x: 10
+] make object! [
+    y: 20
+]]
+>> morph/auto ["x" "y" 10 20] [name: string! | value: integer! ...] [to object! [to set-word! 'name 'value ...]]
+== [make object! [
+    x: 10
+    y: 20
+]]
+```
+Note the subtle difference in the loop scope ;)
+
+And of course more trivial:
+```
+>> object morph/auto ["x" "y" 10 20] [name: string! | value: integer! ...] [to set-word! 'name 'value ...]
+== make object! [
+    x: 10
+    y: 20
+]
+```
+
+---
+
 Simple **CSV-like codec**.
 
 First we define a few rules.
