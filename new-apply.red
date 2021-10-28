@@ -62,11 +62,15 @@ Red [
 ]
 
 
+#include %assert.red
 #include %error-macro.red
+#include %localize-macro.red
 
 apply: function [
 	"Call a function NAME with a set of arguments ARGS"
-	'name [word! function!] "Function name or literal"			;@@ support path here or `(in obj 'name)` will be enough?
+	;@@ support path here or `(in obj 'name)` will be enough?
+	;@@ operators should be supported too
+	'name [word! function! action! native!] "Function name or literal"
 	args [block! function! object! word!] "Block of [arg: expr ..], or a context to get values from"
 	/verb "Do not evaluate expressions in the ARGS block, use them verbatim"
 	/local value
@@ -124,14 +128,61 @@ apply: function [
 			not use-words? []							;-- refinement is not set, ignore words
 			type = word!     [repend call ['quote do get-value]]
 			;@@ extra work that won't be needed in R/S:
-			type = lit-word! [repend call as paren! compose/only [(do get-value)]]
+			type = lit-word! [append call as paren! reduce [do get-value]]
 			type = get-word! [repend call [do get-value]]
 			;@@ type checking - where? should interpreter do it for us?
 		]
 	]
-	; print ["Constructed call:" mold call]
+	print ["Constructed call:" mold call]
 	do call
 ]
+
+#localize [#assert [
+	-1  = apply negate [number: 1]
+	-2  = apply negate [number: 1 + 1]					;-- evaluation of arguments
+	 5  = apply add [value1: 2  value2: 3]
+	 5  = apply add [value2: 2  value1: 3]				;-- order independence
+	 5  = apply add [value2: 2  value1: 3  value3: 4]	;-- no error on extra args given, by design
+	 4  = apply add [value1: value2: 2]					;-- chaining of set-words
+	 5  = apply add [value1: value1: 2  value2: 3]		;@@ should this be an error? (extra check may slow down the code)
+	 5  = apply add [value1: 2  value1: value2: 3]		;@@ right now it uses first defined value, not the last one
+	yes = apply none? []								;-- omission of args sets them to 'none'
+	
+	(value1: 10 value2: 20)
+	 30 = apply add [value1: value1  value2: value2]	;-- args do not shadow expression words 
+
+	 5  = apply add object [value1: 2  value2: 3]		;-- accepts objects 
+	yes = apply none? object []
+	
+	none? apply quote [value: none]						;-- able to pass get-args
+	word? apply quote [value: quote none]
+	word? apply quote [value: 'none]
+	
+	x: 0												;-- prevent leakage
+	 2  = apply repeat [word: 'x value: 2 body: [x]]	;-- able to pass lit-args
+	 2  = apply repeat [word: quote ('x) value: 2 body: [x]]
+	
+	word?       apply/verb quote [value: none]			;-- /verb doesn't evaluate 
+	 5        = apply/verb add   [value2: 2  value1: 3]
+	set-word?   apply/verb quote [value: value:]
+	error? try [apply/verb add   [value1: value2: 2]]	;-- obv no chaining in verbatim mode
+	
+	find-me-needle: function exclude spec-of :find [value [any-type!]] [
+		value: ["needle"]
+		case: only: yes
+		apply find 'local								;-- value becomes /local, so it's valid here
+	]
+	"needle"     = apply find-me-needle [series: "here's the needle"]  
+	none?          apply find-me-needle [series: "here's the nEedle"]  
+	none?          apply find-me-needle [series: ["needle"]]  
+	[["needle"]] = apply find-me-needle [series: ["dont poke me with yer" ["needle"]]]  
+	
+	;@@ calling literals not possible at mezz level:
+	 ; 5  = apply :add [value2: 2  value1: 3]				;-- should accept function/native literals
+	; yes = apply :none? []
+	; "needle"     = apply :find-me-needle [series: "here's the needle"]  
+	; none?          apply :find-me-needle [series: "here's the nEedle"]  
+]]
 
 ; value: "d"
 ; probe apply find [series: "abcdef" value: value only: case: yes]
