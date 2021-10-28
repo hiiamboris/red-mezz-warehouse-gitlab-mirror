@@ -594,7 +594,8 @@ morph-ctx: context [
 		#assert [any-list? series]
 		
 		;; this is dumb and slow but I don't see any other way to locate the inner change
-		;@@ address this issue in REP92
+		;; see https://github.com/red/red/issues/4524#issuecomment-953570556
+		;@@ proper way to implement this is to turn it into a loop that fires for each series match
 		pos: series
 		append path 0
 		while [pos: find/tail pos series!] [
