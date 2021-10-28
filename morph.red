@@ -203,8 +203,15 @@ morph-ctx: context [
 				either all [    
 					any-string? input
 					not tail? input
-					find token input/1
+					find token :input/1
 				] [1x0][-1x0]										;-- matches only in strings
+			])
+			
+			datatype!: (function [input token] [
+				either all [
+					not tail? input
+					token = type? :input/1
+				] [1x0][-1x0]
 			])
 			
 			any-type!: (function [input token] [				;-- catch-all special case
@@ -596,6 +603,7 @@ morph-ctx: context [
 		;; this is dumb and slow but I don't see any other way to locate the inner change
 		;; see https://github.com/red/red/issues/4524#issuecomment-953570556
 		;@@ proper way to implement this is to turn it into a loop that fires for each series match
+		;@@ and for speed we'll have to collect a map of each inner series (at head) to it's deep offset in the source
 		pos: series
 		append path 0
 		while [pos: find/tail pos series!] [
@@ -938,6 +946,24 @@ emit-rules: construct/only compose with morph-ctx [
 		; either tail? input [0x0][FAIL]
 	; ]
 	
+	quote: (function [
+		"Emit next token as is"
+		input args output
+	][
+		if tail? args [return -1x0]
+		append/only output :args/1
+		1x1 
+	])
+	
+	lit: (function [
+		"Emit contents of next block/paren (or word referring to it)"
+		input args output
+	][
+		if tail? args [return -1x0]
+		append output either word? :args/1 [get/any args/1][:args/1]
+		1x1
+	])
+	
 	opt: (func [
 		"Try to match next rule, but succeed anyway, similar to (rule |)"
 		input args output data
@@ -975,7 +1001,7 @@ emit-rules: construct/only compose with morph-ctx [
 		offset/2: offset/2 + 1
 		if match? offset [
 			#assert [single? pos]
-			change pos to type pos/1 
+			change pos either object! = type [object pos/1][to type pos/1]
 		]
 		offset
 	])
