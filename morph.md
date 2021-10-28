@@ -297,6 +297,7 @@ These features weren't designed but were considered for later:
 - Functions to work with the data tree, so user-defined rules could call them too.  
 - Inline declaration of named rules, e.g. `[x: rule1 x x y: rule2 y y]`. Should be possible to define all rules on the go, without prior context creation.
 - Multiple sources/targets could be combined later in the single `morph` call using likely `from source ...` and `into target ...` rules.
+- Support of automatic propagation of changes from a single series into many will require on-deep-change to use a dispatcher of sorts. We should be able to add/remove new targets.
 - Macros to rewrite rules in place. E.g. `opt rule` -> `[rule |]`, or `some rule` -> `rule any rule`.\
   Problem with these is that arity of each rule is only known at the moment of it's evaluation, but macros cannot evaluate anything, so they are limited by their knowledge and need extra clues. And then there's a question of how to spell them. If with issues, e.g. `#opt rule`, then is this better than using Red preprocessor? And won't we be conflicting with the preprocessor?
 - Natives and actions could be used as rule functions of simpler form. They would take the series and possibly single argument and return series at a new offset (or none). Thus `find` could be used as `to`, `next` as `skip`, maybe something else. I'm not sure how much use this idea is.
