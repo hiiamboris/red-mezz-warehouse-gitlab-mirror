@@ -143,11 +143,12 @@ morph-ctx: context [
 			block!: (function [input token args output data /with name] [
 				either any-list? :input/1 [					;-- block is able to dive into blocks in the input
 					append data/paths/input 0
-					type-rules/paren!/with input/1 token args output data name
+					r: type-rules/paren!/with input/1 token args output data name
 					take/last data/paths/input
 				][
-					type-rules/paren!/with input   token args output data name
+					r: type-rules/paren!/with input   token args output data name
 				]
+				r
 			])
 				
 			paren!: (function [input token args output data /with name] [		;-- (rule)/[rule]
@@ -698,6 +699,7 @@ morph-ctx: context [
 		/into target [series!]
 		/auto "Automatically bind scan-rule and emit-rule to basic rule blocks"
 		;@@ eventually /auto should be able to bind the expanded rule, so it will be bound deeply
+		;@@ and /auto should be the default case, and /manual for when we want maximum juice
 		/live "Establish a persistent mapping (TBD)"
 		;; returns target, so even if it's not provided, /live is not in vain
 	][
