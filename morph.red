@@ -875,7 +875,7 @@ scan-rules: construct/only compose with morph-ctx [		;-- construct preserves fun
 			until [
 				input: skip input new/1
 				offset/1: offset/1: new/1
-				not match? new: eval-next-rule input args output data
+				not match? new: scanner/eval-next-rule input args output data
 			]
 		][
 			offset/1: -1								;-- fails if never succeeded
@@ -887,12 +887,12 @@ scan-rules: construct/only compose with morph-ctx [		;-- construct preserves fun
 		"Match next rule zero or more times (always succeeds)"
 		input args output data
 	][
-		offset: 0x0
+		offset: 0
 		while [match? new: scanner/eval-next-rule input args output data] [
 			input: skip input new/1
-			offset/1: offset/1 + new/1
+			offset: offset + new/1
 		]
-		offset											;-- never fails
+		as-pair offset new/2							;-- never fails
 	])
 
 	quote: (func [
@@ -1085,6 +1085,17 @@ do with morph-ctx [
 	^ morph/auto/into [1 2 3 4] ['x ...] ['x (not 'x | " ") ...] ""
 ]
 
+probe morph "title1 para1 para2 title2 para3" context with scan-rules [
+	digit: charset "1234567890"
+	ws: charset " ^-^/^M"
+	para:  ["para" some digit]
+	title: ["title" some digit]
+	title+para: [title any ws (para any ws ...)]
+	return [title+para ...]
+] context with emit-rules [
+	title+para: ['title ['para ...]]
+	return [title+para ...]
+]
 
 
 ;@@ this model is planned but not implemented yet:
@@ -1107,3 +1118,4 @@ do with morph-ctx [
 ; ]
 
 ]
+
