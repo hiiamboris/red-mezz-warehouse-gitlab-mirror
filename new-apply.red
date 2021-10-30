@@ -133,7 +133,7 @@ apply: function [
 			;@@ type checking - where? should interpreter do it for us?
 		]
 	]
-	print ["Constructed call:" mold call]
+	; print ["Constructed call:" mold call]
 	do call
 ]
 
