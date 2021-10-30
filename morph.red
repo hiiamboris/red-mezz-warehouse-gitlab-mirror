@@ -107,7 +107,11 @@ morph-ctx: context [
 				#assert [not find [| ...] token]		;-- handled outside, because there's also backtracking logic involved
 				; name: args/-1
 				; if find/case [| ...] name [return as-pair 0 length? args]
-				set/any 'value get/any name: token
+				name: token
+				set/any 'value any [
+					select data/scan-dict name
+					get/any token
+				]
 				; type: type?/word :value
 				handler: any [
 					unless any-word? :value [			;-- words referring to lit/set/normal-words get literal treatment
@@ -305,6 +309,7 @@ morph-ctx: context [
 			"Parse the INPUT with a given scan RULE"
 			input [series!]
 			rule [block! paren!] "Uses scanner's type rules"
+			dict [map!] "Default dictionary of scanner rules"
 			/from "STUB: pick up scanning from given offsets"				;@@
 				input-path [vector!] scan-path [vector!]
 			/trace "STUB: report each scan result to the trace function"	;@@
@@ -315,8 +320,10 @@ morph-ctx: context [
 				;@@ so rules are preserved from accidental modification for morph/live
 				;@@ perhaps we'll need to do that for macros as well
 				input:      none
+			 	scan-dict:  dict
 			 	scan-rules: rule
 			 	tree:       copy []
+			 	emit-dict:  none
 				emit-rules: none						;-- filled by emitter
 				output:     none
 				paths: object [
@@ -356,7 +363,11 @@ morph-ctx: context [
 				#assert [not find [| ...] token]	;-- handled outside, because there's also backtracking logic involved
 				; name: args/-1
 				; if find/case [| ...] name [return as-pair 0 length? args]
-				set/any 'value get/any name: token
+				name: token
+				set/any 'value any [
+					select data/emit-dict name
+					get/any name
+				]
 				handler: any [
 					unless any-word? :value [		;-- words referring to lit/set/normal-words get literal treatment
 						select type-rules type: type?/word :value
@@ -550,6 +561,7 @@ morph-ctx: context [
 			"Run emit RULE against scanned DATA and return produced result" 
 			data [object!] "Result of previous SCAN call"
 			rule [block! paren!] "Uses emitter's type rules"
+			dict [map!] "Default dictionary of emitter rules"
 			/into output [series!] "Specify a target to append to (default: new block)"
 			/from "STUB: pick up emission from given offsets"				;@@
 				output-path [vector!] emit-path [vector!]
@@ -558,6 +570,7 @@ morph-ctx: context [
 		][
 			output: any [output copy []]
 			; data/emit-rules: copy/deep rule
+			data/emit-dict:        dict
 			data/emit-rules:       rule
 			data/output:           output
 			data/paths/emit-rules: make vector! [] 
@@ -697,21 +710,17 @@ morph-ctx: context [
 		scan-rule [block! paren!] "Rule to interpret the source"
 		emit-rule [block! paren!] "Rule to produce the target"
 		/into target [series!]
-		/auto "Automatically bind scan-rule and emit-rule to basic rule blocks"
+		/custom "Use custom rule dictionaries instead of `scan-rules` and `emit-rules`"
+			scan-dict [map!] emit-dict [map!]
 		;@@ eventually /auto should be able to bind the expanded rule, so it will be bound deeply
 		;@@ and /auto should be the default case, and /manual for when we want maximum juice
 		/live "Establish a persistent mapping (TBD)"
 		;; returns target, so even if it's not provided, /live is not in vain
 	][
 		target: any [target copy []]
-		if auto [
-			;-- this is an overhead, so by default rules should already be bound properly
-			;-- however it also helps to shorten one-liners when performance doesn't matter
-			bind scan-rule scan-rules
-			bind emit-rule emit-rules
-		]
 		either not live [
-			emit/into (scan source scan-rule) emit-rule target
+			data: scan source scan-rule any [scan-dict scan-rules]
+			emit/into data    emit-rule any [emit-dict emit-rules] target
 		][
 			do make error! "Not implemented!"
 			reactor: make deep-reactor-92! [
@@ -817,7 +826,7 @@ morph-ctx: context [
 
 ;;============ scan rules are fully in defined userspace ============
 
-scan-rules: construct/only compose with morph-ctx [		;-- construct preserves function code from being bound to rule names
+scan-rules: make map! compose with morph-ctx [		;-- construct preserves function code from being bound to rule names
 
 	?: (function [
 		"Evaluate next expression, succeed if it's not none or false"
@@ -938,7 +947,7 @@ scan-rules: construct/only compose with morph-ctx [		;-- construct preserves fun
 
 ;;============ emit rules are fully in defined userspace ============
 
-emit-rules: construct/only compose with morph-ctx [
+emit-rules: make map! compose with morph-ctx [
 	;@@ these don't work because input is not a linear structure: it has named items
 	;@@ (not 'name) or (ahead 'name) should be used instead as targeted rules
 	; *head: func [input args output data] [
@@ -1029,7 +1038,7 @@ emit-rules: construct/only compose with morph-ctx [
 
 comment [
 
-csv-src: context with scan-rules [
+csv-src: context [
 	; source: system/words/quote (word (#" " |) ...)
 	; word:   system/words/quote ('x ? x <> #" " ...)
 	; probe scan source "ab cde fg"
@@ -1048,13 +1057,13 @@ csv-src: context with scan-rules [
 	return [line (lf line ...)]
 ]
 	
-csv-blk: context with emit-rules [
+csv-blk: context [
 	; line: [to tag! :value ...]
 	line: [load 'value ...]
 	return [line ...]
 ]
 		
-csv-txt: context with emit-rules [
+csv-txt: context [
 	line: ['value (#"," 'value ...)]
 	return [line :lf ...]
 ]
@@ -1062,39 +1071,41 @@ csv-txt: context with emit-rules [
 
 do with morph-ctx [
 	text: {a,b,c^/10,20,30} 
-	; set 'data scan text my-scan-rules/csv
+	; set 'data scan text csv-src scan-rules
 	; ?! data
-	; new-csv-text: emit/into data my-emit-string-rules/csv ""
+	; new-csv-text: emit/into data csv-txt emit-rules ""
 	; ?! new-csv-text
-	; new-csv-tree: emit data my-emit-block-rules/csv
+	; new-csv-tree: emit data csv-blk emit-rules
 	; ?! new-csv-tree
-
+	
 	^ morph [1 2 3 4] ['x 'y ...] ['y 'x ...]
-	^ morph/auto [1 2 3 4] ['x ? even? x | skip ...] ['x ...]
+	^ morph [1 2 3 4] ['x ? even? x | skip ...] ['x ...]
 	
 	;; parse/emit a csv
 	^ morph/into text csv-src csv-txt ""
 	^ morph      text csv-src csv-blk
 	
 	;; delimit values
-	^ morph "1 2 3 4" context with scan-rules [
+	^ morph "1 2 3 4" context [
 		token: [not #" " skip ...]
 		return [token (#" " token ...)]
 	] ['token ...]
 	;; join values
-	^ morph/auto/into [1 2 3 4] ['x ...] ['x (not 'x | " ") ...] ""
-]
-
-probe morph "title1 para1 para2 title2 para3" context with scan-rules [
-	digit: charset "1234567890"
-	ws: charset " ^-^/^M"
-	para:  ["para" some digit]
-	title: ["title" some digit]
-	title+para: [title any ws (para any ws ...)]
-	return [title+para ...]
-] context with emit-rules [
-	title+para: ['title ['para ...]]
-	return [title+para ...]
+	^ morph/into [1 2 3 4] ['x ...] ['x (not 'x | " ") ...] ""
+	
+	^ morph "title1 para1 para2 title2 para3" context [
+		digit: charset "1234567890"
+		ws: charset " ^-^/^M"
+		para:  ["para" some digit]
+		title: ["title" some digit]
+		title+para: [title any ws (para any ws ...)]
+		return [title+para ...]
+	] context [
+		title+para: system/words/quote ('title ['para ...])
+		return [title+para ...]
+	]
+	
+	^ morph [-33 -22 -11 -5 0 5 11 22 33] ['x ? any [x < -10 x > 10] | skip ...] ['x ...]
 ]
 
 
