@@ -155,7 +155,7 @@ The above ruleset defines how to **interpret** the textual structure of a CSV fi
 
 ```
 csv-blk: [line: [load 'value ...] ...]
-csv-txt: [line: ['value (#"," 'value ...) :lf ...]
+csv-txt: [line: ['value (#"," 'value ...)] :lf ...]
 ```
 The above two rules define how to **emit** CSV as block and as text back.\
 `load` rule, well, `load`s the result of the next rule, so we get `10` instead of `"10"` and so on.
