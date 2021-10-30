@@ -61,6 +61,10 @@ Red [
 ;@@ BUG: break/return will return nothing, because - see #4416
 ;@@ modifies series in place, similar to replace (undecided if it's good or not)
 
+;@@ BUG: Parse will deadlock if used carelessly,
+;@@   e.g. `mapparse [any rule] "whatever" ["x"]` will insert "x" indefinitely
+;@@   should we detect if match is empty and not evaluate the body for it?
+
 ;@@ or name it `rewrite`? but `mapparse` name is consistent with `forparse`
 mapparse: function [
 	"Changes every match of pattern in series with result of body evaluation"
