@@ -150,6 +150,7 @@ morph-ctx: context [
 					r: type-rules/paren!/with input/1 token args output data name
 					take/last data/paths/input
 				][
+					;@@ should it fail in list mode when not at the block?
 					r: type-rules/paren!/with input   token args output data name
 				]
 				r
@@ -381,6 +382,15 @@ morph-ctx: context [
 				result
 			])
 		
+			;@@ incomplete but useful!
+			set-word!: (function [input token args output data] [		;-- x: rule
+				name: to word! token
+				#assert [any-list? :args/1]				;@@ only x: [group] is supported for now; need more?
+				handler: select type-rules type: type?/word args/1
+				0x1 + handler/with input args/1 (next args) output data name
+				;@@ can this be made recursive and support multiple set-words in a chain? is it useful?
+			])
+			
 			get-word!: (function [input token args output] [	;-- :x - emits word's value
 				append/only output get/any token
 				1x0										;-- always succeeds, even if unset
@@ -450,18 +460,6 @@ morph-ctx: context [
 				]
 				1x0 * either result [1][-1]
 			])
-			
-			;@@ not implemented yet
-			; set-word!: (function [input token args output data] [		;-- x: rule
-				; name: to word! token
-				; #assert [any-list? :args/1]				;@@ only x: [group] is supported for now; need more?
-				; append data/paths/tree name
-				; inner: select input ;@@@ WHOOPS!
-				; offset: eval-next-rule input args output data	;-- has to be recursive to support multiple set-words
-				; unless input [clear end]
-				; take/last data/paths/tree
-				; offset
-			; ])
 			
 			;@@ TODO: natives & actions could use a simpler interface:
 			;@@ take output (and maybe args/1, depending on their arity), return modified output
@@ -1057,17 +1055,19 @@ csv-src: context [
 	return [line (lf line ...)]
 ]
 	
-csv-blk: context [
+; csv-blk: context [
 	; line: [to tag! :value ...]
-	line: [load 'value ...]
-	return [line ...]
-]
+	; line: [load 'value ...]
+	; return [line ...]
+; ]
 		
-csv-txt: context [
-	line: ['value (#"," 'value ...)]
-	return [line :lf ...]
-]
-	
+; csv-txt: context [
+	; line: ['value (#"," 'value ...)]
+	; return [line :lf ...]
+; ]
+
+csv-blk: [line: [load 'value ...] ...]
+csv-txt: [line: ['value (#"," 'value ...)] :lf ...]
 
 do with morph-ctx [
 	text: {a,b,c^/10,20,30} 

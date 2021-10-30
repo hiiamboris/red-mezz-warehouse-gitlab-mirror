@@ -71,23 +71,22 @@ Here, each `x` and `y` get set to next item, then get emitted in reverse order.\
 
 **Filtering**:
 ```
->> morph/auto [1 2 3 4] ['x ? even? x | skip ...] ['x ...]
+>> morph [1 2 3 4] ['x ? even? x | skip ...] ['x ...]
 == [2 4]
 ```
-Here, `? even? x` evaluates `even? x` expression and fails if it returns `none` or `false`.\
-`/auto` automatically binds given rules to default rulesets (ignore it for now).
+Here, `? even? x` evaluates `even? x` expression and fails if it returns `none` or `false`.
 
 ---
 
 **Delimiting**:
 ```
->> morph "1 2 3 4" context with scan-rules [
+>> morph "1 2 3 4" context [
 [    		token: [not #" " skip ...]
 [    		return [token (#" " token ...)]
 [    	] ['token ...]
 == ["1" "2" "3" "4"]
 ```
-Here, we define `token` rule and an unnamed scan rule that uses `token`. We bind both rules to default scan ruleset manually using `with scan-rules`. Later, `/auto` should become able to handle it for us, but not yet.
+Here, we define `token` rule and an unnamed scan rule that uses `token`.
 
 Rules above are all similar to Parse, except `()` is equivalent to Parse's `[]` and just groups a few rules together into a single one, in this particular case to denote loop start and end points.
 
@@ -95,7 +94,7 @@ Rules above are all similar to Parse, except `()` is equivalent to Parse's `[]` 
 
 **Joining**:
 ```  
->> morph/auto/into [1 2 3 4] ['x ...] ['x (not 'x | " ") ...] ""
+>> morph/into [1 2 3 4] ['x ...] ['x (not 'x | " ") ...] ""
 == "1 2 3 4"
 ```
 Since intermediate data model is not a sequence, but a tree of named branches (explained below), we cannot check for tail of input during emission. So we use `not 'x` rule to see if there are more `x`s or not, so we don't get close the output with space.
@@ -106,7 +105,7 @@ Since intermediate data model is not a sequence, but a tree of named branches (e
 
 Emission of values **literally** when those value
 ```
->> morph/auto [] [] ["str" 123 quote x: lit [y: z:]]
+>> morph [] [] ["str" 123 quote x: lit [y: z:]]
 == ["str" 123 x: y: z:]
 ```
 `"str"` and `123` are not recognized as rules, so they are treated literally, while set-words demonstrate the work of `quote` and `lit` rules.
@@ -115,13 +114,13 @@ Emission of values **literally** when those value
 
 **Object** creation:
 ```
->> morph/auto ["x" "y" 10 20] [name: string! | value: integer! ...] [to object! [to set-word! 'name 'value] ...]
+>> morph ["x" "y" 10 20] [name: string! | value: integer! ...] [to object! [to set-word! 'name 'value] ...]
 == [make object! [
     x: 10
 ] make object! [
     y: 20
 ]]
->> morph/auto ["x" "y" 10 20] [name: string! | value: integer! ...] [to object! [to set-word! 'name 'value ...]]
+>> morph ["x" "y" 10 20] [name: string! | value: integer! ...] [to object! [to set-word! 'name 'value ...]]
 == [make object! [
     x: 10
     y: 20
@@ -131,7 +130,7 @@ Note the subtle difference in the loop scope ;)
 
 And of course more trivial:
 ```
->> object morph/auto ["x" "y" 10 20] [name: string! | value: integer! ...] [to set-word! 'name 'value ...]
+>> object morph ["x" "y" 10 20] [name: string! | value: integer! ...] [to set-word! 'name 'value ...]
 == make object! [
     x: 10
     y: 20
@@ -145,7 +144,7 @@ Simple **CSV-like codec**.
 First we define a few rules.
 
 ```
-csv-src: context with scan-rules [
+csv-src: context [
 	value-char: negate charset "^/,"
 	value: [value-char ...]
 	line:  [value (#"," value ...)]
@@ -155,16 +154,13 @@ csv-src: context with scan-rules [
 The above ruleset defines how to **interpret** the textual structure of a CSV file.
 
 ```
-csv-blk: context with emit-rules [
-	line: [load 'value ...]
-	return [line ...]
-]
-csv-txt: context with emit-rules [
-	line: ['value (#"," 'value ...)]
-	return [line :lf ...]
-]
+csv-blk: [line: [load 'value ...] ...]
+csv-txt: [line: ['value (#"," 'value ...) :lf ...]
 ```
-The above two rulesets define how to **emit** CSV as block and as text back. `load` rule, well, `load`s the result of the next rule, so we get `10` instead of `"10"` and so on.
+The above two rules define how to **emit** CSV as block and as text back.\
+`load` rule, well, `load`s the result of the next rule, so we get `10` instead of `"10"` and so on.
+
+Note that because `morph` **tracks** each value by it's rule's **name**, these rules have to be put into different contexts (objects). That's what you can see above: same word `line` is linked to various rules for scanning and emission.
 
 Now we can transform text CSV into a block or back into itself: 
 ```
@@ -187,7 +183,7 @@ To be able to use `morph` DSL, it's important to get the idea how it structures 
 
 Picture below illustrates it for the following modified CSV-like ruleset (as in the examples section, but with delimiters kept):
 ```
-csv-src: context with scan-rules [
+csv-src: context [
 	value-char: negate charset "^/,"
 	d: [#","]		;) delimiter
 	value: [value-char ...]
@@ -204,11 +200,13 @@ This data tree acts as *output* for the scanner and as *input* for the emitter. 
 ## How it works
 
 The **hardcoded** syntax:
-- At the heart of data model is ruleset (like `csv-src` above).
+- At the heart of data model is a **ruleset** (like `csv-src` above) and **rule dictionary** (where all the common rules are stored).
+  - Rulesets are simply a way to have the same words have different meaning for scanner and emitter. Nothing more. You can create any kind of contextual structure, inheriting rules from outer contexts. Only the word's resolved value matters to `morph`.
+  - Rule dictionaries however are only two. Default ones are named [`scan-rules` and `emit-rules`](#default-rule-dictionaries) and can be overridden with `/custom` refinement. When resolving a word, dictionaries take priority over rulesets.
 - Ruleset consists of named rule groups (like `value: [value-char ...]`).
 - **Groups** are denoted by `()` and `[]` markers (see block and paren in [type rules](#scanner-type-rules)).
 - Groups can define **single rules** (default) or **loops** (denoted by `...` before the closing brace).\
-  loops never fail, i.e. they evaluate zero or more times, similar to Parse's `any`
+  Loops never fail, i.e. they evaluate zero or more times, similar to Parse's `any`
 - Groups can contain **alternatives** (denoted by `|` as in Parse).\
   They serve as positions for backtracking. Backtracking mechanics should undo any changes to the output and any advances of the input made since the previous group start (unlike Parse where there's no backtracking of side effects).
 
@@ -217,7 +215,7 @@ Everything else is handled by a set of **datatype dispatchers**. These functions
 Type dispatcher that handles `function!` and `routine!` datatypes calls the corresponding function and returns it's result.\
 Type dispatcher that handles `word!` datatype fetches word's value and dispatches based on the type of it's value.
 
-Together `word!` and `function!` dispatchers allow one to fully define one's own processing rules. Default rulesets are named `scan-rules` and `emit-rules`, and one can base new rules on these, or define one's own totally unique rules, adapting to the task at hand.
+Together `word!` and `function!` dispatchers allow one to fully define one's own processing rules. `word!` is first looked up in a rule dictionary, and only if it's not found, then it's value is fetched from the context where it's bound.
 
 **Rule function** is a function (or routine) of the following interface:
 ```
@@ -254,7 +252,7 @@ Rule functions should **return** a pair value in `ATExUSED` format, where:
 
 | datatype | function |
 |-|-|
-| word! | Polymorphic. Gets the word value and redispatches it by value type. The only exception is `any-word!` values, which are fed to `any-type!` sink, thus forbidding function and rule aliasing |
+| word! | Polymorphic. Looks it up in the scan dictionary, if not found - gets it's value. Then redispatches it by value type. The only exception is `any-word!` values, which are fed to `any-type!` sink, thus forbidding function and rule aliasing |
 | get-word! | Literally matches the value referred to by the word |
 | lit-word! | `'x` acts as a shortcut to `x: skip`, defining a named rule that eats a single token, but also sets the word so it can be inspected e.g. using `?? x` rule |
 | set-word! | Defines a named rule: rule that follows the set-word will be included into the output tree. Loosely similar to `copy word! rule` in Parse | 
@@ -269,49 +267,51 @@ Rule functions should **return** a pair value in `ATExUSED` format, where:
 
 | datatype | function |
 |-|-|
-| word! | Polymorphic. Gets the word value and redispatches it by value type. The only exception is `any-word!` values, which are fed to `any-type!` sink, thus forbidding function and rule aliasing |
+| word! | Polymorphic. Looks it up in the emit dictionary, if not found - gets it's value. Then redispatches it by value type. If value is a block or paren, chooses a named branch of the tree before entering the group. The only exception is `any-word!` values, which are fed to `any-type!` sink, thus forbidding function and rule aliasing |
 | get-word! | Literally emits the word's value |
 | lit-word! | Emits next item from the branch by that name, or fails if branch is exhausted |
-| set-word! | Not implemented, supposed to cover inline rule definition |
+| set-word! | Has to be followed by block or paren, for now at least. Declares a named rule group and enters it |
 | paren! | Enters the rule group (with alternatives and looping possibility). Used for flow control | 
 | block! | Pushes a new block on the output and enters the rule group to emit into that block. Used to create output of any nesting level |
 | function! and routine! | Call rule functions (explained above) |
 | any-type! | Used as a fallback if no other type dispatcher can handle it. Emits the value as is | 
 
-## Default rulesets
+## Default rule dictionaries
 
 It's possible to inspect the rules in console:
 ```
 >> ? scan-rules
-SCAN-RULES is an object! with the following words and values:
-     ?      function!     Evaluate next expression, succeed if it's not non...
+SCAN-RULES is a map! with the following words and values:
+     ?      function!     Evaluate next expression, succeed if it's not n...
      ??     function!     Display value of next token.
      show   function!     Display current input location.
-     opt    function!     Try to match next rule, but succeed anyway, simil...
+     opt    function!     Try to match next rule, but succeed anyway, sim...
      ahead  function!     Look ahead if next rule succeeds.
      not    function!     Look ahead if next rule fails.
      some   function!     Match next rule one or more times.
-     any    function!     Match next rule zero or more times (always succee...
+     any    function!     Match next rule zero or more times (always succ...
      quote  function!     Match next token literally vs the input.
-     lit    function!     Match contents of next block/paren (or word refer...
+     lit    function!     Match contents of next block/paren (or word ref...
      skip   function!     Match any single value.
      head   function!     Match head of input only.
      tail   function!     Match tail of input only.
 
 >> ? emit-rules
-EMIT-RULES is an object! with the following words and values:
+EMIT-RULES is a map! with the following words and values:
      quote  function!     Emit next token as is.
-     lit    function!     Emit contents of next block/paren (or word referr...
-     opt    function!     Try to match next rule, but succeed anyway, simil...
+     lit    function!     Emit contents of next block/paren (or word refe...
+     opt    function!     Try to match next rule, but succeed anyway, sim...
      ahead  function!     Look ahead if next rule succeeds.
      not    function!     Look ahead if next rule fails.
-     to     function!     [to datatype! rule...] Convert result of rule mat...
+     to     function!     [to datatype! rule...] Convert result of rule m...
      load   function!     [load rule...] Load result of next rule match.
 ```
 
 Play in console to get a feel of it ;) Though most of it is similar to Parse. `? expr` is similar to Parse's `if (expr)`, `lit` can be used to match multiple items, e.g. `lit [1 2 3]` would be equivalent to Parse's `quote 1 quote 2 quote 3`, and also supports words. The rest should be obvious. 
 
 These are not final, but seemed like a good starting point and showcase.
+
+To override these use `morph/custom` call. Compose your own rule dictionaries that fit perfectly your taste and your task at hand!
 
 
 ## Partial update logic
