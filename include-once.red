@@ -26,7 +26,10 @@ Red [
 	}
 ]
 
-#if not object? rebol [									;-- do nothing when compiling
+#if all [
+	not object? rebol									;-- do nothing when compiling
+	not block? :included-scripts						;-- do not reinclude itself
+][
 	;-- since it's now running in Red, we don't need R2 compatibility
 	#do [verbose-inclusion?: yes]						;-- comment this out to disable file names dump
 	
