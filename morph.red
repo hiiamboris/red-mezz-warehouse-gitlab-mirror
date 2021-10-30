@@ -8,8 +8,6 @@ Red [
 	}
 ]
 
-
-#include %include-once.red
 #include %debug.red
 #include %with.red
 #include %assert.red
