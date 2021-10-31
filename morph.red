@@ -888,7 +888,7 @@ scan-rules: make map! compose with morph-ctx [		;-- construct preserves function
 		if match? offset [
 			input: skip input offset/1
 			change-last data/paths/input -1 + index? input
-			offset: offset + scan-rules/any input args output data 
+			offset/1: offset/1 + first scan-rules/any input args output data 
 		]												;-- fails if never succeeded
 		offset
 	])
@@ -1024,7 +1024,7 @@ emit-rules: make map! compose with morph-ctx [
 	][
 		offset: emitter/eval-next-rule input args output data
 		if match? offset [
-			offset: offset + emit-rules/any input args output data
+			offset/1: offset/1 + first emit-rules/any input args output data
 		]												;-- fails if never succeeded
 		offset
 	])
