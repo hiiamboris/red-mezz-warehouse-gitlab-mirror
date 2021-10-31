@@ -879,7 +879,7 @@ scan-rules: make map! compose with morph-ctx [		;-- construct preserves function
 		either match? offset [
 			until [
 				input: skip input new/1
-				offset/1: offset/1: new/1
+				offset/1: offset/1 + new/1
 				not match? new: scanner/eval-next-rule input args output data
 			]
 		][
