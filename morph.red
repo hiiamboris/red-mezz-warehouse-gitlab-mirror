@@ -844,7 +844,7 @@ scan-rules: make map! compose with morph-ctx [		;-- construct preserves function
 		"Display current input location"
 		input
 	][
-		?? input
+		print ["input:" mold/part input -9 + any [attempt [system/console/size/x] 80]]
 		0x0
 	])
 	
@@ -875,16 +875,15 @@ scan-rules: make map! compose with morph-ctx [		;-- construct preserves function
 		"Match next rule one or more times"
 		input args output data
 	][
-		offset: new: scanner/eval-next-rule input args output data
-		either match? offset [
-			until [
+		offset: scanner/eval-next-rule input args output data
+		if match? new: offset [
+			forever [
 				input: skip input new/1
+				new: scanner/eval-next-rule input args output data
+				unless match? new [break]
 				offset/1: offset/1 + new/1
-				not match? new: scanner/eval-next-rule input args output data
 			]
-		][
-			offset/1: -1								;-- fails if never succeeded
-		]
+		]												;-- fails if never succeeded
 		offset
 	])
 
