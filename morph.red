@@ -64,6 +64,7 @@ morph-ctx: context [
 	
 	FAIL: -1x0                   
 	match?: func [p [pair!]][p/1 >= 0]
+	advanced?: func [p [pair!]][p/1 > 0]
 	
 	change-last: function [s [series!] x [any-type!]] [
 		change/only back tail s :x
@@ -93,6 +94,7 @@ morph-ctx: context [
 			change-last pr2 aofs + base
 			mark: tail locs
 			repend locs [pi pi2 pr pr2 inner none none none none]
+			#debug [print ["kept" name mold inner reduce [pi pi2]]]
 			new-line mark yes
 			new-line inner yes
 		]
@@ -145,13 +147,14 @@ morph-ctx: context [
 			block!: (function [input token args output data /with name] [
 				either any-list? :input/1 [					;-- block is able to dive into blocks in the input
 					append data/paths/input 0
-					r: type-rules/paren!/with input/1 token args output data name
+					result: type-rules/paren!/with input/1 token args output data name
+					result/1: min result/1 1				;-- skip just the list
 					take/last data/paths/input
 				][
 					;@@ should it fail in list mode when not at the block?
-					r: type-rules/paren!/with input   token args output data name
+					result: type-rules/paren!/with input   token args output data name
 				]
-				r
+				result
 			])
 				
 			paren!: (function [input token args output data /with name] [		;-- (rule)/[rule]
@@ -409,7 +412,8 @@ morph-ctx: context [
 				#assert [in1]
 				#assert [in2]
 				pos: tail output
-				append output copy/part in1 in2	;-- no /only in case we're copying parts of block into other block
+				append output
+					set name copy/part in1 in2	;-- no /only in case we're copying parts of block into other block
 				
 				locs/7: locs/6: copy data/paths/output
 				change-last locs/7 (last locs/6) + length? pos
@@ -542,7 +546,10 @@ morph-ctx: context [
 				either loop? [							;-- loop never fails, but ends when doesn't advance or when no match
 					if any [
 						not matched?
-						not grown?: positive? length? end
+						all [
+							not grown?: positive? length? end
+							not advanced?: saved <> input
+						]
 					] [break/return input]
 				][
 					break/return if matched? [input] 
@@ -829,7 +836,8 @@ scan-rules: make map! compose with morph-ctx [		;-- construct preserves function
 		input args /local r end
 	][
 		set/any 'r do/next as [] args 'end			;@@ as [] required per #4980
-		as-pair  either :r [0][-1]  offset? args end
+		; as-pair  either :r [0][-1]  offset? args end	;@@ either unset doesn't work
+		as-pair  either if :r [yes] [0][-1]  offset? args end
 	])
 	
 	??: (func [
@@ -844,7 +852,8 @@ scan-rules: make map! compose with morph-ctx [		;-- construct preserves function
 		"Display current input location"
 		input
 	][
-		print ["input:" mold/part input -9 + any [attempt [system/console/size/x] 80]]
+		n: -9 + any [attempt [system/console/size/x] 80]
+		print ["input:" copy/part mold/part input n n]
 		0x0
 	])
 	
@@ -876,13 +885,10 @@ scan-rules: make map! compose with morph-ctx [		;-- construct preserves function
 		input args output data
 	][
 		offset: scanner/eval-next-rule input args output data
-		if match? new: offset [
-			forever [
-				input: skip input new/1
-				new: scanner/eval-next-rule input args output data
-				unless match? new [break]
-				offset/1: offset/1 + new/1
-			]
+		if match? offset [
+			input: skip input offset/1
+			change-last data/paths/input -1 + index? input
+			offset: offset + scan-rules/any input args output data 
 		]												;-- fails if never succeeded
 		offset
 	])
@@ -891,9 +897,11 @@ scan-rules: make map! compose with morph-ctx [		;-- construct preserves function
 		"Match next rule zero or more times (always succeeds)"
 		input args output data
 	][
+		;@@ TODO: just call eval-ruleset somehow
 		offset: 0
-		while [match? new: scanner/eval-next-rule input args output data] [
+		while [advanced? new: scanner/eval-next-rule input args output data] [
 			input: skip input new/1
+			change-last data/paths/input -1 + index? input
 			offset: offset + new/1
 		]
 		as-pair offset new/2							;-- never fails
@@ -953,6 +961,22 @@ emit-rules: make map! compose with morph-ctx [
 		; either tail? input [0x0][FAIL]
 	; ]
 	
+	?: (function [
+		"Evaluate next expression, succeed if it's not none or false"
+		input args /local r end
+	][
+		set/any 'r do/next as [] args 'end			;@@ as [] required per #4980
+		; as-pair  either :r [0][-1]  offset? args end	;@@ either unset doesn't work!
+		as-pair  either if :r [yes] [0][-1]  offset? args end
+	])
+	
+	discard: (function [
+		"Evaluate next rule discarding it's output, but advancing input"
+		input args output data
+	][
+		emitter/eval-next-rule input args copy [] data
+	])
+	
 	quote: (function [
 		"Emit next token as is"
 		input args output
@@ -994,6 +1018,38 @@ emit-rules: make map! compose with morph-ctx [
 		as-pair (either match? new [-1][0]) new/2
 	])
 	
+	some: (function [
+		"Match next rule one or more times"
+		input args output data
+	][
+		offset: emitter/eval-next-rule input args output data
+		if match? offset [
+			offset: offset + emit-rules/any input args output data
+		]												;-- fails if never succeeded
+		offset
+	])
+
+	any: (function [
+		"Match next rule zero or more times (always succeeds)"
+		input args output data
+	][
+		;@@ TODO: just call eval-ruleset somehow
+		offset: 0
+		saved: copy input
+		end: tail output
+		while [match? new: emitter/eval-next-rule input args output data] [
+			offset: offset + new/1
+			if all [
+				not grown?: positive? length? end
+				not advanced?: saved <> input
+			] [break]
+			end: tail output
+			saved: copy input
+		]
+		append clear input saved						;-- backtrack after failed iteration 
+		as-pair offset new/2							;-- never fails
+	])
+
 	to: (function [
 		"[to datatype! rule...] Convert result of rule match into a given type"
 		input args output data
@@ -1127,3 +1183,33 @@ do with morph-ctx [
 
 ]
 
+#assert [
+	[1 2 3 4]             = morph [1 2 3 4] ['x ...] ['x ...]
+	[1]                   = morph [1 2 3 4] ['x ...] ['x]
+	[1]                   = morph [1 2 3 4] ['x] ['x]
+	[1]                   = morph [1 2 3 4] ['x] ['x ...]
+	[1 2 3 4]             = morph [1 2 3 4] ['x ...] [any 'x]
+	[1 2 3 4]             = morph [1 2 3 4] [any 'x] ['x ...]
+	[1 2 3 4]             = morph [1 2 3 4] [any 'x] [any 'x]
+	[1 2 3 4]             = morph [1 2 3 4] ['x 'y 'z 'w] ['x 'y 'z 'w]
+	[1 2 3 4]             = (morph [1 2 3 4] ['x 'y 'z 'w] [] reduce [x y z w]) 
+	[1 3]                 = morph [1 2 3 4] ['x skip ...] ['x ...]
+	[1 3]                 = morph [1 2 3 4] ['x 'y ...] ['x ...]
+	[2 4]                 = morph [1 2 3 4] ['x 'y ...] ['y ...]
+	[1 2]                 = morph [1 2 3 4] ['x ? x <= 2 | skip ...] ['x ...]
+	[1 2 3]               = morph [1 2 3 4] ['x ? x <= 3 | skip ...] ['x ...]
+	[1 4]                 = morph [1 2 3 4] ['x ? any [x = 1 x = 4] | skip ...] ['x ...]
+	[3 4]                 = morph [1 2 3 4] ['x 'y ? x = 3 | skip ...] ['x 'y ...]
+	[1 2 3 4]             = morph [1 2 3 4] ['x 'y ...] ['x 'y ...]
+	[1 2 3 4]             = morph [1 2 3 4] [any ('x 'y)] ['x 'y ...]
+	[1 2 3 4]             = morph [1 2 3 4] [any ('x 'y)] [any ('x 'y)]
+	[[1 2] [3 4]]         = morph [1 2 3 4] [any ('x 'y)] [any ['x 'y]]
+	[[1 2] [3 4]]         = morph [1 2 3 4] [any ('x 'y)] [['x 'y] ...]
+	[[[1] [2]] [[3] [4]]] = morph [1 2 3 4] [any ('x 'y)] [[['x] ['y]] ...]
+	[[1] [2] [3] [4]]     = morph [1 2 3 4] [any ('x 'y)] [(['x] ['y]) ...]
+	[1 2 3 4]             = morph [1 2 3 4] [any ('x 'y)] [(('x) ('y)) ...]
+	[1 2 3 4]             = morph [1 2 3 4] [any [any 'x]] [any 'x]
+	[[1 2] [3 4]]         = morph [[1 2] [3 4]] [any any 'x] [any 'x]
+	[[1 2] [3 4]]         = morph [[1 2] [3 4]] [any (any 'x)] [any 'x]
+	[1 2 3 4]             = morph [[1 2] [3 4]] [any [any 'x]] [any 'x]
+]

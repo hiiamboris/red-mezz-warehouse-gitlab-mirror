@@ -177,6 +177,68 @@ Look closely at the rules again.
 
 > Note I didn't write a rule to read CSV from a block produced by `csv-blk`: the exercise of converting CSV block into text is left to the reader. Clone the repository, do `morph.red` and play ;)
 
+### Learn by example
+
+Here's more examples, illustrating the basics. Try to compare the result with your expectations.
+```
+>> morph [1 2 3 4] ['x ...] ['x ...]
+== [1 2 3 4]
+>> morph [1 2 3 4] ['x ...] ['x]
+== [1]
+>> morph [1 2 3 4] ['x] ['x]
+== [1]
+>> morph [1 2 3 4] ['x] ['x ...]
+== [1]
+>> morph [1 2 3 4] ['x ...] [any 'x]
+== [1 2 3 4]
+>> morph [1 2 3 4] [any 'x] ['x ...]
+== [1 2 3 4]
+>> morph [1 2 3 4] [any 'x] [any 'x]
+== [1 2 3 4]
+>> morph [1 2 3 4] ['x 'y 'z 'w] ['x 'y 'z 'w]
+== [1 2 3 4]
+>> morph [1 2 3 4] ['x 'y 'z 'w] [] print [x y z w]
+1 2 3 4
+>> morph [1 2 3 4] ['x skip ...] ['x ...]
+== [1 3]
+>> morph [1 2 3 4] ['x 'y ...] ['x ...]
+== [1 3]
+>> morph [1 2 3 4] ['x 'y ...] ['y ...]
+== [2 4]
+>> morph [1 2 3 4] ['x ? x <= 2 | skip ...] ['x ...]
+== [1 2]
+>> morph [1 2 3 4] ['x ? x <= 3 | skip ...] ['x ...]
+== [1 2 3]
+>> morph [1 2 3 4] ['x ? any [x = 1 x = 4] | skip ...] ['x ...]
+== [1 4]
+>> morph [1 2 3 4] ['x 'y ? x = 3 | skip ...] ['x 'y ...]
+== [3 4]
+>> morph [1 2 3 4] ['x 'y ...] ['x 'y ...]
+== [1 2 3 4]
+>> morph [1 2 3 4] [any ('x 'y)] ['x 'y ...]
+== [1 2 3 4]
+>> morph [1 2 3 4] [any ('x 'y)] [any ('x 'y)]
+== [1 2 3 4]
+>> morph [1 2 3 4] [any ('x 'y)] [any ['x 'y]]
+== [[1 2] [3 4]]
+>> morph [1 2 3 4] [any ('x 'y)] [['x 'y] ...]
+== [[1 2] [3 4]]
+>> morph [1 2 3 4] [any ('x 'y)] [[['x] ['y]] ...]
+== [[[1] [2]] [[3] [4]]]
+>> morph [1 2 3 4] [any ('x 'y)] [(['x] ['y]) ...]
+== [[1] [2] [3] [4]]
+>> morph [1 2 3 4] [any ('x 'y)] [(('x) ('y)) ...]
+== [1 2 3 4]
+>> morph [1 2 3 4] [any [any 'x]] [any 'x]
+== [1 2 3 4]
+>> morph [[1 2] [3 4]] [any any 'x] [any 'x]
+== [[1 2] [3 4]]
+>> morph [[1 2] [3 4]] [any (any 'x)] [any 'x]
+== [[1 2] [3 4]]
+>> morph [[1 2] [3 4]] [any [any 'x]] [any 'x]
+== [1 2 3 4]
+```
+
 ## Data model
 
 To be able to use `morph` DSL, it's important to get the idea how it structures the data.
