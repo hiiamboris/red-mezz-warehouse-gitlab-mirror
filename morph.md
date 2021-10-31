@@ -237,6 +237,12 @@ Here's more examples, illustrating the basics. Try to compare the result with yo
 == [[1 2] [3 4]]
 >> morph [[1 2] [3 4]] [any [any 'x]] [any 'x]
 == [1 2 3 4]
+>> morph "1234" [x: ('y 'y) ...] [x: ('y 'y) ...]
+== ["1" "2" "3" "4"]
+>> morph "1234" [x: ('y 'y) ...] [x: ['y 'y] ...]
+== [["1" "2"] ["3" "4"]]
+>> morph "1234" [x: ('y 'y) ...] ['x ...]
+== ["12" "34"]
 ```
 
 ## Data model
