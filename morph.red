@@ -31,7 +31,7 @@ morph-ctx: context [
 	
 	;; `??` variant
 	?!: function ['x [any-type!]] [
-		if any-word? x [set/any 'x get/any name: x]
+		if any [any-word? x any-path? x] [set/any 'x get/any name: x]
 		if any [block? :x object? :x] [x: replace-vectors-with-paths copy/deep x]
 		if name [prin name prin ": "]
 		system/words/probe :x
@@ -120,6 +120,7 @@ morph-ctx: context [
 					select type-rules 'any-type!
 				]
 				either find [block! paren!] type [
+					; #debug [print ["INSIDE" name]]
 					result: handler/with input :value args output data name
 				][	result: handler      input :value args output data
 				]
@@ -175,6 +176,7 @@ morph-ctx: context [
 			;@@ incomplete! has to anonymize the word and set it to the result of next expression
 			set-word!: (function [input token args output data] [	;-- x: rule
 				name: to word! token
+				#debug [print ["INSIDE" name]]
 				append data/paths/tree name
 				inner: copy []
 				offset: eval-next-rule input args inner data		;-- has to be recursive to support multiple set-words
@@ -246,10 +248,15 @@ morph-ctx: context [
 				select type-rules 'any-type!
 			]
 			args: next rule
-			mark: tail output
+			; mark: tail output
+			saved: tree-snapshot output
 			(offset: handler input :token args output data)		;-- parens prevent arity spillage, just in case
 			#assert [pair? offset]
-			if offset/1 <= 0 [clear mark]				;-- do not save results from look-ahead rules
+			;@@ restore when at tail??
+			; ?? saved
+			; ?? offset
+			if offset/1 <= 0 [tree-restore output saved]		;-- do not save results from look-ahead rules
+			; if offset/1 <= 0 [clear mark]				;-- do not save results from look-ahead rules
 			offset + 0x1								;-- count token too
 		]
 		
@@ -269,8 +276,9 @@ morph-ctx: context [
 				start: input
 				ruleset: rule-start
 				matched?: yes							;-- empty rule succeeds
-				tail-tree output						;-- mark a position for backtracking
-				while [not tail? ruleset] [
+				; tail-tree output						;-- mark a position for backtracking
+				saved: tree-snapshot output				;-- mark a position for backtracking
+				while [all [not tail? ruleset not tail? input]] [
 					#assert [not unset? :ruleset/1]
 					token: :ruleset/1
 					if find/case [| ...] :token [break]
@@ -279,7 +287,13 @@ morph-ctx: context [
 					either not match? new [
 						input: start					;-- input is reset for next alternative
 						; clear mark						;-- backtrack (when some rule succeeds but later one fails)
-						clear-tree output				;-- backtrack (when some rule succeeds but later one fails)
+						; ?? new						
+						; ?? saved
+						; print ["failed to match" mold ruleset]
+						; print ["backtracking from" mold input]
+						;@@ restore when at tail?
+						tree-restore output saved		;-- backtrack (when some rule succeeds but later one fails)
+						; clear-tree output			;-- backtrack (when some rule succeeds but later one fails)
 						unless ruleset: find/case/tail ruleset '| [
 							matched?: no
 							break
@@ -601,17 +615,45 @@ morph-ctx: context [
 		parse tree rule: [any [ahead change only set x block! (head x) into rule | skip]]
 	]
 		
-	clear-tree: function [tree /local x] [
+	tree-snapshot: function [tree /local x] [
+		shot: make hash! collect [
+			parse tree [any [
+				word! set x block! (keep/only head x keep/only tail x)
+				;@@ save inner blocks or not?
+			]]
+		]
+	]
+	
+	tree-restore: function [tree shot /local x] [
+		; prin "TREE BEFORE RESTORE: " ?! tree ?! shot
 		parse tree [any [
-			word! set x block! (clear x)
+			p: word! set x block! (
+				set [hd: tl:] find/same/skip/only shot head x 2
+				either hd [
+					; print ["CLEARING" p/1 "at" mold tl]
+					clear tl
+					p: skip p 2
+				][
+					; print ["REMOVING" p/1]
+					remove/part p 2
+				]
+			) :p
 		]]
+		; prin "TREE AFTER RESTORE: " ?! tree
 	]
 		
-	tail-tree: function [tree /local x] [
-		parse tree [any [
-			word! change only set x block! (tail x)
-		]]
-	]
+	;; this doesn't work when an inner loop advances the tree to it's tail:
+	; tail-tree: function [tree /local x] [
+		; parse tree [any [
+			; word! change only set x block! (tail x)
+		; ]]
+	; ]
+	; clear-tree: function [tree /local x] [
+		; parse tree [any [
+			; word! set x block! (clear x)
+		; ]]
+	; ]
+		
 	
 	deep-offset?: function [series chunk /with path] [
 		path: any [path copy []]
@@ -1063,8 +1105,20 @@ emit-rules: make map! compose with morph-ctx [
 		offset: emitter/eval-next-rule input args output data
 		offset/2: offset/2 + 1
 		if match? offset [
-			#assert [single? pos]
-			change pos either object! = type [object pos/1][to type pos/1]
+			if error? err: try [
+				either single? pos [
+					change pos either object! = type [object :pos/1][to type :pos/1]
+				][
+					;@@ experimental multi-value conversion (e.g. to join stuff into a single string)
+					change/part
+						pos
+						either object! = type [object :pos][to type :pos]
+						tail pos
+				]
+			][
+				#debug [print ["ERROR: Unable to make" mold type "out of" mold/flat/part :pos/1 100]]
+				offset/1: -1							;-- let the rule silently fail
+			]
 		]
 		offset
 	])
@@ -1183,36 +1237,37 @@ do with morph-ctx [
 
 ]
 
-#assert [
-	[1 2 3 4]             = morph [1 2 3 4] ['x ...] ['x ...]
-	[1]                   = morph [1 2 3 4] ['x ...] ['x]
-	[1]                   = morph [1 2 3 4] ['x] ['x]
-	[1]                   = morph [1 2 3 4] ['x] ['x ...]
-	[1 2 3 4]             = morph [1 2 3 4] ['x ...] [any 'x]
-	[1 2 3 4]             = morph [1 2 3 4] [any 'x] ['x ...]
-	[1 2 3 4]             = morph [1 2 3 4] [any 'x] [any 'x]
-	[1 2 3 4]             = morph [1 2 3 4] ['x 'y 'z 'w] ['x 'y 'z 'w]
-	[1 2 3 4]             = (morph [1 2 3 4] ['x 'y 'z 'w] [] reduce [x y z w]) 
-	[1 3]                 = morph [1 2 3 4] ['x skip ...] ['x ...]
-	[1 3]                 = morph [1 2 3 4] ['x 'y ...] ['x ...]
-	[2 4]                 = morph [1 2 3 4] ['x 'y ...] ['y ...]
-	[1 2]                 = morph [1 2 3 4] ['x ? x <= 2 | skip ...] ['x ...]
-	[1 2 3]               = morph [1 2 3 4] ['x ? x <= 3 | skip ...] ['x ...]
-	[1 4]                 = morph [1 2 3 4] ['x ? any [x = 1 x = 4] | skip ...] ['x ...]
-	[3 4]                 = morph [1 2 3 4] ['x 'y ? x = 3 | skip ...] ['x 'y ...]
-	[1 2 3 4]             = morph [1 2 3 4] ['x 'y ...] ['x 'y ...]
-	[1 2 3 4]             = morph [1 2 3 4] [any ('x 'y)] ['x 'y ...]
-	[1 2 3 4]             = morph [1 2 3 4] [any ('x 'y)] [any ('x 'y)]
-	[[1 2] [3 4]]         = morph [1 2 3 4] [any ('x 'y)] [any ['x 'y]]
-	[[1 2] [3 4]]         = morph [1 2 3 4] [any ('x 'y)] [['x 'y] ...]
-	[[[1] [2]] [[3] [4]]] = morph [1 2 3 4] [any ('x 'y)] [[['x] ['y]] ...]
-	[[1] [2] [3] [4]]     = morph [1 2 3 4] [any ('x 'y)] [(['x] ['y]) ...]
-	[1 2 3 4]             = morph [1 2 3 4] [any ('x 'y)] [(('x) ('y)) ...]
-	[1 2 3 4]             = morph [1 2 3 4] [any [any 'x]] [any 'x]
-	[[1 2] [3 4]]         = morph [[1 2] [3 4]] [any any 'x] [any 'x]
-	[[1 2] [3 4]]         = morph [[1 2] [3 4]] [any (any 'x)] [any 'x]
-	[1 2 3 4]             = morph [[1 2] [3 4]] [any [any 'x]] [any 'x]
-	["1" "2" "3" "4"]     = morph "1234" [x: ('y 'y) ...] [x: ('y 'y) ...]
-	[["1" "2"] ["3" "4"]] = morph "1234" [x: ('y 'y) ...] [x: ['y 'y] ...]
-	["12" "34"]           = morph "1234" [x: ('y 'y) ...] ['x ...]
-]
+; #assert [
+	; [1 2 3 4]             = morph [1 2 3 4] ['x ...] ['x ...]
+	; [1]                   = morph [1 2 3 4] ['x ...] ['x]
+	; [1]                   = morph [1 2 3 4] ['x] ['x]
+	; [1]                   = morph [1 2 3 4] ['x] ['x ...]
+	; [1 2 3 4]             = morph [1 2 3 4] ['x ...] [any 'x]
+	; [1 2 3 4]             = morph [1 2 3 4] [any 'x] ['x ...]
+	; [1 2 3 4]             = morph [1 2 3 4] [any 'x] [any 'x]
+	; [1 2 3 4]             = morph [1 2 3 4] ['x 'y 'z 'w] ['x 'y 'z 'w]
+	; [1 2 3 4]             = (morph [1 2 3 4] ['x 'y 'z 'w] [] reduce [x y z w]) 
+	; [1 3]                 = morph [1 2 3 4] ['x skip ...] ['x ...]
+	; [1 3]                 = morph [1 2 3 4] ['x 'y ...] ['x ...]
+	; [2 4]                 = morph [1 2 3 4] ['x 'y ...] ['y ...]
+	; [1 2]                 = morph [1 2 3 4] ['x ? x <= 2 | skip ...] ['x ...]
+	; [1 2 3]               = morph [1 2 3 4] ['x ? x <= 3 | skip ...] ['x ...]
+	; [1 4]                 = morph [1 2 3 4] ['x ? any [x = 1 x = 4] | skip ...] ['x ...]
+	; [3 4]                 = morph [1 2 3 4] ['x 'y ? x = 3 | skip ...] ['x 'y ...]
+	; [1 2 3 4]             = morph [1 2 3 4] ['x 'y ...] ['x 'y ...]
+	; [1 2 3 4]             = morph [1 2 3 4] [any ('x 'y)] ['x 'y ...]
+	; [1 2 3 4]             = morph [1 2 3 4] [any ('x 'y)] [any ('x 'y)]
+	; [[1 2] [3 4]]         = morph [1 2 3 4] [any ('x 'y)] [any ['x 'y]]
+	; [[1 2] [3 4]]         = morph [1 2 3 4] [any ('x 'y)] [['x 'y] ...]
+	; [[[1] [2]] [[3] [4]]] = morph [1 2 3 4] [any ('x 'y)] [[['x] ['y]] ...]
+	; [[1] [2] [3] [4]]     = morph [1 2 3 4] [any ('x 'y)] [(['x] ['y]) ...]
+	; [1 2 3 4]             = morph [1 2 3 4] [any ('x 'y)] [(('x) ('y)) ...]
+	; [1 2 3 4]             = morph [1 2 3 4] [any [any 'x]] [any 'x]
+	; [[1 2] [3 4]]         = morph [[1 2] [3 4]] [any any 'x] [any 'x]
+	; [[1 2] [3 4]]         = morph [[1 2] [3 4]] [any (any 'x)] [any 'x]
+	; [1 2 3 4]             = morph [[1 2] [3 4]] [any [any 'x]] [any 'x]
+	; ["1" "2" "3" "4"]     = morph "1234" [x: ('y 'y) ...] [x: ('y 'y) ...]
+	; [["1" "2"] ["3" "4"]] = morph "1234" [x: ('y 'y) ...] [x: ['y 'y] ...]
+	; ["12" "34"]           = morph "1234" [x: ('y 'y) ...] ['x ...]
+	; ["xxx"]               = morph "xxxy" [x: some "x" "y"] ['x]
+; ]
