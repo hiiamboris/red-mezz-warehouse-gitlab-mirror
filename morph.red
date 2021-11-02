@@ -121,7 +121,7 @@ morph-ctx: context [
 				]
 				either find [block! paren!] type [
 					; #debug [print ["INSIDE" name]]
-					result: handler/with input :value args output data name
+					result: do copy/deep [handler/with input :value args output data name]	;@@ #4584 workaround
 				][	result: handler      input :value args output data
 				]
 				result
@@ -224,7 +224,7 @@ morph-ctx: context [
 				] [1x0][-1x0]
 			])
 			
-			any-type!: (function [input token] [				;-- catch-all special case
+			any-type!: (function [input token [any-type!]] [				;-- catch-all special case
 				end: find/match/tail input :token 
 				1x0 * either end [offset? input end][-1]
 			])
@@ -391,7 +391,7 @@ morph-ctx: context [
 					select type-rules 'any-type!
 				]
 				either find [block! paren!] type [
-					result: handler/with input :value args output data name
+					result: do copy/deep [handler/with input :value args output data name]	;@@ #4584 workaround
 				][	result: handler      input :value args output data
 				]
 				result
@@ -402,7 +402,7 @@ morph-ctx: context [
 				name: to word! token
 				#assert [any-list? :args/1]				;@@ only x: [group] is supported for now; need more?
 				handler: select type-rules type: type?/word args/1
-				0x1 + handler/with input args/1 (next args) output data name
+				0x1 + do copy/deep [handler/with input args/1 (next args) output data name]	;@@ #4584 workaround
 				;@@ can this be made recursive and support multiple set-words in a chain? is it useful?
 			])
 			
@@ -879,7 +879,15 @@ scan-rules: make map! compose with morph-ctx [		;-- construct preserves function
 	][
 		set/any 'r do/next as [] args 'end			;@@ as [] required per #4980
 		; as-pair  either :r [0][-1]  offset? args end	;@@ either unset doesn't work
-		as-pair  either if :r [yes] [0][-1]  offset? args end
+		as-pair  either any [unset? :r :r] [0][-1]  offset? args end
+	])
+	
+	do: (function [
+		"Evaluate next expression and continue"
+		input args /local r end
+	][
+		set/any 'r do/next as [] args 'end			;@@ as [] required per #4980
+		0x1 * offset? args end
 	])
 	
 	??: (func [
@@ -1009,14 +1017,15 @@ emit-rules: make map! compose with morph-ctx [
 	][
 		set/any 'r do/next as [] args 'end			;@@ as [] required per #4980
 		; as-pair  either :r [0][-1]  offset? args end	;@@ either unset doesn't work!
-		as-pair  either if :r [yes] [0][-1]  offset? args end
+		as-pair  either any [unset? :r :r] [0][-1]  offset? args end
 	])
 	
-	discard: (function [
-		"Evaluate next rule discarding it's output, but advancing input"
-		input args output data
+	do: (function [
+		"Evaluate next expression and continue"
+		input args /local r end
 	][
-		emitter/eval-next-rule input args copy [] data
+		set/any 'r do/next as [] args 'end			;@@ as [] required per #4980
+		0x1 * offset? args end
 	])
 	
 	quote: (function [
@@ -1044,8 +1053,15 @@ emit-rules: make map! compose with morph-ctx [
 		max 0x0 emitter/eval-next-rule input args output data
 	])
 
+	discard: (function [
+		"Match next rule discarding it's output, but advancing input"
+		input args output data
+	][
+		emitter/eval-next-rule input args copy [] data
+	])
+	
 	ahead: (function [
-		"Look ahead if next rule succeeds" 
+		"Look ahead if next rule succeeds; input & output is not advanced" 
 		input args output data
 	][
 		new: emitter/eval-next-rule input args output data
@@ -1053,7 +1069,7 @@ emit-rules: make map! compose with morph-ctx [
 	])
 
 	not: (function [
-		"Look ahead if next rule fails" 
+		"Look ahead if next rule fails; input & output is not advanced" 
 		input args output data
 	][
 		new: emitter/eval-next-rule input args output data
@@ -1092,6 +1108,18 @@ emit-rules: make map! compose with morph-ctx [
 		as-pair offset new/2							;-- never fails
 	])
 
+	into: (function [
+		"[into name] Inline a named rule without entering a named branch"
+		input args output data
+	][
+		#assert [word? :args/1 "into rule expects a word argument"]
+		#assert [any-list? get/any args/1]
+		value: get name: args/1
+		handler: :morph-ctx/emitter/type-rules/paren!			;-- treat both block & paren as just paren
+		result: handler input value (next args) output data		;-- call as unnamed
+		result + 0x1
+	])
+	
 	to: (function [
 		"[to datatype! rule...] Convert result of rule match into a given type"
 		input args output data
@@ -1137,6 +1165,7 @@ emit-rules: make map! compose with morph-ctx [
 		offset
 	])
 ]
+	
 		
 
 ;;============ test code ============
