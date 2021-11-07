@@ -32,7 +32,7 @@ Red [
 
 #include %trace.red
 
-#macro ['??? copy code to end] func [[manual] s e] [	;-- has to support inner `???`s inside the `???` block
+#macro [ahead word! '??? copy code to end] func [[manual] s e] [	;-- has to support inner `???`s inside the `???` block
 	back clear change s reduce ['show-trace code]
 ]
 
