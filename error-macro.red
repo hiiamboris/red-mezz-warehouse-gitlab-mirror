@@ -17,11 +17,14 @@ Red [
 
 ;; I'm intentionally not naming it `#error` or the macro may be silently ignored if it's not expanded
 ;; (due to many issues with the preprocessor)
-;; word! is to ensure it doesn't fire on lit-word 'ERROR
-#macro [p: 'ERROR :p word! skip] func [[manual] ss ee] [
+#macro [
+	p: 'ERROR
+	(either "ERROR" == mold p/1 [p: []][p: [end skip]]) p		;@@ this idiocy is to make R2 accept only uppercase ERROR
+	skip
+] func [[manual] ss ee] [
 	unless string? ss/2 [
 		print form make error! form reduce [
-			"ERROR macro expects a string! argument, not" mold/part ss/2 50
+			"ERROR macro expects a string! argument, not" mold copy/part ss/2 50
 		]
 	]
 	remove ss
