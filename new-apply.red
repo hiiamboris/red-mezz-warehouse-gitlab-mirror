@@ -66,6 +66,7 @@ Red [
 #include %error-macro.red
 #include %localize-macro.red
 
+;@@ TODO: automatically set refinement to true if any of it's arguments are provided?
 apply: function [
 	"Call a function NAME with a set of arguments ARGS"
 	;@@ support path here or `(in obj 'name)` will be enough?
