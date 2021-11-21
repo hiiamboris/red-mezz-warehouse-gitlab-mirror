@@ -23,7 +23,7 @@ context [
 	]
 ]
 
-; comment {	;; Test
+comment {	;; Test
 	factor: 1.0
 	brightness: func [c] [(c/1 / 240 ** 2) + (c/2 / 200 ** 2) ** 0.5]	;-- doesn't count blue for speed
 	contrast-with: function [c][
@@ -49,4 +49,4 @@ context [
 			keep 'return
 		]
 	]
-; }
+}
