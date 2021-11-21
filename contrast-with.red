@@ -10,30 +10,32 @@ Red [
 ]
 
 context [
-	invert: func [c] [white - c]
-	push:   func [c] [c - (min c/1 min c/2 c/3) / 1.4]		;-- 1.3 is the magic number found best from the test below
+	brightness: func [c] [								;-- returns 1 for a value halfway between B and W
+		(c/1 / 240 ** 2) + (c/2 / 200 ** 2) ** 0.5		;-- doesn't count blue for better speed
+	]
 
 	set 'contrast-with function [
 		"Pick a color that would contrast with the given one"
 		c [tuple!]
 	][
-		mean: c/1 + c/2 + c/3 / 3
-		either mean <= 128 [invert push c][push invert c]
+		bw: either 1 > brightness c [white][black]		;-- pick black or write: what's more contrast 
+		white - c / 5 + (bw * 0.8)						;-- 20% of inverted color + 80% of B/W
 	]
 ]
 
-comment {	;; Test
+; comment {	;; Test
 	factor: 1.0
-	invert: func [c] [white - c]
-	push:   func [c] [c - (min c/1 min c/2 c/3) / factor]
+	brightness: func [c] [(c/1 / 240 ** 2) + (c/2 / 200 ** 2) ** 0.5]	;-- doesn't count blue for speed
 	contrast-with: function [c][
-		mean: c/1 + c/2 + c/3 / 3
-		either mean <= 128 [invert push c][push invert c]
+		bw: either 1 > brightness c [white][black]
+		; white - c / 5 + (bw * 0.8)
+		(white - c / factor) + (bw * (1.0 - (1.0 / factor)))
 	]
 	colors: reduce extract load help-string tuple! 2
+	insert colors 75.142.254
 	forall colors [if attempt [colors/1/4] [remove colors]]
 	view collect [
-		keep [sl: slider [factor: 2 * face/data + 1.0] text react [face/data: 1.0 * factor sl/data] return]
+		keep [sl: slider focus [factor: 100 * face/data + 1.0] text react [face/data: 1.0 * factor sl/data] return]
 		n: round/ceiling/to sqrt length? colors 1
 		repeat i n [
 			repeat j n [
@@ -47,4 +49,4 @@ comment {	;; Test
 			keep 'return
 		]
 	]
-}
+; }
