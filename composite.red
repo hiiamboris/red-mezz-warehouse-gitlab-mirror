@@ -181,7 +181,7 @@ context [
 ]
 
 #assert [ 
-	[#composite <tag flag=(mold 1 + 2)/>] == [`<tag flag=(mold 1 + 2)/>`]
+	[#composite <tag flag=(mold 1 + 2)/>] == [` <tag flag=(mold 1 + 2)/> `]		;@@ `<a b>` is buggy when compiled
 	[#composite %"()() - (1 + 2) - (<abc)))>) - (func)(1)()()"] == [` %"()() - (1 + 2) - (<abc)))>) - (func)(1)()()" `]
 ]
 
