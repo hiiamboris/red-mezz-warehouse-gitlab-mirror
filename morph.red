@@ -19,6 +19,9 @@ Red [
 ; #include %map-each.red
 #debug off
 
+;@@ TODO: morph input inp-rule (to map! rule) should not wrap it into a block
+;@@ TODO: use interpreter for function rules (but not routines) - favoring simplicity over speed
+
 morph-ctx: context [
 
 	;;============ temporary debugging crap ============
@@ -149,7 +152,7 @@ morph-ctx: context [
 				either any-list? :input/1 [					;-- block is able to dive into blocks in the input
 					append data/paths/input 0
 					result: type-rules/paren!/with input/1 token args output data name
-					result/1: min result/1 1				;-- skip just the list
+					result/1: either match? result [1][-1]	;-- skip just the list, even if block is empty
 					take/last data/paths/input
 				][
 					;@@ should it fail in list mode when not at the block?
