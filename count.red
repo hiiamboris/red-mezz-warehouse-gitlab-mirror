@@ -14,24 +14,63 @@ Red [
 ]
 
 
+#include %new-apply.red
+
 count: function [
-	"Count occurrences of X in S (using `=` by default)"
-	s [series!]
-	x [any-type!]
+	"Count occurrences of VALUE in SERIES (using `=` by default)"
+	series [series!]
+	value  [any-type!]
 	/case "Use strict comparison (`==`)"
 	/same "Use sameness comparison (`=?`)"
+	/only "Treat series and typesets as single values"
+	/head "Count the number of subsequent values at series' head"
+	/tail "Count the number of subsequent values at series' tail"	;@@ doesn't work for strings! #3339
 ][
-    n: 0 
-    system/words/case [
-        same [while [s: find/tail/same s :x][n: n + 1]]
-        case [while [s: find/tail/case s :x][n: n + 1]]
-        true [while [s: find/tail      s :x][n: n + 1]]
-    ] 
+    match: head or tail
+    unless tail: not reverse: tail [series: system/words/tail series]
+	n: 0 while [series: apply find 'local] [n: n + 1]
     n
 ]
 
+{
+	Toomas's version without apply: (and /case /same)
+
+count: func [series item /only /head /tail /local cnt pos with-only without][
+    cnt: 0
+    set [       with-only                             without                  ] case [
+        tail [[[find/reverse/match/only series item] [find/reverse/match series item]]]
+        head [[[find/match/tail/only    series item] [find/match/tail    series item]]]
+        true [[[find/tail/only          series item] [find/tail          series item]]]
+    ]
+    if tail [series: system/words/tail series]
+    while [all [pos: either only with-only without series: pos]] [cnt: cnt + 1]
+    cnt
+]	
+}
+
+; probe count/head "aaabbc" "a"
+; probe count/head "aaabbc" "aa"
+; probe count/head "aaabbc" "aaa"
+; probe count/tail [1 2 2 3 3 3] 3
 
 comment {
+	;; limited and ugly but fast version
+	count: function [
+		"Count occurrences of X in S (using `=` by default)"
+		s [series!]
+		x [any-type!]
+		/case "Use strict comparison (`==`)"
+		/same "Use sameness comparison (`=?`)"
+	][
+	    n: 0
+	    system/words/case [
+	        same [while [s: find/tail/same s :x][n: n + 1]]
+	        case [while [s: find/tail/case s :x][n: n + 1]]
+	        true [while [s: find/tail      s :x][n: n + 1]]
+	    ]
+	    n 
+    ] 
+
 	;; `compose` involves too much memory pressure
 	count: function [
 		"Count occurrences of X in S (using `=` by default)"
