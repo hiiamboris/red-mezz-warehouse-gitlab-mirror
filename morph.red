@@ -17,8 +17,8 @@ Red [
 ; #include %selective-catch.red
 ; #include %reactor92.red
 ; #include %map-each.red
-#debug off
-
+; do/expand [
+; #debug on
 ;@@ TODO: morph input inp-rule (to map! rule) should not wrap it into a block
 ;@@ TODO: use interpreter for function rules (but not routines) - favoring simplicity over speed
 
@@ -179,7 +179,7 @@ morph-ctx: context [
 			;@@ incomplete! has to anonymize the word and set it to the result of next expression
 			set-word!: (function [input token args output data] [	;-- x: rule
 				name: to word! token
-				#debug [print ["INSIDE" name]]
+				; #debug [print ["INSIDE" name]]
 				append data/paths/tree name
 				inner: copy []
 				offset: eval-next-rule input args inner data		;-- has to be recursive to support multiple set-words
@@ -1135,6 +1135,7 @@ emit-rules: make map! compose with morph-ctx [
 		pos: tail output
 		offset: emitter/eval-next-rule input args output data
 		offset/2: offset/2 + 1
+		nl?: new-line? pos
 		if match? offset [
 			if error? err: try [
 				either single? pos [
@@ -1151,6 +1152,7 @@ emit-rules: make map! compose with morph-ctx [
 				offset/1: -1							;-- let the rule silently fail
 			]
 		]
+		new-line pos nl?
 		offset
 	])
 	
@@ -1161,10 +1163,12 @@ emit-rules: make map! compose with morph-ctx [
 		#assert [any-block? output  "'load' rule is only valid for blocks"]
 		pos: tail output
 		offset: emitter/eval-next-rule input args output data
+		nl?: new-line? pos
 		if match? offset [
 			#assert [single? pos]
 			change pos transcode :pos/1					;-- expands if multiple values
 		]
+		new-line pos nl?
 		offset
 	])
 ]
@@ -1302,4 +1306,5 @@ do with morph-ctx [
 	; [["1" "2"] ["3" "4"]] = morph "1234" [x: ('y 'y) ...] [x: ['y 'y] ...]
 	; ["12" "34"]           = morph "1234" [x: ('y 'y) ...] ['x ...]
 	; ["xxx"]               = morph "xxxy" [x: some "x" "y"] ['x]
+; ]
 ; ]
