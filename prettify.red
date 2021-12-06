@@ -30,16 +30,32 @@ Red [
 
 
 prettify: function [
-	"Reformat CODE with new-lines to look readable"
-	code [block! paren!] "Modified in place, deeply"
+	"Reformat BLOCK with new-lines to look readable"
+	block [block! paren!] "Modified in place, deeply"
+	/data "Treat block as data (default: as code)"
 ][
-	new-line/all from: code no							;-- start flat
+	new-line/all orig: block no							;-- start flat
+	
+	if data [											;-- format data as key/value pairs, not expressions
+		limit: 80										;-- expansion margin
+		while [block: find/tail block block!] [
+			prettify/data inner: block/-1				;-- descend recursively
+		]
+		if any [
+			inner										;-- has inner blocks?
+			limit <= length? mold/part orig limit		;-- longer than limit?
+		][
+			new-line/skip orig yes 2					;-- expand the block
+		]
+		return orig
+	]
+	
 	until [
-		new-line code yes								;-- add newline before each independent expression
-		tail? code: preprocessor/fetch-next code
+		new-line block yes								;-- add newline before each independent expression
+		tail? block: preprocessor/fetch-next block
 	]
 	attempt [											;-- in case it recurses into itself ;)
-		parse from [any [p:
+		parse orig [any [p:
 			set w ['function | 'func] if (word? w)		;-- do not mistake words for lit-/get-words
 			ahead block! (								;-- special case for function spec (not very reliable detection :/ )
 				new-line/all p/2 no						;-- flatten the spec
@@ -51,10 +67,11 @@ prettify: function [
 			]]
 		|	[block! | paren!] (
 				new-line p no							;-- disable new-line before block start
-				prettify p/1							;-- prettify the inner block/paren
+				data?: not find/part p/1 word! limit	;-- heuristic: data if no words nearby, code otherwise
+				either data? [prettify/data p/1][prettify p/1]	;-- prettify the inner block/paren
 			)
 		|	skip
 		]]
 	]
-	from
+	orig
 ]
