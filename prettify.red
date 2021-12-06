@@ -42,19 +42,25 @@ Red [
 ;@@ TODO: VID support
 prettify: function [
 	"Reformat BLOCK with new-lines to look readable"
-	block [block! paren!] "Modified in place, deeply"
+	block [block! paren! map!] "Modified in place, deeply"
 	/data  "Treat block as data (default: as code)"
 	/spec  "Treat block as function spec"
 	/parse "Treat block as Parse rule"
 	/local w body
 ][
-	new-line/all orig: block no							;-- start flat
+	unless map? block [new-line/all orig: block no]		;-- start flat
 	if empty? orig [return orig]
 	limit: 80											;-- expansion margin
 	
 	; attempt [											;-- trap in case it recurses into itself ;)
 	; print [case [data ["DATA"] spec ["SPEC"] parse ["PARSE"] 'else ["CODE"]] mold block lf]
 	case [
+		map? block [
+			block: values-of block
+			while [block: find/tail block block!] [
+				prettify/data block
+			]
+		]
 		data [													;-- format data as key/value pairs, not expressions
 			while [block: find/tail block block!] [
 				prettify/data inner: block/-1					;-- descend recursively
