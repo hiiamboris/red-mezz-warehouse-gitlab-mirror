@@ -134,7 +134,7 @@ context [
 		ii: copy iteration-info!
 		ii/spec:   spec: compose [(spec)]
 		ii/series: series
-		ii/code:   code
+		ii/code:   copy/deep code						;-- copy/deep or binding will be shared on recursive calls!
 		ii/cmp: get pick pick [[=? =?] [== =]] same-flag case-flag
 		if all [same-flag case-flag] [
 			ERROR "/case and /same refinements are mutually exclusive"
@@ -904,6 +904,17 @@ context [
 	(x: 1     map-each x     [2 3 4]   [x: x * x]  x = 1)
 	(x: y: 1  map-each [x y] [2 3 4 5] [x: y * x]  all [x = 1 y = 1])
 
+	;; confirm binding is not shared
+	depth: 0
+	f: does [
+		depth: depth + 1
+		also map-each/eval [x y] [1 2 3 4] [			;-- shared code block between multiple nesting levels
+			if depth < 2 [x: f]
+			[x y]
+		]
+		depth: depth - 1
+	]
+	[[[1 2 3 4] 2 [1 2 3 4] 4] = f]
 
 
 
