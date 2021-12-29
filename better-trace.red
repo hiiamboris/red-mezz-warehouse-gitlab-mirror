@@ -106,6 +106,7 @@ unless find spec-of :trace /here [context [
 				any-word? set/any 'word last data/stack
 				not same? word last data/evstack
 				not find [yes no on off true false none] word
+				not find to [] any-type! word
 			]
 			return [
 				data/isubex?
