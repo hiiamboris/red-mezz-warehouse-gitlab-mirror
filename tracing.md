@@ -70,7 +70,7 @@ print from my-func
 *** Stack: 
 </pre>
 
-<code>``</code> lines show:
+<code>``````</code> lines show:
 - path of called functions so far
 - expression that resulted in reaching the current current scope
 
@@ -180,7 +180,7 @@ print from my-func
 *** Stack: 
 </pre>
 
-<code>``</code> lines become irreplaceable in such logs as they help connect expressions with their context.
+<code>``````</code> lines become irreplaceable in such logs as they help connect expressions with their context.
 
 ### Tracing sub-expressions with `trace/all`
 
