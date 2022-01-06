@@ -21,7 +21,7 @@ selective-catch: func [
 	/local e r
 ][
 	all [
-		error? e: try/all [set/any 'r do code  'ok]		;-- r <- code result (maybe error or unset);  e <- error or ok
+		error? e: try/all/keep [set/any 'r do code  'ok]	;-- r <- code result (maybe error or unset);  e <- error or ok
 		any [											;-- muffle & return the selected error only
 			e/type <> type
 			e/id <> id
