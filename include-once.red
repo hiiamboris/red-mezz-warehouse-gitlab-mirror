@@ -4,6 +4,15 @@ Red [
 	author:  @hiiamboris
 	license: 'BSD-3
 	notes: {
+		NOTE: MAKE SURE THIS IS THE FIRST INCLUDED SCRIPT
+		                IN THE MAIN FILE!
+		Otherwise the following mess happens:
+		1. preprocessor "includes" and discards every file, replaces `#include` with `do`
+		2. `do` now expands files that "seem" to have been included already, and now become empty (deduplicated)
+		3. you get "undefined symbol" kind of errors, etc
+	
+		Description:
+		
 		I once inserted a 'print' inside `assert.red`...
 		and found out it gets included from `everything.red` 126 times!!!
 		No wonder Red loaded in 15-20 seconds.
@@ -23,17 +32,24 @@ Red [
 		- check if file is already included
 		- replace itself with file contents (this will likely mess reported error line numbers)
 		- insert `change-dir` into file contents block to properly handle relative includes
+		
+		It's not possible to compile using this approach, because Red code is not usually loadable in R2
+		For compiling, see https://gitlab.com/hiiamboris/red-cli/-/tree/master/mockups/inline
 	}
 ]
 
 #if all [
-	not object? rebol									;-- do nothing when compiling
+	not object? :rebol									;-- do nothing when compiling
 	not block? :included-scripts						;-- do not reinclude itself
 ][
 	;-- since it's now running in Red, we don't need R2 compatibility
 	#do [verbose-inclusion?: yes]						;-- comment this out to disable file names dump
 	
-	#macro [#include] func [[manual] s e /local file data old-path path _] [
+	#macro [#include] func [
+		[manual] s e
+		/local file data old-path path _ verb? processing? finished? also?
+	][
+		indent: ""
 		unless file? :s/2 [
 			do make error! rejoin [
 				"#include expects a file argument, not " mold/part :s/2 100
@@ -45,20 +61,39 @@ Red [
 		if find included-scripts file [					;-- if already included, skip it
 			return remove/part s 2
 		]
-		if true = :verbose-inclusion? [print ["including" mold file]]
+		if verb?: true = :verbose-inclusion? [
+			print rejoin ["including " mold file]
+		]
 		data: try [load file]
 		if error? data [								;-- on loading error, report & skip
 			print data
 			return remove/part s 2
 		]
+		
+		processing?: finished?: also?: []
+		if verb? [
+			processing?: compose/deep [
+				print rejoin [append indent " " "processing " (mold file)]
+			]
+			finished?: compose/deep [
+				print rejoin [head remove back tail indent "finished " (mold file)]
+			]
+			also?: [also]
+		]
 
 		old-path: what-dir
 		set [path _] split-path file
+		if 'Red == :data/1 [data: skip data 2]			;-- skip the header in case Red word is defined to smth else
 		change/part s compose/deep [					;-- insert contents
 			(to issue! 'do) [change-dir (path)]			;-- descend into paths for relative includes to work
-			(data)
+			do [										;-- `do` makes it compatible with x: #include y expressions
+				(processing?)
+				(also?) do [(data)]						
+				(finished?)
+			]
 			(to issue! 'do) [change-dir (old-path)]
 		] 2
+		; print ["===" file "expands into:^/" mold s]
 		append included-scripts file
 		s												;-- continue processing from contents itself
 	]
