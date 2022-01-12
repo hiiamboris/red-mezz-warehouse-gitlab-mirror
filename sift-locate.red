@@ -5,6 +5,12 @@ Red [
 	license: BSD-3
 	notes: {
 		See sift-locate.md for details
+		
+		BUGS:
+		need to get rid of the preprocessor here! not an option!
+		setting `x: does []` is enough to fail the tests, because it errors on fetch-next `x/p/q`
+		it might have almost worked if conditions were bound to for-each spec before preprocessing
+		but still: what if `x/p/q` is a non-nullary func where `x` is not yet defined? 
 	}
 ]
 
@@ -20,15 +26,25 @@ context [
 	;-- get succeeds = path exists = we get `not none` = true
 	;-- get fails = no path = we get `not error` = false
 	;-- should not return false if path exists but has a falsey value!
-	path-exists?: func [path [path!]] [
-		not try [get/any path  none]
+	path-exists?: function [:path [path! get-path!]] [
+		; not try [get/any path  none]					;@@ no longer working :( no longer fast :(
+		; not try compose/into [(path)  none] clear []
+		not try [
+			either path? path [
+				x: get/any path							;-- x: is a workaround for #4988
+			][
+				get/any path
+			]
+			none
+		]
+		;@@ maybe to hell with this func, let it fail and rethrow the errors unless they're path-related?
 	]
 	#assert [
-		(b: [a 1]             path-exists? 'b/a)
+		(b: [a 1]             path-exists? b/a)
 		;@@ this technically fails, but I don't care since my aim is to avoid path errors rather than a precise check:
-		; (b: [a 1]         not path-exists? 'b/b)
-		(o: object [a: 1]     path-exists? 'o/a)
-		(o: object [a: 1] not path-exists? 'o/b)
+		; (b: [a 1]         not path-exists? b/b)
+		(o: object [a: 1]     path-exists? o/a)
+		(o: object [a: 1] not path-exists? o/b)
 	]
 
 	anonymous-hyphen: anonymize '- none					;-- a safe-to-assign hyphen for use in spec
@@ -70,7 +86,7 @@ context [
 				find/only head tested-paths path		;-- don't repeat tests for already tested paths
 			][
 				append chain compose/deep [
-					path-exists? (to lit-path! path)
+					path-exists? (path)
 				]
 				nexpr: nexpr + 1
 				append/only tested-paths path
@@ -225,7 +241,7 @@ context [
 		code: compose [if (tests) [result: skip ii/series ii/offset break]]	;@@ return won't work from here (caught by for-each-core)
 		if ii: each-ctx/fill-info spec series code back case same [
 			each-ctx/for-each-core ii [
-				if ii/matched? code
+				if ii/matched? ii/code					;-- ii/code is bound, original `code` isn't!
 			] []
 		]
 
@@ -248,7 +264,8 @@ context [
 		buf: copy []
 		code: compose/deep [							;@@ has to be composed, otherwise tests & spec don't get bound by map-each
 			reduce/into [(spec-words)] clear buf		;-- tests may change word values, so we have to reduce them before that
-			either (tests) [buf][continue]
+			; either (tests) [buf][continue]				;@@ no longer works when tests evaluate to unset!
+			any [all [(tests) buf] continue]
 		]
 		self: drop: yes									;-- preserve input type, omit rows not passing the tests
 		unless scalar? series [series: copy series]		;-- don't modify the original
@@ -303,7 +320,8 @@ context [
 	o2: object [p: object [r: 2]]
 	o3: object [p: object [r: 3]]
 	(reduce [o1]) = sift reduce [o1 o2 o3] [x .. x/p/q        ] 	;-- should not error out on non-existing paths
-	(reduce [o1]) = sift reduce [o1 o2 o3] [x .. :x/p/q       ] 	;-- get-paths too!
+	(reduce [o1 o2 o3]) = sift reduce [o1 o2 o3] [x .. :x/p/q ] 	;-- get-paths too!
+	; (reduce [o1]) = sift reduce [o1 o2 o3] [x .. :x/p/q       ] 	no longer a valid test in new Red
 	(reduce [o1]) = sift reduce [o1 o2 o3] [x .. x/p/q > 0    ] 
 	(reduce [o2]) = sift reduce [o1 o2 o3] [x .. /p x = o2    ] 
 	(reduce [o3]) = sift reduce [o1 o2 o3] [x .. y: /p y/r > 2] 
@@ -376,7 +394,9 @@ context [
 	single? locate/back faces [.. s: /size [s/x * s/y = 0]   ] 
 	single? locate/back faces [.. s: /size [s/x * s/y = 0]   ] 
 	single? locate      faces [.. /size = 0x2                ] 
-
+	
+	3 = index? locate [1 [a] 2 [b] 3 [c]] [- b .. b = [b]]
+ 
 ]]
 ; #include %prettify.red
 ; print "------ WORK HERE ------"
