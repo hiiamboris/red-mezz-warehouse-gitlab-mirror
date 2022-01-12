@@ -197,7 +197,8 @@ context [
 ; #assert [20 = trace-deep :inspect [f: func [x] [does [10]] g: f 1 g * 2]]
 ; #assert [20 = trace-deep :inspect [f: func [x] [does [10]] (g: f (1)) ((g) * 2)]]
 
-#assert [
+
+#localize [#assert [									;-- prevent leakage of all these x y f words
 	() = trace-deep func [x y [any-type!]][:y] []
 	() = trace-deep func [x y [any-type!]][:y] [()]
 	() = trace-deep func [x y [any-type!]][:y] [1 ()]
@@ -206,4 +207,4 @@ context [
 	4  = trace-deep func [x y [any-type!]][:y] [x: y: 2 x + y]
 	20 = trace-deep func [x y [any-type!]][:y] [f: func [x] [does [10]] g: f 1 g * 2]
 	20 = trace-deep func [x y [any-type!]][:y] [f: func [x] [does [10]] x: f: :f (g: f (1)) ((g) * 2)]
-]
+]]
