@@ -171,21 +171,21 @@ once prof: context [									;-- don't reinclude or stats may be reset
 		time+ram: make block! 64
 		repend pending [code code-copy n time+ram]			;-- stash stats in case the loop doesn't finish
 		timer: func [x [any-type!] pos [block!]] [			;-- collects timing of each expression
-			t2: now/precise									;-- 2 time markers here - to minimize `timer` influence on timings
+			t2: now/utc/precise								;-- 2 time markers here - to minimize `timer` influence on timings
 			s2: stats
-			dt: difference t2 t1							;-- in millisecs
+			dt: difference t2 t1
 			time+ram: change/only change change time+ram
 				dt      + any [time+ram/1 0.0]				;-- save both timing...
 				s2 - s1 + any [time+ram/2 0]				;-- ...allocations size...
 				index? pos									;-- ...and position
 			s1: stats
-			t1: now/precise
+			t1: now/utc/precise								;-- /utc is 2x faster
 			:x
 		]
 
 		loop n [											;-- profile the code
 			s1: stats
-			t1: now/precise
+			t1: now/utc/precise
 			set/any 'result trace :timer test-code			;-- this may throw out of the profiler
 			time+ram: head time+ram
 		]
