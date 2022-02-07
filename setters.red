@@ -88,7 +88,7 @@ once: func [
 	:word [set-word!]
 	val   [default!] "New value"
 ][
-	unless value? to word! word [set word :val]
+	if unset? get/any word [set word :val]
 	:val
 ]
 
@@ -97,7 +97,7 @@ default: func [
 	:subj [set-word! set-path!]
 	val   [default!] "New value"
 ][
-	if set-path? subj [subj: as path! subj]				;-- get does not work on set-paths
+	; if set-path? subj [subj: as path! subj]				;-- get does not work on set-paths
 	if none =? get/any subj [set subj :val]				;-- `=?` is like 5% faster than `=`, and 2x faster than `none?`
 	:val
 ]
@@ -107,7 +107,7 @@ maybe: func [
 	:subj [set-word! set-path!]
 	val   [default!] "New value"
 ][
-	if set-path? subj [subj: as path! subj]				;-- get does not work on set-paths
+	; if set-path? subj [subj: as path! subj]				;-- get does not work on set-paths
 	unless :val == get/any subj [set subj :val]
 	:val
 ]
