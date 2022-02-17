@@ -76,7 +76,7 @@ Red [
 				print rejoin [append indent " " "processing " (mold file)]
 			]
 			finished?: compose/deep [
-				print rejoin [head remove back tail indent "finished " (mold file)]
+				print rejoin [" " head remove back tail indent "finished " (mold file)]
 			]
 			also?: [also]
 		]
