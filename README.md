@@ -48,6 +48,7 @@ Notes:
 | [selective-catch](selective-catch.red) | Catch `break`/`continue`/etc. - for use in building custom loops |
 | [prettify](prettify.red)               | Automatically fill some (possibly flat) code with new-line markers for readability |
 | [reshape](reshape.red)                 | Advanced code construction dialect to replace `compose` and `build`. [Read more](reshape.md) |
+| [leak-check](leak-check.red)           | Find words leaking from complex code |
 | [modulo](modulo.red)                   | Working modulo implementation with tests |
 
 ### Series-related

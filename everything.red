@@ -16,6 +16,7 @@ Red [
 #include %prettify.red
 #include %reshape.red
 #include %morph.red
+#include %leak-check.red
 
 #include %count.red
 #include %collect-set-words.red
