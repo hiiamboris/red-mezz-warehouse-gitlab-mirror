@@ -37,6 +37,8 @@ Spec can include the following elements:
 
 Spec can also be a `word!`, used as a shortcut. E.g. `foreach x ..` is fully equivalent to `foreach [x] ..`.
 
+Note: `/i` and `p:` cannot be mixed together because then behavior becomes undefined. E.g. user modifies `p` and it's not aligned with step anymore and may even go backwards, then what should `i` become?
+
 ## Series
 
 Apart from iteration over series, this version supports:
