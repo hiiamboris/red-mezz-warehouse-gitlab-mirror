@@ -57,7 +57,7 @@ Red [
 
 			Units of measure:
 				Time is displayed in milliseconds per iteration because:
-				- sub-microseconds are beyond TRACE resolution and only can be found in CLOCK mezz
+				- sub-microseconds are beyond SHALLOW-TRACE resolution and only can be found in CLOCK mezz
 				- less columns wasted for formatting, freeing space for code lines
 				- output is nicely balanced around a central dot
 				RAM is displayed in bytes per iteration because:
@@ -76,7 +76,7 @@ Red [
 
 
 ; #include %assert.red
-#include %trace.red
+#include %shallow-trace.red
 #include %setters.red
 #include %format-readable.red
 
@@ -174,7 +174,7 @@ once prof: context [									;-- don't reinclude or stats may be reset
 			t2: now/utc/precise								;-- 2 time markers here - to minimize `timer` influence on timings
 			s2: stats
 			dt: difference t2 t1
-			time+ram: change/only change change time+ram
+			time+ram: change change change time+ram
 				dt      + any [time+ram/1 0.0]				;-- save both timing...
 				s2 - s1 + any [time+ram/2 0]				;-- ...allocations size...
 				index? pos									;-- ...and position
@@ -186,7 +186,7 @@ once prof: context [									;-- don't reinclude or stats may be reset
 		loop n [											;-- profile the code
 			s1: stats
 			t1: now/utc/precise
-			set/any 'result trace :timer test-code			;-- this may throw out of the profiler
+			set/any 'result shallow-trace :timer test-code	;-- this may throw out of the profiler
 			time+ram: head time+ram
 		]
 

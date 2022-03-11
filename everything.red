@@ -35,19 +35,19 @@ Red [
 ; #include %explore.red									;@@ temporary
 
 #include %clock.red
-; #include %trace.red									;-- included by clock-each.red & show-trace.red & stepwise-func.red
+; #include %shallow-trace.red							;-- included by clock-each.red & show-trace.red & stepwise-func.red
 #include %clock-each.red
-#include %show-trace.red
+; #include %show-trace.red								;-- unlikely needed given now available trace mezz
 #include %stepwise-func.red
 
 ; #include %trace-deep.red								;-- included by expect.red & show-deep-trace.red
 #include %expect.red
-#include %show-deep-trace.red
+; #include %show-deep-trace.red							;-- unlikely needed given now available trace mezz
 
 ; #include %format-number.red							;-- included by timestamp.red
 ; #include %stepwise-macro.red							;-- included by timestamp.red
 #include %timestamp.red
-if error? set/any 'e try [#include %tabs.red] [print ["%tabs.red:^/" e]]
+#include %tabs.red
 #include %modulo.red
 #include %print-macro.red
 

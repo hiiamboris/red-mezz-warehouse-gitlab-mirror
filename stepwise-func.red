@@ -19,7 +19,7 @@ Red [
 	}
 ]
 
-#include %trace.red
+#include %shallow-trace.red
 
 
 ;; NOTE: safe in recursion: stepwise [2 (stepwise [3]) * .]  -- returns 6, not 9
@@ -27,7 +27,7 @@ stepwise: function [
 	"Evaluate code by setting `.` word to the result of each expression"
 	. [block!] "Block of code"		;-- can't name this `code`, else `code` name will be exposed to itself by `bind` -- will be fixed by native bind/only
 ][
-	trace 
+	shallow-trace 
 		func [x [any-type!] _] [set/any '. :x]		;-- save result of the last expr in `.`
 		also
 			bind . '.								;-- `.` inside code block should refer to the local word
@@ -44,7 +44,7 @@ comment {
 		;; `code` can't be bound to `stepwise` context, or we expose it's locals
 		bind code f: has [.] [							;-- localize `.` to allow recursion
 			unset '.									;-- for `stepwise []` to equal `stepwise [.]`
-			trace :setter code
+			shallow-trace :setter code
 		]
 		setter: func [x [any-type!] _] bind [set/any '. :x] :f
 		f

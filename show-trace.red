@@ -25,12 +25,12 @@ Red [
 			append [] [1 2 3 4 5]                    => [1 2 3 4 5]
 			*** Script Error: this-is-an-error! has no value
 			*** Where: do
-			*** Stack: show-trace trace 
+			*** Stack: show-trace shallow-trace 
 	}
 ]
 
 
-#include %trace.red
+#include %shallow-trace.red
 
 ; #macro [ahead word! '??? copy code to end] func [[manual] s e] [	ahead is not known to R2, can't compile
 #macro [p: word! :p '??? copy code to end] func [[manual] s e] [	;-- has to support inner `???`s inside the `???` block
@@ -46,7 +46,7 @@ show-trace: function [
 ][
 	unless widths [left: right: 40]
 	orig: copy/deep code								;-- preserve the original code in case it changes during execution
-	trace
+	shallow-trace
 		func [rslt [any-type!] more [block!]] compose [
 			print [
 				pad mold/part/flat/only
