@@ -66,7 +66,8 @@ unless find spec-of :trace /here [context [
 	;; yet another iteration of this func
 	mold-part: function [value [any-type!] part [integer!] /only] [
 		either only [
-			ellipsize-at mold/flat/part/only :value part + 1 part
+			r: ellipsize-at mold/flat/part/only :value part + 1 part
+			clear skip r part						;-- when part < 3-4
 		][ 
 			r: mold/flat/part :value part + 1
 			if part < length? r [
@@ -78,6 +79,7 @@ unless find spec-of :trace /here [context [
 				][
 					clear change skip tail r -4 "..."
 				]
+				clear skip r part						;-- when part < 3-4
 			]
 			r
 		]
