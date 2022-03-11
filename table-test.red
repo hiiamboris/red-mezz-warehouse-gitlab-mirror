@@ -6,6 +6,7 @@ Red [
 ]
 
 
+#include %include-once.red
 #include %table.red
 #include %../red-view-test/elasticity.red
 ; do https://gitlab.com/hiiamboris/red-elastic-ui/-/raw/master/elasticity.red

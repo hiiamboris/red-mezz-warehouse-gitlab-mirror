@@ -42,6 +42,7 @@ Red [
 
 ; recycle/off
 
+#include %assert.red
 #include %setters.red
 #include %keep-type.red
 #include %map-each.red
@@ -104,7 +105,7 @@ by: make op! :as-pair
 table: context [
 	~table: self
 
-	profile?: no
+	profile?: yes
 	debug?:   no
 	~colors: system/view/metrics/colors
 
@@ -465,7 +466,6 @@ table: context [
 	];; ~column: column: context [
 
 	set-pane-size: function [face [object!] size [integer!] child-style [word!]] [
-		#assert [len >= 0]
 		more: size - length? pane: face/pane
 		case [
 			more < 0 [clear skip pane size]
