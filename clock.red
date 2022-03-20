@@ -13,14 +13,14 @@ Red [
 clock: function [
 	"Display execution time of CODE, returning result of it's evaluation"
 	code [block!]
-	/times n [integer!] "Repeat N times (default: once); displayed time is per iteration"
+	/times n [integer! float!] "Repeat N times (default: once); displayed time is per iteration"
 	/delta "Don't print the result, return time delta (ms)"
 	/local r
 ][
 	n: max 1 any [n 1]
 	text: mold/flat/part code 70						;-- mold the code before it mutates
 	t1: now/precise
-	set/any 'r loop n code
+	set/any 'r loop to integer! n code					;-- float is useful for eg. `1e6` instead of `1'000'000`
 	t2: now/precise
 	dt: 1e3 / n * to float! difference t2 t1
 	either delta [
