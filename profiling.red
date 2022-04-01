@@ -75,7 +75,7 @@ Red [
 ]
 
 
-; #include %assert.red
+#include %assert.red
 #include %shallow-trace.red
 #include %setters.red
 #include %format-readable.red
@@ -154,6 +154,27 @@ once prof: context [									;-- don't reinclude or stats may be reset
 		()
 	]
 
+	manual: function [
+		"Profile time between start and end"
+		mark "Token that should be same for start and end"
+		/start /end
+	][
+		#assert [any [start end]]
+		either start [
+			any [
+				pos: find/only/skip data :mark 6
+				repend pos: tail data [:mark reduce [:mark] 1 0 0 0]
+			]
+			pos/5: stats - pos/5
+			pos/4: now/precise/utc - (pos/4 * 0:0:0.001)
+		][
+			pos: find/only/skip data :mark 6
+			pos/4: 1e3 * to float! difference now/precise/utc pos/4
+			pos/5: stats - pos/5
+			pos/6: pos/6 + 1
+		]
+	]
+
 	set 'clock-each											;-- left for backward compatibility
 	each: function [										;-- new interface: PROF/EACH
 		"Display execution time of each expression in CODE"
@@ -193,7 +214,7 @@ once prof: context [									;-- don't reinclude or stats may be reset
 		process code quiet									;-- prepare & show the results
 		either n = 1 [:result][()]							;-- result is needed for transparent profiling with `***` and `(* *)`
 	]
-
+	
 	process: function [
 		"Process pending profiling results (if any)"
 		code [block! none!] "none to process everything"
