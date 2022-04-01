@@ -98,6 +98,7 @@ Red [
 once prof: context [									;-- don't reinclude or stats may be reset
 	data: make hash! []									;-- collected stats and their code offsets
 	pending: []			;-- block of time+ram & code pairs that weren't processed due to control flow escapes
+	start-time: none									;-- used to infer percentage of all time spent on profiled code
 
 	format-delta: function [
 		"Number formatter used internally by PROF/EACH"
@@ -120,7 +121,10 @@ once prof: context [									;-- don't reinclude or stats may be reset
 		b
 	]
 
-	reset: function ["Forget all collected profiling stats"] [clear data ()]
+	reset: func ["Forget all collected profiling stats"] [
+		clear data ()
+		start-time: none
+	]
 
 	;@@ TODO: get stats as a table (block), sorted output
 	show: function [
@@ -138,6 +142,7 @@ once prof: context [									;-- don't reinclude or stats may be reset
 			dt: pad format-delta dt 5 10						;-- 9'999.9999 ms: dot=5 total=10
 			ds: round/to ds / n 1
 			ds: format-delta ds 12								;-- 999'999'999 b: dot=12, total=11
+			unless block? code [code-copy: reduce [:code]]		;-- code-copy field is used by manual profiling mode
 			slice: ellipsize (copy/part code-copy len) width
 			n: pad mold to tag! n 8								;-- '<99999> ' iterations: total=8
 			repend to-show [n t dt "ms " ds " B " slice]		;-- 7 items
@@ -151,27 +156,38 @@ once prof: context [									;-- don't reinclude or stats may be reset
 			print rejoin copy/part to-show 7
 			remove/part to-show 7
 		]
+		if start-time [
+			elapsed: 1e3 * to float! difference now/precise/utc start-time
+			amnt: format-readable/size 100% * (t-total / elapsed) 2
+			print ["CPU load of profiled code:" amnt]
+		]
 		()
 	]
 
 	manual: function [
 		"Profile time between start and end"
-		mark "Token that should be same for start and end"
+		mark [immediate! any-string!] "Token that should be same for start and end"
 		/start /end
 	][
 		#assert [any [start end]]
 		either start [
-			any [
-				pos: find/only/skip data :mark 6
-				repend pos: tail data [:mark reduce [:mark] 1 0 0 0]
+			unless pos: find/only/skip data :mark 6 [
+				unless start-time [self/start-time: now/precise/utc]
+				repend pos: tail data [:mark none 1 0.0 0 0]
 			]
 			pos/5: stats - pos/5
-			pos/4: now/precise/utc - (pos/4 * 0:0:0.001)
+			pos/2: now/precise/utc
 		][
+			t: now/precise/utc
 			pos: find/only/skip data :mark 6
-			pos/4: 1e3 * to float! difference now/precise/utc pos/4
+			pos/4: pos/4 + max 0.0 1e3 * to float! dt: difference t pos/2
 			pos/5: stats - pos/5
 			pos/6: pos/6 + 1
+			pos/2: none
+			pos: data									;@@ should be for-each here
+			while [pos: find/tail pos date!] [			;-- subtract inner scopes from outer, to get sum right
+				pos/-1: pos/-1 + dt
+			]
 		]
 	]
 
@@ -258,6 +274,18 @@ once prof: context [									;-- don't reinclude or stats may be reset
 ; ; loop 100 [(* 1 2 3 wait 0.002 *)]
 ; prof/show
 ; prof/each/times [1] 10000
+
+; prof/manual/start 'x
+; wait 0.5
+; prof/manual/start 'y
+; wait 0.5
+; prof/manual/start 'z
+; wait 0.5
+; prof/manual/end 'z
+; prof/manual/end 'y
+; wait 0.5
+; prof/manual/end 'x
+; prof/show
 
 ; loop 10000 [(* 1 2 3 continue 4 5 6 7 *) 2]
 ; probe 1
