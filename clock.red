@@ -19,9 +19,9 @@ clock: function [
 ][
 	n: max 1 any [n 1]
 	text: mold/flat/part code 70						;-- mold the code before it mutates
-	t1: now/precise
+	t1: now/precise/utc
 	set/any 'r loop to integer! n code					;-- float is useful for eg. `1e6` instead of `1'000'000`
-	t2: now/precise
+	t2: now/precise/utc
 	dt: 1e3 / n * to float! difference t2 t1
 	either delta [
 		dt
