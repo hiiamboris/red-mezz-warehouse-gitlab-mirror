@@ -76,10 +76,14 @@ It works, but uglifies it so much that a question constantly arises: can we do s
 These two functions will serve as a great playground for such an experiment.
 
 ### Debugging
+
+These functions mainly help one follow design-by-contract guidelines in one's code.
+
 | Source file                            | Description |
 | ---                                    | --- |
 | [debug](debug.red)                     | Simple macro to include some debug-mode-only code/data |
 | [assert](assert.red)                   | Allow embedding sanity checks into the code, to limit error propagation and simplify debugging. [Read more](assert.md) |
+| [typecheck](typecheck.red)             | Mini-DSL for type checking and constraint validity insurance |
 | [expect](expect.red)                   | Test a condition, showing full backtrace when it fails |
 | [show-trace](show-trace.red)           | Example TRACE wrapper that just prints the evaluation log to console |
 | [show-deep-trace](show-deep-trace.red) | Example TRACE-DEEP wrapper that just prints the evaluation log to console |
