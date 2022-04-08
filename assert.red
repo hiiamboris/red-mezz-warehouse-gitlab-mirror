@@ -29,12 +29,11 @@ Red [
 
 #macro [#assert block!] func [[manual] s e /local nl] [	;-- allow macros within assert block!
 	nl: new-line? s
-	also either assertions [
+	new-line either assertions [
 		change s 'assert
 	][
 		remove/part s e
-	]
-	new-line s nl
+	] nl
 ]
 
 context [
