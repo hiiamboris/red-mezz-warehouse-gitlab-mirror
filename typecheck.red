@@ -32,7 +32,7 @@ context [
 		words [block!] "A sequence of: word [type! (type-test) ...] (global-test)"
 		/local word type
 	][
-		ok?: true
+		ok?: yes
 		do-test: [
 			unless do test [
 				value: mold/flat/part get/any word 40
@@ -40,15 +40,18 @@ context [
 			]	
 		]
 		types: [
-			(type-match?: no) list: any [
-				set type word! (
+			list: (type-match?: no)						;-- no match on empty set
+			any [
+				if (type-match?) to end					;-- stop once found a match
+			|	set type word! (
 					value: get type
 					type-match?: case [
 						datatype? :value [value    = type? get/any word]
 						typeset?  :value [find value type? get/any word]
 						'else [error rejoin ["Word "type" must refer to a datatype or typeset"]]
 					]
-				) opt [set test paren! (all [type-match?  do do-test])]
+				)
+				opt [set test paren! (all [type-match?  do do-test])]
 			] (
 				unless ok?: type-match? [
 					type: type?/word get/any word
@@ -59,12 +62,11 @@ context [
 		]
 		parse words [
 			any [
-				if (ok?)
 				set word word! (type-match?: yes)
 				opt [ahead block! into types]
-				opt [if (ok?) set test paren! (do do-test)]
+				opt [set test paren! (do do-test)]
 			]
-			[end | if (ok?) p: (error rejoin ["Unexpected token "mold :p/1" in typecheck spec"])]
+			[end | p: (error rejoin ["Unexpected token "mold :p/1" in typecheck spec"])]
 		]
 		ok?
 	]
