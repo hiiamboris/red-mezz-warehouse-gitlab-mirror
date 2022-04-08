@@ -27,12 +27,14 @@ Red [
 #macro [#assert 'off] func [s e] [assertions: off []]
 #do [unless value? 'assertions [assertions: on]]		;-- only reset it on first include
 
-#macro [#assert block!] func [[manual] s e] [			;-- allow macros within assert block!
-	either assertions [
+#macro [#assert block!] func [[manual] s e /local nl] [	;-- allow macros within assert block!
+	nl: new-line? s
+	also either assertions [
 		change s 'assert
 	][
 		remove/part s e
 	]
+	new-line s nl
 ]
 
 context [
@@ -49,6 +51,7 @@ context [
 	][
 		copied: copy/deep tests							;-- save unmodified code ;@@ this is buggy for maps: #2167
 		while [not tail? tests] [
+			; print mold/flat copy/part tests 5
 			set/any 'result do/next bgn: tests 'tests
 			if all [
 				:result
