@@ -96,9 +96,14 @@ Red [
 ]
 
 once prof: context [									;-- don't reinclude or stats may be reset
-	data: make hash! []									;-- collected stats and their code offsets
-	pending: []			;-- block of time+ram & code pairs that weren't processed due to control flow escapes
-	start-time: none									;-- used to infer percentage of all time spent on profiled code
+	;; data format: [code  code-copy  length-of-code  total-time  total-ram  iteration-count  ...]
+	data:         make hash! 120
+	;; block of time+ram & code pairs that weren't processed due to control flow escapes:
+	pending:      make block! 80
+	;; block of [marker  start-time  start-stats]
+	; manual-stack: make hash!  60						;@@ hash is buggy - #5118 (and #5096)
+	manual-stack: make block! 60
+	start-time:   none									;-- used to infer percentage of all time spent on profiled code
 
 	format-delta: function [
 		"Number formatter used internally by PROF/EACH"
@@ -165,29 +170,40 @@ once prof: context [									;-- don't reinclude or stats may be reset
 	]
 
 	manual: function [
-		"Profile time between start and end"
+		"Profile time between start and end (can be reentrant)"
 		mark [immediate! any-string!] "Token that should be same for start and end"
 		/start /end
 	][
 		#assert [any [start end]]
 		either start [
-			unless pos: find/only/skip data :mark 6 [
-				unless start-time [self/start-time: now/precise/utc]
-				repend pos: tail data [:mark none 1 0.0 0 0]
-			]
-			pos/5: stats - pos/5
-			pos/2: now/precise/utc
+			unless start-time [self/start-time: now/precise/utc]
+			repend manual-stack [:mark now/precise/utc stats]
 		][
+			;; measure time & ram delta, remove the started marker
 			t: now/precise/utc
-			pos: find/only/skip data :mark 6
-			pos/4: pos/4 + max 0.0 1e3 * to float! dt: difference t pos/2
-			pos/5: stats - pos/5
-			pos/6: pos/6 + 1
-			pos/2: none
-			pos: data									;@@ should be for-each here
-			while [pos: find/tail pos date!] [			;-- subtract inner scopes from outer, to get sum right
-				pos/-1: pos/-1 + dt
+			s: stats
+			pos: find/reverse/only/skip skip tail manual-stack -2 :mark 3
+			#assert [pos]
+			ms: 1e3 * to float! dt: difference t pos/2
+			ds: s - pos/3       
+			remove/part pos 3
+			
+			;; correct all other started markers by subtracting this one
+			pos: manual-stack
+			foreach [_ t s] pos [						;@@ should be for-each
+				pos/2: t + dt
+				pos/3: s + ds
+				pos: skip pos 3
 			]
+			
+			;; save result into data
+			either pos: find/only/skip data :mark 6 [
+				pos/4: pos/4 + ms
+				pos/5: pos/5 + ds
+				pos/6: pos/6 + 1
+			][
+				repend pos: tail data [:mark reduce [:mark] 1 ms ds 1]
+			] 
 		]
 	]
 
@@ -283,6 +299,14 @@ once prof: context [									;-- don't reinclude or stats may be reset
 ; wait 0.5
 ; prof/manual/end 'z
 ; prof/manual/end 'y
+; wait 0.5
+; prof/manual/end 'x
+; prof/show
+
+; prof/manual/start 'x
+; prof/manual/start 'x
+; wait 0.5
+; prof/manual/end 'x
 ; wait 0.5
 ; prof/manual/end 'x
 ; prof/show
