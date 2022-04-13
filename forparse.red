@@ -84,8 +84,9 @@ forparse: function [
 		[ahead any-list! into =rule= | skip]
 		[skip]
 	] deep
-	=rule=: [any thru [
+	=rule=: [any [
 		pattern (set/any 'r catch-continue body)		;-- set r to result of last iteration
+	|	=else=
 	]]
 	if error? catch-a-break [
 		apply (in system/words 'parse) [
