@@ -6,6 +6,10 @@ Red [
 	notes: {
 		NOTE: MAKE SURE THIS IS THE FIRST INCLUDED SCRIPT
 		                IN THE MAIN FILE!
+		                
+		   ALSO PAY ATTENTION TO THE USAGE OF `DO %FILE`!
+		`DO` RUNS PREPROCESSOR AND EVALUATION IN DIFFERENT PLACES! (#5121)		                
+		                
 		Otherwise the following mess happens:
 		1. preprocessor "includes" and discards every file, replaces `#include` with `do`
 		2. `do` now expands files that "seem" to have been included already, and now become empty (deduplicated)
@@ -70,26 +74,31 @@ Red [
 			return remove/part s 2
 		]
 		
-		processing?: finished?: also?: []
-		if verb? [
-			processing?: compose/deep [
-				print rejoin [append indent " " "processing " (mold file)]
-			]
-			finished?: compose/deep [
-				print rejoin [" " head remove back tail indent "finished " (mold file)]
-			]
-			also?: [also]
-		]
-
 		old-path: what-dir
 		set [path _] split-path file
 		if 'Red == :data/1 [data: skip data 2]			;-- skip the header in case Red word is defined to smth else
+		
+		prelude:  compose [change-dir (path)]			;-- evaluate inside script's path
+		postlude: compose [change-dir (old-path)]		;-- restore path after evaluation (unless errors out or halts..)
+		if verb? [
+			prelude: compose/deep [
+				print rejoin [append indent " " "processing " (mold file)]
+				(prelude)
+			]
+			postlude: compose/deep [
+				do [									;-- `do` for also to return the code's result
+					(postlude)
+					print rejoin [" " remove indent "finished " (mold file)]
+				]
+			]
+		]
+		
 		change/part s compose/deep [					;-- insert contents
-			(to issue! 'do) [change-dir (path)]			;-- descend into paths for relative includes to work
+			(to issue! 'do) [change-dir (path)]			;-- preprocess inside script's path
 			do [										;-- `do` makes it compatible with x: #include y expressions
-				(processing?)
-				(also?) do [(data)]						
-				(finished?)
+				(prelude)
+				also do [(data)]
+				(postlude)
 			]
 			(to issue! 'do) [change-dir (old-path)]
 		] 2
