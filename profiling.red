@@ -110,7 +110,7 @@ once prof: context [									;-- don't reinclude or stats may be reset
 		delta [number!] dot-index [integer!]
 	][
 		s: either percent? delta [
-			format-readable/size         delta 0
+			format-readable/size/clean   delta 0
 		][	format-readable/extend/clean delta
 		]
 		dot: index? any [find s #"."  tail s]			;-- align the dot
