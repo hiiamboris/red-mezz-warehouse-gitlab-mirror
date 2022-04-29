@@ -321,7 +321,7 @@ context [
 				unless same? head new-pos head ii/series [	;-- most likely it's a bug, so we report it
 					ERROR "(ii/pos-word) was changed to another series"
 				]
-				ii/offset: -1 + index? new-pos
+				ii/offset: offset? ii/series new-pos
 			]
 		]
 
@@ -588,13 +588,14 @@ context [
 	3 =    for-each x [1 2 3] [x]
 
 	;; spec unfolding tests
-	empty?    collect [for-each  x  [     ] [keep x]]
-	[1    ] = collect [for-each  x  [1    ] [keep x]]
-	[1 2  ] = collect [for-each  x  [1 2  ] [keep x]]
-	[1 2 3] = collect [for-each  x  [1 2 3] [keep x]]
-	[1    ] = collect [for-each [x] [1    ] [keep x]]
-	[1 2  ] = collect [for-each [x] [1 2  ] [keep x]]
-	[1 2 3] = collect [for-each [x] [1 2 3] [keep x]]
+	empty?    collect [for-each  x       [       ] [keep x]]
+	[1    ] = collect [for-each  x       [1      ] [keep x]]
+	[1 2  ] = collect [for-each  x       [1 2    ] [keep x]]
+	[1 2 3] = collect [for-each  x       [1 2 3  ] [keep x]]
+	[2 3 4] = collect [for-each  x  next [1 2 3 4] [keep x]]
+	[1    ] = collect [for-each [x]      [1      ] [keep x]]
+	[1 2  ] = collect [for-each [x]      [1 2    ] [keep x]]
+	[1 2 3] = collect [for-each [x]      [1 2 3  ] [keep x]]
 	[[1 2] [3 #[none]]      ] = collect [for-each [x y] [1 2 3    ] [keep/only reduce [x y]]]
 	[[1 2] [3 4]            ] = collect [for-each [x y] [1 2 3 4  ] [keep/only reduce [x y]]]
 	[[1 2] [3 4] [5 #[none]]] = collect [for-each [x y] [1 2 3 4 5] [keep/only reduce [x y]]]
@@ -607,6 +608,7 @@ context [
 	;; indexes & /reverse
 	[1 2 3  ] = collect [for-each [/i x]   [x y z]     [keep i       ]]
 	[1 2 3  ] = collect [for-each [p: x]   [x y z]     [keep index? p]]
+	[2 3 4  ] = collect [for-each [p: x] next [1 2 3 4] [keep x]]			;-- was buggy once
 	[1 2 3  ] = collect [for-each [/i x y] [a b c d e] [keep i       ]]
 	[1 3 5  ] = collect [for-each [p: x y] [a b c d e] [keep index? p]]
 	[1 3 4 5] = collect [for-each [p: x y] [a b c d e] [keep index? p p: back p]]	;-- 1st `back` fails
@@ -936,3 +938,5 @@ context [
 	"abcf"= head remove-each x skip "abcdef" 2 [find "de" x]
 
 ]]
+
+
