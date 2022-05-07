@@ -12,6 +12,7 @@ Red [
 ]
 
 ;@@ BUG: this turns return/exit/break/continue into errors (when not caught) - they should be rethrown separately using their natives
+;@@ BUG: throw cannot be used from inside CODE block, because it will be turned into an error before being rethrown!
 selective-catch: func [
 	"Evaluate CODE and return errors of given TYPE & ID only, while rethrowing all others"
 	type	[word!]
