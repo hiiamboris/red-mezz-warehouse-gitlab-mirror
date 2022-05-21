@@ -106,10 +106,10 @@ maybe: func [
 	"If SUBJ's value is not strictly equal to VAL, set it to VAL (for use in reactivity)"
 	:subj [set-word! set-path!]
 	val   [default!] "New value"
+	/same "Use =? as comparator"
 ][
-	; if set-path? subj [subj: as path! subj]				;-- get does not work on set-paths
-	unless :val == get/any subj [set subj :val]
-	:val
+	if either same [:val =? get/any subj][:val == get/any subj] [return :val]
+	set subj :val
 ]
 
 import: function [
