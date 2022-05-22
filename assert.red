@@ -75,7 +75,8 @@ context [
 
 			unless :result [							;-- test fails, need to repeat it step by step
 				msg: either left = 1 [first end: back end][""]
-				prin ["ASSERTION FAILED!" msg "^/"]
+				err: next find form try [do make error! ""] "^/*** Stack:"
+				prin ["ASSERTION FAILED!" msg "^/" err "^/"]
 				expect copy/part at copied index? bgn at copied index? end		;-- expects single expression, or will report no error
 				;-- no error thrown, to run other assertions
 			]
