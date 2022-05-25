@@ -84,12 +84,10 @@ forparse: function [
 		[ahead any-list! into =rule= | skip]
 		[skip]
 	] deep
-	=rule=: [any [
-		pattern (set/any 'r catch-continue body)		;-- set r to result of last iteration
-	|	=else=
-	]]
+	=match=: [pattern (set/any 'r catch-continue body)]	;-- set r to result of last iteration
+	=rule=: [any [=match= | =else=] =match=]			;-- try matching at the end too, for `end` rule
 	if error? catch-a-break [
-		apply (in system/words 'parse) [
+		apply (in system/words 'parse) copy/deep [
 			input:  series
 			rules:  =rule=
 			case:   case
