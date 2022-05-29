@@ -97,7 +97,7 @@ mapparse: function [
 	] only
 	=rule=: pick [
 		[thru =change= series:]
-		[any [=change= | =else=]]
+		[any [=change= | =else=] =change=]
 	] once
 	catch-a-break [
 		apply (in system/words 'parse) [
