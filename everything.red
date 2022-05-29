@@ -26,6 +26,7 @@ Red [
 
 ; #include %selective-catch.red							;-- included by forparse.red
 #include %forparse.red
+#include %mapparse.red
 ; #include %composite.red								;-- included by error-macro.red
 ; #include %error-macro.red								;-- included by for-each.red
 ; #include %bind-only.red								;-- included by for-each.red
