@@ -115,8 +115,13 @@ maybe: func [
 import: function [
 	"Import words from context CTX into the global namespace"
 	ctx [object!]
+	/only words [block!] "Not all, just chosen words"
 ][
-	set/any  bind words-of ctx system/words  values-of ctx
+	either only [
+		foreach word words [set/any 'system/words/:word :ctx/:word]
+	][
+		set/any  bind words-of ctx system/words  values-of ctx
+	]
 ]
 
 export: function [
