@@ -47,10 +47,23 @@ Red [
 				maybe my-word: my-value
 				maybe my/path: my-value
 			Sets my-word or my/path to my-value only if it's current value does not strictly equal the new one.
+				maybe/same my/path: my-value
+			Ditto, if current value is not same as the new one.
 
 			This is handy in reactivity to stop unnecessary events from firing, reduce lag, break dependency loops.
 			It uses strict equality, because otherwise we won't be able to change e.g. "Text" to "TEXT".
 			For numerics it's a drawback though, as changing from `0` to `0.0` to `0%` to `1e-100` produces an event.
+			/same is useful mostly for object values
+
+		QUIETLY (a macro)
+			Syntax:
+				quietly my-word: my-value
+				quietly my/path: my-value
+			Sets my-word or my/path to my-value without triggering on-change* function (thus any kind of reactivity).
+			
+			Similar to (and is based on) set-quiet routine but supports paths and more readable set-word syntax.
+			It's useful either to group multiple changes into one on-change signal,
+			or when on-change incurs too much overhead for no gain (e.g. setting of face facets is 25x faster this way).
 
 		IMPORT
 			Syntax:
@@ -155,3 +168,16 @@ anonymize: function [
 	set-word? get/any anonymize 'value quote value:
 	lit-word? get/any anonymize 'value quote 'value
 ]
+
+
+;; macro allows to avoid a lot of runtime overhead, thus allows using `quietly` with paths in critical code
+#macro ['quietly set-path!] func [s e] [
+	compose [
+		set-quiet in (to path! copy/part s/2 back tail s/2)		;-- returns the value after #5146
+		(to lit-word! last s/2)
+	]	
+	; compose [quietly in (to path! copy/part s/2 back tail s/2) (to lit-word! last s/2)]
+]
+; quietly: function [word [word!] value [any-type!]] [	;-- unlike set-quiet, returns value, not word!
+	; set-quiet word :value :value								
+; ]
