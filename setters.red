@@ -171,13 +171,13 @@ anonymize: function [
 
 
 ;; macro allows to avoid a lot of runtime overhead, thus allows using `quietly` with paths in critical code
-#macro ['quietly set-path!] func [s e] [
-	compose [
-		set-quiet in (to path! copy/part s/2 back tail s/2)		;-- returns the value after #5146
-		(to lit-word! last s/2)
+#macro ['quietly [set-path! | set-word!]] func [s e /local path] [
+	either set-word? s/2 [
+		compose [set-quiet (to lit-word! s/2)]			;-- set-quiet returns the value after #5146
+	][
+		compose [
+			set-quiet in (to path! copy/part s/2 back tail s/2)
+			(to lit-word! last s/2)
+		]	
 	]	
-	; compose [quietly in (to path! copy/part s/2 back tail s/2) (to lit-word! last s/2)]
 ]
-; quietly: function [word [word!] value [any-type!]] [	;-- unlike set-quiet, returns value, not word!
-	; set-quiet word :value :value								
-; ]
