@@ -86,20 +86,16 @@ Red [
 				(prelude)
 			]
 			postlude: compose/deep [
-				do [									;-- `do` for also to return the code's result
-					(postlude)
-					print rejoin [" " remove indent "finished " (mold file)]
-				]
+				(postlude)
+				print rejoin [" " remove indent "finished " (mold file)]
 			]
 		]
 		
 		change/part s compose/deep [					;-- insert contents
 			(to issue! 'do) [change-dir (path)]			;-- preprocess inside script's path
-			do [										;-- `do` makes it compatible with x: #include y expressions
-				(prelude)
-				also do [(data)]
-				(postlude)
-			]
+			(prelude)
+			(data)
+			(postlude)
 			(to issue! 'do) [change-dir (old-path)]
 		] 2
 		; print ["===" file "expands into:^/" mold s]
