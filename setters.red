@@ -175,9 +175,10 @@ anonymize: function [
 	either set-word? s/2 [
 		compose [set-quiet (to lit-word! s/2)]			;-- set-quiet returns the value after #5146
 	][
+		path: to block! s/2								;-- required for R2 that can't copy/part paths!
 		compose [
-			set-quiet in (to path! copy/part s/2 back tail s/2)
-			(to lit-word! last s/2)
+			set-quiet in (to path! copy/part path back tail path)
+			(to lit-word! last path)
 		]	
 	]	
 ]
