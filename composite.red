@@ -226,6 +226,9 @@ context [
 	[ #composite "(append {1} #composite {2(1 + 2)})" ]
 	== [ rejoin ["" (append "1" rejoin ["2" (1 + 2)])] ]
 
+	;@@ this is bugged, fixed in #rejoin PR
+	; [ #composite "(1 + 2)(\text)" ] = [ "" (1 + 2) "(" "text)" ]
+
 	;-- line comments handling
 	"9" == #composite  {(;-- comment
 		1 + 2 * 3					;-- another
@@ -237,3 +240,5 @@ context [
 		1 + 2 * 3					;-- another
 	)}
 ]
+
+
