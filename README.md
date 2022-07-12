@@ -61,7 +61,7 @@ Notes:
 | [count](count.red)                         | Count occurences of an item in the series |
 | [keep-type](keep-type.red)                 | Filter list using accepted type or typeset |
 | [collect-set-words](collect-set-words.red) | Deeply collect set-words from a block of code |
-| [morph](morph.red)                         | Dialect for persistent local series mapping [Read more](morph.md) |
+| [morph](morph.red)                         | Dialect for persistent local series mapping. [Read more](morph.md) |
 
 ### Loops
 | Source file                                | Description |
@@ -70,6 +70,7 @@ Notes:
 | [forparse](forparse.red)                   | Leverage parse power to filter series |
 | [for-each](for-each.red)                   | Experimental design of an extended FOREACH |
 | [map-each](map-each.red)                   | Map one series into another, leveraging FOR-EACH power |
+| [bulk](bulk.red)                           | Bulk evaluation syntax support. [Read more](https://github.com/greggirwin/red-hof/tree/master/code-analysis#bulk-syntax)] |
 
 Interestingly, `for-each` and `map-each` code showcases how limited `compose` is when building complex nested code with a lot of special cases.
 It works, but uglifies it so much that a question constantly arises: can we do something better than `compose`?
