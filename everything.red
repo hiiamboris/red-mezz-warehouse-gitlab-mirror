@@ -35,6 +35,7 @@ Red [
 #include %xyloop.red									;-- included by explore.red
 #include %relativity.red								;-- included by explore.red
 ; #include %explore.red									;@@ temporary
+#include %bulk.red	
 
 #include %clock.red
 ; #include %shallow-trace.red							;-- included by clock-each.red & show-trace.red & stepwise-func.red
