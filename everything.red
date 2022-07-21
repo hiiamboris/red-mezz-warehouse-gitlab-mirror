@@ -12,6 +12,7 @@ Red [
 #include %with.red
 #include %setters.red
 #include %catchers.red
+#include %step.red	
 #include %extremi.red
 #include %prettify.red
 #include %reshape.red
