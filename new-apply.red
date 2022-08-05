@@ -94,17 +94,17 @@ apply: function [
 	;@@ by having O(1) lookups of all set-words into some argument array specific to each particular function
 	;@@ this implementation for now just uses `find` within args block, which makes it O(n^2)
 	
-	;@@ won't be needed in R/S
-	call: reduce [path: as path! reduce [:name]]		;@@ in Red - impossible to add refinements to function literal
-	
 	either word? :name [
 		set/any 'fun get/any name
 		unless any-function? :fun [ERROR "NAME argument (name) does not refer to a function"]
 	][
-		fun: :name
-		name: none
+		anonymous: fun: :name
+		name: 'anonymous
 	]
 
+	;@@ won't be needed in R/S
+	call: reduce [path: to path! name]					;@@ in Red - impossible to add refinements to function literal
+	
 	get-value: [
 		either block? :args [
 			select/skip args to set-word! word 2
