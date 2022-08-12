@@ -85,7 +85,7 @@ forparse: function [
 		[skip]
 	] deep
 	=match=: [pattern (set/any 'r catch-continue body)]	;-- set r to result of last iteration
-	=rule=: [any [=match= | =else=] =match=]			;-- try matching at the end too, for `end` rule
+	=rule=: [any [=match= | =else=]]
 	if error? catch-a-break [
 		apply (in system/words 'parse) copy/deep [
 			input:  series
