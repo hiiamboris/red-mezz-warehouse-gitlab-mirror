@@ -87,6 +87,7 @@ context [
 		while [fa/type <> lim] [
 			xy: xy op fa/offset
 			fa: fa/parent
+			#assert [fa "Face is not connected to window!"]
 		]
 		xy
 	]
