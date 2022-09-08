@@ -117,6 +117,8 @@ Red [
 			    u: unset
 			    w: 'some-word
 			]
+			
+		See also %typed-object.red which is a different (and incompatible) approach
 	}
 	limitations: {
 		on-change* cannot be redefined or it will break validation
@@ -216,6 +218,7 @@ Red [
 			Besides, that would need a way to override these, some additional syntax. 
 	}
 	TODO: {
+		- turn off all checks in release mode
 		- friendlier reflection, esp. how final on-change maps to words
 		- maybe #constant keyword as alias for #type [] ?
 	}
@@ -232,11 +235,12 @@ id: func ["Identity function: passes it's argument through" x [any-type!]] [:x]
 
 context [
 	set 'on-change-dispatch function [
-		class       [word!]
-		obj         [object!]
-		word        [any-word!]
-		old         [any-type!]
-		new         [any-type!]
+		"General on-change function built for object validation"
+		class [word!]
+		obj   [object!]
+		word  [any-word!]
+		old   [any-type!]
+		new   [any-type!]
 	][
 		if info: classes/:class/:word [
 			set [equals: types: values: on-change:] info
@@ -362,8 +366,6 @@ comment [												;; test code
 	?? typed
 
 	my-spec: declare-class 'my-class [
-		classify-object 'my-class self
-		
 		#type [integer!] x: 1
 		#type [number!] (y >= 0) y: 0%
 		
@@ -375,7 +377,6 @@ comment [												;; test code
 	my-object1: make classy-object! my-spec
 	my-object2: make classy-object! my-spec
 	my-other-spec: declare-class/with 'other-class [
-		classify-object 'other-class self
 		u: "unrestricted"
 		#type [word!] w: 'some-word
 	] 'my-class
