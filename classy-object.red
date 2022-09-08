@@ -246,32 +246,22 @@ context [
 			set [equals: types: values: on-change:] info
 			unless :old equals :new [
 				word: bind to word! word obj			;@@ bind & to required for now
-				check-type
-				check-value
-				on-change obj :new
+				unless find types type? :new [			;-- check type
+					set-quiet word :old					;-- in case of error, word must have the old value
+					new':   mold/flat/part :new 20
+					types': mold to block! types
+					either empty? types'
+						[ERROR "Word (word) is marked constant and cannot be set to (new')"]
+						[ERROR "Word (word) can't accept `(new')` of type (mold type? :new), only (types')"]
+				]
+				unless values :new [					;-- check value
+					set-quiet word :old					;-- in case of error, word must have the old value
+					new':    mold/flat/part :new 40
+					values': mold body-of :values
+					ERROR "Word (word) can't accept `(new')` value, only (values')"
+				]
+				on-change obj word :new
 			]
-		]
-	]
-	
-	;@@ maybe unify all these funcs? but only if it will speed it up
-	;@@ (they are bound now to save time from pushing args to the stack)
-	check-type: has [new' types'] with :on-change-dispatch [
-		unless find types type? :new [
-			set-quiet word :old							;-- in case of error, word must have the old value
-			new':   mold/flat/part :new 20
-			types': mold to block! types
-			either empty? types'
-				[ERROR "Word (word) is marked constant and cannot be set to (new')"]
-				[ERROR "Word (word) can't accept `(new')` of type (mold type? :new), only (types')"]
-		]
-	]
-	
-	check-value: has [new' values'] with :on-change-dispatch [
-		unless values :new [
-			set-quiet word :old							;-- in case of error, word must have the old value
-			new':    mold/flat/part :new 40
-			values': mold body-of :values
-			ERROR "Word (word) can't accept `(new')` value, only (values')"
 		]
 	]
 ]
@@ -366,12 +356,13 @@ comment [												;; test code
 	?? typed
 
 	my-spec: declare-class 'my-class [
-		#type [integer!] x: 1
+		#type [integer!] == x: 1
 		#type [number!] (y >= 0) y: 0%
 		
 		#on-change [obj val] [print ["changing s to" val]]
 		#type == [string!]
 		s: "data"
+		z: 0
 	]
 	
 	my-object1: make classy-object! my-spec
@@ -396,4 +387,15 @@ comment [												;; test code
 	print try [unset in my-object3 'w]
 	unset in my-object3 'u
 	?? my-object3
+		
+	#include %clock.red
+	o: object [x: 1 on-change*: func [w o n][]]
+	clock/times [o/x: 2] 1e7
+	clock/times [my-object1/z: 1] 1e6
+	clock/times [my-object1/x: 2] 1e6
+	clock/times [o/x: random 99999] 1e6
+	clock/times [my-object1/x: random 99999] 1e6
+	m: #(1 2 3 4 5 6 7 8 9 0)
+	x: 3
+	clock/times [m/:x] 1e7
 ]
