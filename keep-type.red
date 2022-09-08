@@ -11,6 +11,7 @@ Red [
 ]
 
 
+;@@ TODO: more general keep-thing function that can filter on charsets - opposite of trim/all/with
 keep-type: function [
 	"Make a list including only values of type TYPE from the original LIST"
 	list [any-block!]

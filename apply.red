@@ -41,6 +41,8 @@ Red [
 ]
 
 
+;@@ TODO: implement issue #1 of red-hof repo?
+
 context [
 	;; we must ignore set-words, e.g. `return:`
 	arg-typeset: make typeset! [word! get-word! lit-word! refinement!]

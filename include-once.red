@@ -41,6 +41,7 @@ Red [
 		For compiling, see https://gitlab.com/hiiamboris/red-cli/-/tree/master/mockups/inline
 	}
 ]
+;@@ TODO: instead of printing, use `try/all` and report the file where the error happens
 
 #if all [
 	not object? :rebol									;-- do nothing when compiling

@@ -171,6 +171,7 @@ anonymize: function [
 
 
 ;; macro allows to avoid a lot of runtime overhead, thus allows using `quietly` with paths in critical code
+;@@ unfortunate limitation: only applicable to objects, set-quiet cannot work with /x /y of a pair or components of time/date
 #macro ['quietly [set-path! | set-word!]] func [s e /local path] [
 	either set-word? s/2 [
 		compose [set-quiet (to lit-word! s/2)]			;-- set-quiet returns the value after #5146
