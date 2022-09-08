@@ -306,12 +306,14 @@ context [
 			]] p: (new-line p on)
 		|	remove [#on-change [set args block! set body block! | set name get-word!]]
 		|	set field set-word! (
-				info: any [cmap/:field cmap/:field: reduce [:falsey-op any-type! :id none]]
-				if op     [info/1: get op]
-				if types  [info/2: make typeset! types]
-				if values [info/3: func reduce [to word! field [any-type!]] as block! values]
-				if any [body name] [info/4: either name [get name][function args body]]
-				set [op: types: values: args: body: name:] none
+				if any [op types values args body name] [		;-- don't include untyped words (for speed)
+					info: any [cmap/:field cmap/:field: reduce [:falsey-op any-type! :id none]]
+					if op     [info/1: get op]
+					if types  [info/2: make typeset! types]
+					if values [info/3: func reduce [to word! field [any-type!]] as block! values]
+					if any [body name] [info/4: either name [get name][function args body]]
+					set [op: types: values: args: body: name:] none
+				]
 			)
 		|	skip 
 		]]
@@ -362,7 +364,7 @@ comment [												;; test code
 		#on-change [obj val] [print ["changing s to" val]]
 		#type == [string!]
 		s: "data"
-		z: 0
+		zz: 0
 	]
 	
 	my-object1: make classy-object! my-spec
@@ -389,9 +391,10 @@ comment [												;; test code
 	?? my-object3
 		
 	#include %clock.red
+	class: 'test
 	o: object [x: 1 on-change*: func [w o n][]]
 	clock/times [o/x: 2] 1e7
-	clock/times [my-object1/z: 1] 1e6
+	clock/times [my-object1/zz: 1] 1e6
 	clock/times [my-object1/x: 2] 1e6
 	clock/times [o/x: random 99999] 1e6
 	clock/times [my-object1/x: random 99999] 1e6
