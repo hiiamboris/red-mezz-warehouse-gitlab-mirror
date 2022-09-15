@@ -29,20 +29,23 @@ context [
 		"Find minimum value among XS"
 		xs [block! hash! vector! image! binary! any-string!]
 	][
-		first minmax-of xs
+		x-: first xs
+		foreach x next xs [x-: min x- x]
+		x-
 	]
 
 	brute-maximum-of: func [
 		"Find minimum value among XS"
 		xs [block! hash! vector! image! binary! any-string!]
 	][
-		second minmax-of xs
+		x+: first xs
+		foreach x next xs [x+: max x+ x]
+		x+
 	]
 
 	containers: object [
 		block!:  make system/words/block!  50
 		hash!:   make system/words/block!  50
-		vector!: make system/words/vector! 50
 		string!: make system/words/string! 50
 		email!:  make system/words/string! 50
 		file!:   make system/words/string! 50
@@ -50,6 +53,7 @@ context [
 		url!:    make system/words/string! 50
 		binary!: make system/words/binary! 50
 		;; not for image! and tag! - those should use the brute version
+		;; not for vector! - since they are of incompatible types which are unknown
 	]
 
 	set 'minimum-of func [
