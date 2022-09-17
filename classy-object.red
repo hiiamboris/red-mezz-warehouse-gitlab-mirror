@@ -253,20 +253,22 @@ context [
 			;; love these names but this single `set` slows everything down by 15-20%; so using path accessors instead
 			;; left as a reminder:  set [equals: types: values: on-change:] info 
 			unless info/1 :old :new [
-				; word: bind to word! word obj			;@@ bind & to required for now ;; fixed early Sept 2022
-				unless find info/2 type? :new [			;-- check type
-					set-quiet word :old					;-- in case of error, word must have the old value
-					new':   mold/flat/part :new 20
-					types': mold to block! info/2
-					either empty? types'
-						[ERROR "Word (word) is marked constant and cannot be set to (new')"]
-						[ERROR "Word (word) can't accept `(new')` of type (mold type? :new), only (types')"]
-				]
-				unless info/3 :new [					;-- check value
-					set-quiet word :old					;-- in case of error, word must have the old value
-					new':    mold/flat/part :new 40
-					values': mold body-of :info/3
-					ERROR "Word (word) can't accept `(new')` value, only (values')"
+				#debug [								;-- disable checks in release ver
+					; word: bind to word! word obj		;@@ bind & to required for now ;; fixed early Sept 2022
+					unless find info/2 type? :new [		;-- check type
+						set-quiet word :old				;-- in case of error, word must have the old value
+						new':   mold/flat/part :new 20
+						types': mold to block! info/2
+						either empty? types'
+							[ERROR "Word (word) is marked constant and cannot be set to (new')"]
+							[ERROR "Word (word) can't accept `(new')` of type (mold type? :new), only (types')"]
+					]
+					unless info/3 :new [				;-- check value
+						set-quiet word :old				;-- in case of error, word must have the old value
+						new':    mold/flat/part :new 40
+						values': mold body-of :info/3
+						ERROR "Word (word) can't accept `(new')` value, only (values')"
+					]
 				]
 				info/4 obj word :new
 			]
