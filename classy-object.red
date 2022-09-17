@@ -51,16 +51,16 @@ Red [
 		The above MY-SPEC once evaluated will classify itself first, then assign values,
 		because `classify-object` call is inserted automatically into the spec produced by declare-class.
 		
-		DECLARE-CLASS <class-name> <spec> takes an optional /with <prototype-name> argument.
-		It will copy validation from already declared other class to the new one.
+		DECLARE-CLASS <class-name> <spec> can take a path of two words as it's <class-name>: 'new-class/other-class.
+		It will copy validation from already declared other-class to the new-class.
 		
 		After class is declared, objects can be instantiated:
 			my-object1: make classy-object! my-spec
 			my-object2: make classy-object! my-spec
-			my-other-spec: declare-class/with 'other-class [
+			my-other-spec: declare-class 'other-class/my-class [
 				u: "unrestricted"
 				#type [word!] w: 'some-word
-			] 'my-class
+			]
 			my-object3: make my-object2 my-other-spec
 		
 		Let's do some tests now:
@@ -119,6 +119,13 @@ Red [
 			]
 			
 		See also %typed-object.red which is a different (and incompatible) approach
+	}
+	benchmarks: {
+		0.24 μs		object/word: value					;) with empty but existing on-change*
+		1.21 μs		maybe object/word: value
+		1.07 μs		classy-object/untracked-word: value
+		1.59 μs		classy-object/tracked-word: same-value
+		2.88 μs		classy-object/tracked-word: new-value
 	}
 	limitations: {
 		on-change* cannot be redefined or it will break validation
@@ -243,24 +250,25 @@ context [
 		new   [any-type!]
 	][
 		if info: classes/:class/:word [
-			set [equals: types: values: on-change:] info
-			unless :old equals :new [
-				word: bind to word! word obj			;@@ bind & to required for now
-				unless find types type? :new [			;-- check type
+			;; love these names but this single `set` slows everything down by 15-20%; so using path accessors instead
+			;; left as a reminder:  set [equals: types: values: on-change:] info 
+			unless info/1 :old :new [
+				; word: bind to word! word obj			;@@ bind & to required for now ;; fixed early Sept 2022
+				unless find info/2 type? :new [			;-- check type
 					set-quiet word :old					;-- in case of error, word must have the old value
 					new':   mold/flat/part :new 20
-					types': mold to block! types
+					types': mold to block! info/2
 					either empty? types'
 						[ERROR "Word (word) is marked constant and cannot be set to (new')"]
 						[ERROR "Word (word) can't accept `(new')` of type (mold type? :new), only (types')"]
 				]
-				unless values :new [					;-- check value
+				unless info/3 :new [					;-- check value
 					set-quiet word :old					;-- in case of error, word must have the old value
 					new':    mold/flat/part :new 40
-					values': mold body-of :values
+					values': mold body-of :info/3
 					ERROR "Word (word) can't accept `(new')` value, only (values')"
 				]
-				on-change obj word :new
+				info/4 obj word :new
 			]
 		]
 	]
@@ -281,17 +289,20 @@ classes: make map! 20
 
 context [
 	;; used as default equality test, which always fails and allows to trigger on-change even if value is the same
-	falsey-op: make op! func [x [any-type!] y [any-type!]] [no]
+	falsey-compare: func [x [any-type!] y [any-type!]] [no]
 	
 	set 'declare-class function [
 		"Declare a named class (overrides if already exists), return preprocessed spec"
-		class       [word!]  "Class name"
-		spec        [block!] "Spec block with validity directives"
-		/with proto [word!]  "Inherit validity data from a prototype class"
-		/manual              "Don't insert classify-object call automatically"
+		class       [word! path!]  "Class name (word) or class-name/prototype-name (path)"
+		spec        [block!]       "Spec block with validity directives"
+		/manual                    "Don't insert classify-object call automatically"
 	][
 		; if classes/:class [ERROR "Class (class) is already declared"]
-		cmap: classes/:class: either with [
+		if path? class [
+			#assert [parse class [2 word! end]]
+			set [class: proto:] class
+		]
+		cmap: classes/:class: either proto [
 			unless pmap: classes/:proto [ERROR "Unknown class: (proto)"]
 			copy/deep pmap
 		][
@@ -307,8 +318,8 @@ context [
 		|	remove [#on-change [set args block! set body block! | set name get-word!]]
 		|	set field set-word! (
 				if any [op types values args body name] [		;-- don't include untyped words (for speed)
-					info: any [cmap/:field cmap/:field: reduce [:falsey-op any-type! :id none]]
-					if op     [info/1: get op]
+					info: any [cmap/:field cmap/:field: reduce [:falsey-compare any-type! :id none]]
+					if op     [info/1: switch op [= [:equal?] == [:strict-equal?] =? [:same?]]]
 					if types  [info/2: make typeset! types]
 					if values [info/3: func reduce [to word! field [any-type!]] as block! values]
 					if any [body name] [info/4: either name [get name][function args body]]
@@ -336,6 +347,7 @@ classy-object!: object declare-class/manual 'classy-object! [
 ]
 
 
+; do [
 comment [												;; test code
 	typed: make classy-object! probe declare-class 'test [
 		#type == [integer!] (x >= 0) x: 1
@@ -369,10 +381,10 @@ comment [												;; test code
 	
 	my-object1: make classy-object! my-spec
 	my-object2: make classy-object! my-spec
-	my-other-spec: declare-class/with 'other-class [
+	my-other-spec: declare-class 'other-class/my-class [
 		u: "unrestricted"
 		#type [word!] w: 'some-word
-	] 'my-class
+	]
 	my-object3: make my-object2 my-other-spec
 
 	my-object1/x: 2
@@ -396,8 +408,10 @@ comment [												;; test code
 	clock/times [o/x: 2] 1e7
 	clock/times [my-object1/zz: 1] 1e6
 	clock/times [my-object1/x: 2] 1e6
+	; clock/times [my-object1/y: random 99999] 1e6
 	clock/times [o/x: random 99999] 1e6
 	clock/times [my-object1/x: random 99999] 1e6
+	; clock/times [maybe o/x: 2] 1e6
 	m: #(1 2 3 4 5 6 7 8 9 0)
 	x: 3
 	clock/times [m/:x] 1e7
