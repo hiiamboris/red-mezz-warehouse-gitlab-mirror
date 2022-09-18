@@ -41,6 +41,8 @@ Red [
 			- equality type: one of [= == =?]
 			  by default no equality test is performed and on-change always gets called
 			  tip: `==` is good for scalars and strings, `=?` for blocks
+			- :existing-func-name for on-change handler
+			  alias for #on-change :existing-func-name for declaration brevity
 		  #on-change [obj word value] [function body], or
 		  #on-change :existing-func-name
 			which creates a `function` that reacts to word's changes
@@ -312,10 +314,11 @@ context [
 		]
 		spec: copy spec
 		parse spec [any [
-			remove [#type 0 3 [
+			remove [#type 0 4 [
 				set types block!
 			|	set values paren!
 			|	ahead word! set op ['== | '= | '=?]
+			|	set name get-word!
 			]] p: (new-line p on)
 		|	remove [#on-change [set args block! set body block! | set name get-word!]]
 		|	set field set-word! (
