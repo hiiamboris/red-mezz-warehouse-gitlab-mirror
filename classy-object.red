@@ -243,11 +243,6 @@ Red [
 #include %error-macro.red
 
 
-;; used as default value check (that always succeeds) - this simplifies and speeds up the check
-;@@ perhaps there's a better place for id func?
-id: func ["Identity function: passes it's argument through" x [any-type!]] [:x]
-
-
 context [
 	set 'on-change-dispatch function [
 		"General on-change function built for object validation"
@@ -261,8 +256,9 @@ context [
 			;; love these names but this single `set` slows everything down by 15-20%; so using path accessors instead
 			;; left as a reminder:  set [equals: types: values: on-change:] info 
 			unless info/1 :old :new [
+				; word: bind to word! word obj			;@@ bind part fixed early Sept 2022
+				word: to word! word						;@@ to word! required for now
 				#debug [								;-- disable checks in release ver
-					; word: bind to word! word obj		;@@ bind & to required for now ;; fixed early Sept 2022
 					unless find info/2 type? :new [		;-- check type
 						set-quiet word :old				;-- in case of error, word must have the old value
 						new':   mold/flat/part :new 20
@@ -301,6 +297,10 @@ context [
 	;; used as default equality test, which always fails and allows to trigger on-change even if value is the same
 	falsey-compare: func [x [any-type!] y [any-type!]] [no]
 	
+	;; used as default value check (that always succeeds) - this simplifies and speeds up the check
+	truthy-test: func [x [any-type!]] [true]
+
+	
 	set 'modify-class function [
 		"Modify a named class"
 		class [word!]  "Class name (word)"
@@ -320,7 +320,7 @@ context [
 		|	remove [#on-change [set args block! set body block! | set name get-word!]]
 		|	set field set-word! (
 				if any [op types values args body name] [		;-- don't include untyped words (for speed)
-					info: any [cmap/:field cmap/:field: reduce [:falsey-compare any-type! :id none]]
+					info: any [cmap/:field cmap/:field: reduce [:falsey-compare any-type! :truthy-test none]]
 					if op     [info/1: switch op [= [:equal?] == [:strict-equal?] =? [:same?]]]
 					if types  [info/2: make typeset! types]
 					if values [info/3: func reduce [to word! field [any-type!]] as block! values]
