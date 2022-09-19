@@ -350,7 +350,7 @@ context [
 		][
 			make map! 20
 		]
-		modify-class class spec
+		spec: modify-class class spec
 		unless manual [
 			insert spec compose [
 				classify-object (to lit-word! class) self
