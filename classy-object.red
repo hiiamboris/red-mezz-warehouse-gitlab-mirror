@@ -56,6 +56,12 @@ Red [
 		DECLARE-CLASS <class-name> <spec> can take a path of two words as it's <class-name>: 'new-class/other-class.
 		It will copy validation from already declared other-class to the new-class.
 		
+		MODIFY-CLASS <class-name> <spec> is used to make adjustments to an existing class
+		Uses same syntax as DECLARE-CLASS, though set-words do not need any values in it.
+		Use cases:
+		- add on-change handler to a word that's not in the object's spec
+		- (in some addon) adjust a class that was declared elsewhere
+		
 		After class is declared, objects can be instantiated:
 			my-object1: make classy-object! my-spec
 			my-object2: make classy-object! my-spec
@@ -295,25 +301,16 @@ context [
 	;; used as default equality test, which always fails and allows to trigger on-change even if value is the same
 	falsey-compare: func [x [any-type!] y [any-type!]] [no]
 	
-	set 'declare-class function [
-		"Declare a named class (overrides if already exists), return preprocessed spec"
-		class       [word! path!]  "Class name (word) or class-name/prototype-name (path)"
-		spec        [block!]       "Spec block with validity directives"
-		/manual                    "Don't insert classify-object call automatically"
+	set 'modify-class function [
+		"Modify a named class"
+		class [word!]  "Class name (word)"
+		spec  [block!] "Spec block with validity directives"
 	][
-		; if classes/:class [ERROR "Class (class) is already declared"]
-		if path? class [
-			#assert [parse class [2 word! end]]
-			set [class: proto:] class
+		
+		unless cmap: classes/:class [
+			ERROR "Unknown class (class), defined are: (mold/flat words-of classes)"
 		]
-		cmap: classes/:class: either proto [
-			unless pmap: classes/:proto [ERROR "Unknown class: (proto)"]
-			copy/deep pmap
-		][
-			make map! 20
-		]
-		spec: copy spec
-		parse spec [any [
+		parse spec: copy spec [any [
 			remove [#type 0 4 [
 				set types block!
 			|	set values paren!
@@ -333,6 +330,27 @@ context [
 			)
 		|	skip 
 		]]
+		spec
+	]
+	
+	set 'declare-class function [
+		"Declare a named class (overrides if already exists), return preprocessed spec"
+		class       [word! path!]  "Class name (word) or class-name/prototype-name (path)"
+		spec        [block!]       "Spec block with validity directives"
+		/manual                    "Don't insert classify-object call automatically"
+	][
+		; if classes/:class [ERROR "Class (class) is already declared"]
+		if path? class [
+			#assert [parse class [2 word! end]]
+			set [class: proto:] class
+		]
+		classes/:class: either proto [
+			unless pmap: classes/:proto [ERROR "Unknown class: (proto)"]
+			copy/deep pmap
+		][
+			make map! 20
+		]
+		modify-class class spec
 		unless manual [
 			insert spec compose [
 				classify-object (to lit-word! class) self
