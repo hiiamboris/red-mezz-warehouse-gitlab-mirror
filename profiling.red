@@ -211,11 +211,11 @@ once prof: context [									;-- don't reinclude or stats may be reset
 	each: function [										;-- new interface: PROF/EACH
 		"Display execution time of each expression in CODE"
 		code [block!] "Result is only returned if N = 1"
-		/times n [integer!] "Repeat the whole CODE N times (default: once); displayed time/RAM is per iteration"
+		/times n [integer! float!] "Repeat the whole CODE N times (default: once); displayed time/RAM is per iteration"
 		/quiet "Don't print anything, just save the results for later display via PROF/SHOW"
 		/local result
 	][
-		n: any [n 1]
+		n: to integer! any [n 1]
 		code-copy: any [									;-- preserve the original code in case it changes during execution
 			select/same/only data code						;-- could be preserved already
 			copy/deep code
