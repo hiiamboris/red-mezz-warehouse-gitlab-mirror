@@ -315,9 +315,9 @@ context [
 				set types block!
 			|	set values paren!
 			|	ahead word! set op ['== | '= | '=?]
-			|	set name get-word!
+			|	set name [get-word! | get-path!]
 			]] p: (new-line p on)
-		|	remove [#on-change [set args block! set body block! | set name get-word!]]
+		|	remove [#on-change [set args block! set body block! | set name [get-word! | get-path!]]]
 		|	set field set-word! (
 				if any [op types values args body name] [		;-- don't include untyped words (for speed)
 					info: any [cmap/:field cmap/:field: reduce [:falsey-compare any-type! :truthy-test none]]
