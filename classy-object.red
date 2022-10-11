@@ -48,6 +48,10 @@ Red [
 			which creates a `function` that reacts to word's changes
 		Specifiers apply to the first set-word that follows them.
 		
+		Multiple specifiers complement each other, so e.g. upper class may define allowed types,
+		then descending class may define equality type or on-change handler.
+		Of course, the same feature (type check, value check, equality, on-change) gets replaced when it's specified again.
+		
 		CLASSIFY-OBJECT function assigns an object to a given class, enabling validation specific to that class.
 		It can be called at any time, but for more safety should be before any assignments are made.
 		The above MY-SPEC once evaluated will classify itself first, then assign values,
@@ -235,7 +239,10 @@ Red [
 	TODO: {
 		- turn off all checks in release mode
 		- friendlier reflection, esp. how final on-change maps to words
-		- maybe #constant keyword as alias for #type [] ?
+		- maybe #constant or #lock/#locked keyword as alias for #type [] ? (will be set internally by set-quiet)
+		  problem is how to initialize smth that supports no assignment, probably it should allow unset->value only
+		- expose classes by their names so their on-change handlers could be called from inherited handlers
+		  useful when overriding one handler with another, and problem arises of keeping them in sync
 	}
 ]
 
