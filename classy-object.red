@@ -22,14 +22,14 @@ Red [
 		Class is declared with DECLARE-CLASS function.
 		It takes an object spec block with specifiers and returns a make-able spec block without them:
 			my-spec: declare-class 'my-class [
-				#type [integer!] x: 1					;) just type restriction for X
-				#type [number!] (y >= 0) y: 0%			;) type+value restriction for Y
+				x: 1   #type [integer!]					;) just type restriction for X
+				y: 0%  #type [number!] (y >= 0)			;) type+value restriction for Y
 				
+				s: "data"
 				#on-change [obj word val] [				;) action on S change
 					print ["changing s to" val]
 				]
 				#type == [string!]						;) change tolerance and type restriction for S
-				s: "data"
 			]
 			
 		Supported specifiers are:
@@ -46,7 +46,7 @@ Red [
 		  #on-change [obj word value] [function body], or
 		  #on-change :existing-func-name
 			which creates a `function` that reacts to word's changes
-		Specifiers apply to the first set-word that follows them.
+		Specifiers apply to the first set-word that precedes them.
 		
 		Multiple specifiers complement each other, so e.g. upper class may define allowed types,
 		then descending class may define equality type or on-change handler.
@@ -71,7 +71,7 @@ Red [
 			my-object2: make classy-object! my-spec
 			my-other-spec: declare-class 'other-class/my-class [
 				u: "unrestricted"
-				#type [word!] w: 'some-word
+				w: 'some-word  #type [word!]
 			]
 			my-object3: make my-object2 my-other-spec
 		
@@ -219,6 +219,12 @@ Red [
 			This was a disorganized mess with bugs scattered around.
 			Equality type declared per word unifies it all and removes the need for `maybe` checks.
 			It should also perform better.
+			
+		Why type specification follows the set-word, not precedes it?
+			First implementation used preceding type spec, and it turned out to be way less readable.
+			In folowing type spec there's a danger:
+				x: 1 + y: 2  #type [integer!]  			;) type applies to y, not x
+			But overall it's worth it. Just don't multiple set-words in the same expression, or it will become a mess. 
 			 
 		Make safety.
 			Implementation was designed so that `make` on classy-object creates another *valid* classy-object.
@@ -237,16 +243,16 @@ Red [
 			Besides, that would need a way to override these, some additional syntax. 
 	}
 	TODO: {
-		- turn off all checks in release mode
 		- friendlier reflection, esp. how final on-change maps to words
 		- maybe #constant or #lock/#locked keyword as alias for #type [] ? (will be set internally by set-quiet)
 		  problem is how to initialize smth that supports no assignment, probably it should allow unset->value only
+		- #type [block! [subtype!]] kind of check (deep, e.g. block of words)?
 		- expose classes by their names so their on-change handlers could be called from inherited handlers
 		  useful when overriding one handler with another, and problem arises of keeping them in sync
 	}
 ]
 
-#include %new-each.red
+; #include %debug.red
 #include %error-macro.red
 
 
@@ -312,6 +318,7 @@ context [
 		"Modify a named class"
 		class [word!]  "Class name (word)"
 		spec  [block!] "Spec block with validity directives"
+		/local next-field
 	][
 		
 		unless cmap: classes/:class [
@@ -325,8 +332,11 @@ context [
 			|	set name [get-word! | get-path!]
 			]] p: (new-line p on)
 		|	remove [#on-change [set args block! set body block! | set name [get-word! | get-path!]]]
-		|	set field set-word! (
+		|	set next-field [set-word! | end] (
 				if any [op types values args body name] [		;-- don't include untyped words (for speed)
+					unless field [
+						ERROR "Type specification found without a preceding set-word at (mold/flat/part spec 70)"
+					]
 					info: any [cmap/:field cmap/:field: reduce [:falsey-compare any-type! :truthy-test none]]
 					if op     [info/1: switch op [= [:equal?] == [:strict-equal?] =? [:same?]]]
 					if types  [info/2: make typeset! types]
@@ -334,6 +344,7 @@ context [
 					if any [body name] [info/4: either name [get name][function args body]]
 					set [op: types: values: args: body: name:] none
 				]
+				field: next-field
 			)
 		|	skip 
 		]]
@@ -380,8 +391,8 @@ classy-object!: object declare-class/manual 'classy-object! [
 ; do [
 comment [												;; test code
 	typed: make classy-object! probe declare-class 'test [
-		#type == [integer!] (x >= 0) x: 1
-		#type =? [any-string!] (0 < length? s) s: "str" 
+		x: 1		#type == [integer!] (x >= 0)
+		s: "str"	#type =? [any-string!] (0 < length? s) 
 	]
 	
 	classify-object 'test typed
@@ -400,12 +411,13 @@ comment [												;; test code
 	?? typed
 
 	my-spec: declare-class 'my-class [
-		#type [integer!] == x: 1
-		#type [number!] (y >= 0) y: 0%
+		x: 1	#type [integer!] ==
+		y: 0%	#type [number!] (y >= 0)
 		
+		s: "data"
 		#on-change [obj val] [print ["changing s to" val]]
 		#type == [string!]
-		s: "data"
+		
 		zz: 0
 	]
 	
@@ -413,7 +425,7 @@ comment [												;; test code
 	my-object2: make classy-object! my-spec
 	my-other-spec: declare-class 'other-class/my-class [
 		u: "unrestricted"
-		#type [word!] w: 'some-word
+		w: 'some-word	#type [word!]
 	]
 	my-object3: make my-object2 my-other-spec
 
