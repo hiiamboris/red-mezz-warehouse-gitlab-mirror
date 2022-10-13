@@ -24,6 +24,11 @@ Red [
 			my-spec: declare-class 'my-class [
 				x: 1   #type [integer!]					;) just type restriction for X
 				y: 0%  #type [number!] (y >= 0)			;) type+value restriction for Y
+				z: 1:0 #type [							;) type-specific value restrictions for Z
+					time! (z >= 0:0)
+					date! (z >= 1900/1/1)
+					any-string! (all [date? z: transcode/one as string! z  z >= 1900/1/1])
+				]
 				
 				s: "data"
 				#on-change [obj word val] [				;) action on S change
@@ -36,8 +41,10 @@ Red [
 		  #type which accepts in any order (all are optional):
 			- [block with type/typeset names]
 			  by default any-type! is allowed
+			  may contain (parens with expressions to test value's validity if it belongs to the preceding type)
 			- (paren with an expression to test the value's validity)
 			  by default all values are accepted
+			  applies to all accepted types that do NOT have a type-specific value check
 			- equality type: one of [= == =?]
 			  by default no equality test is performed and on-change always gets called
 			  tip: `==` is good for scalars and strings, `=?` for blocks
@@ -164,7 +171,7 @@ Red [
 			And get-word has to be bound, but at the time of macro evaluation it's unbound and can even be in R2.
 			Plus, making code compatible with R2 adds a lot of ugly hacky code.
 			
-		Why not keep validationi spec separate from the object's spec?
+		Why not keep validation spec separate from the object's spec?
 			Mainly it will be impossible to figure out if they're in sync (unless you love tedious work).
 			Keeping them as a single body allows to guarantee it's all kept in sync during refactors.
 			It also makes spec more descriptive, adding meaning to each object's word. 
@@ -203,6 +210,15 @@ Red [
 			  for more verbosity:
 				#equality #tolerance #op #eq (comparison operator)
 			    #validity #check #range (value conditions)
+			    
+		Why having both typed and untyped value checks?
+			Without typed value checks, any value's check that supports multiple types becomes unreadable.
+			Example: instead of
+				x [integer! (x >= 0) pair! (0x0 +<= x) none!]
+			I would have to write:
+				x [integer! pair! none!] (any [none =? x all [integer? x x >= 0] 0x0 +<= x])
+			or  x [integer! pair! none!] (switch type?/word x [none! [yes] integer! [x >= 0] pair! [0x0 +<= x]])
+			and it only gets worse as the number of types grows.
 			    
 		Why on-change has `obj word value` arguments?
 			Since all the checks are already made, I don't see a use for `old` value there.
@@ -249,6 +265,7 @@ Red [
 		- #type [block! [subtype!]] kind of check (deep, e.g. block of words)?
 		- expose classes by their names so their on-change handlers could be called from inherited handlers
 		  useful when overriding one handler with another, and problem arises of keeping them in sync
+		- maybe before throwing an error I should print out part of the object where it happened?
 	}
 ]
 
@@ -313,6 +330,25 @@ context [
 	;; used as default value check (that always succeeds) - this simplifies and speeds up the check
 	truthy-test: func [x [any-type!]] [true]
 
+	extract-value-checks: function [field [set-word!] types [block!] values [word!] /local check] [
+		field: to get-word! field
+		typeset: clear []
+		options: clear []
+		parse types [any [
+			set type word! (append typeset type)
+			opt [
+				set check paren! (
+					mask: either datatype? type: get type [type][reduce to block! type]
+					append/only append options mask as block! check
+				)
+			]
+		]]
+		unless empty? options [
+			default: either get values [as block! get values][[true]]
+			set values compose/only [switch/default type? (field) (options) (default)]
+		]
+		make typeset! typeset
+	]
 	
 	set 'modify-class function [
 		"Modify a named class"
@@ -337,9 +373,9 @@ context [
 					unless field [
 						ERROR "Type specification found without a preceding set-word at (mold/flat/part spec 70)"
 					]
-					info: any [cmap/:field cmap/:field: reduce [:falsey-compare any-type! :truthy-test none]]
+					info: any [cmap/:field cmap/:field: reduce [:falsey-compare  any-type!  :truthy-test  none]]
 					if op     [info/1: switch op [= [:equal?] == [:strict-equal?] =? [:same?]]]
-					if types  [info/2: make typeset! types]
+					if types  [info/2: extract-value-checks field types 'values]
 					if values [info/3: func reduce [to word! field [any-type!]] as block! values]
 					if any [body name] [info/4: either name [get name][function args body]]
 					set [op: types: values: args: body: name:] none
@@ -412,7 +448,7 @@ comment [												;; test code
 
 	my-spec: declare-class 'my-class [
 		x: 1	#type [integer!] ==
-		y: 0%	#type [number!] (y >= 0)
+		y: 0%	#type [number! (print "number check!" y >= 0) none!] (print "general check!" yes)
 		
 		s: "data"
 		#on-change [obj val] [print ["changing s to" val]]
@@ -428,9 +464,10 @@ comment [												;; test code
 		w: 'some-word	#type [word!]
 	]
 	my-object3: make my-object2 my-other-spec
-
+	
 	my-object1/x: 2
 	print try [my-object1/x: 'oops]
+	my-object1/y: none
 	my-object1/y: 10000
 	print try [my-object1/y: -10000]
 	
