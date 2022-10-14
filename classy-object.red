@@ -254,6 +254,10 @@ Red [
 			This ensures that faster tests come first and that on-change is not called on value that will be reset back,
 			otherwise it may react to change and leave the object in inconsistent state.
 		
+		Context of value checks.
+			Value check is internally a `function` that gets it's object field as argument.
+			So all set-words that appear inside it, stay /local.
+		
 		Multiple on-change actions per single word, e.g. one per every inherited class?
 			Not supported. Would be slower, and I don't see the need in that as worth it.
 			Besides, that would need a way to override these, some additional syntax. 
@@ -266,6 +270,7 @@ Red [
 		- expose classes by their names so their on-change handlers could be called from inherited handlers
 		  useful when overriding one handler with another, and problem arises of keeping them in sync
 		- maybe before throwing an error I should print out part of the object where it happened?
+		- automated tests suite
 	}
 ]
 
@@ -376,7 +381,7 @@ context [
 					info: any [cmap/:field cmap/:field: reduce [:falsey-compare  any-type!  :truthy-test  none]]
 					if op     [info/1: switch op [= [:equal?] == [:strict-equal?] =? [:same?]]]
 					if types  [info/2: extract-value-checks field types 'values]
-					if values [info/3: func reduce [to word! field [any-type!]] as block! values]
+					if values [info/3: function reduce [to word! field [any-type!]] as block! values]
 					if any [body name] [info/4: either name [get name][function args body]]
 					set [op: types: values: args: body: name:] none
 				]
