@@ -22,7 +22,7 @@ Red [
 			func [/ref x [integer! string!]][
 			    switch/default type? :x [
 			        none! [x: 1] 						;) applies default when X is not given
-			        integer! [							;) integer type check
+			        integer! [							;) integer value check
 			            unless (x >= 0) [
 			                do make error! form reduce [
 			                    "Failed" "(x >= 0)" "for" type? :x "value:" mold/flat/part :x 40
@@ -30,7 +30,7 @@ Red [
 			            ]
 			        ]
 			    ] [
-			        unless (find x "0") [				;) fallback type check
+			        unless (find x "0") [				;) fallback value check
 			            do make error! form reduce [
 			                "Failed" {(find x "0")} "for" type? :x "value:" mold/flat/part :x 40
 			            ]
