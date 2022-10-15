@@ -62,3 +62,7 @@ Red [
 #include %contrast-with.red
 #include %is-face.red
 
+#include %classy-object.red
+#include %advanced-function.red
+
+
