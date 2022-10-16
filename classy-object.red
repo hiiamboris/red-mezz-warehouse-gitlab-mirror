@@ -272,6 +272,7 @@ Red [
 		  useful when overriding one handler with another, and problem arises of keeping them in sync
 		- maybe before throwing an error I should print out part of the object where it happened?
 		- automated tests suite
+		- could class-typing be unified with instance-typing?
 	}
 ]
 
