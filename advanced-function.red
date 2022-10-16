@@ -5,7 +5,7 @@ Red [
 	license:     'BSD-3
 	usage: {
 		Function argument specification is extended with the following:
-		- per-type value checks (as parenthesis following the type or typeset name)
+		- per-type value checks (as parenthesis following the type or typeset name(s))
 		- fallback value checks (as parenthesis following the type block if any, or the argument name)
 		- default values (as value after the argument name written as a set-word)
 		
@@ -14,6 +14,8 @@ Red [
 		  So `#debug off` removes all the overhead, but still keeps the default.
 		- No checks are applied to the default value (for performance reasons).
 		  It's up to the user to ensure that the default is within acceptable range.
+		- Per-type check applies to all previously listed types(ets) up to the previous per-type check,
+		  i.e. x [integer! float! (x >= 0) none!] applies check to both integer and float. 
 		- Fallback checks apply only to types not covered by per-type checks.
 		
 		Example:
@@ -163,9 +165,12 @@ Red [
 		
 		There's no guarantee about checks evaluation order between multiple arguments.
 			Don't create dependencies, as spec is seen as an orderless thing. Use body for ordered code.
+		
+		See also %classy-object.red for some notes on syntax design.
 	}
 	TODO: {
 		- ability to apply a single by-type checks to multiple types/typesets?
+		  maybe apply the check to all previously listed types, not just one?
 		- need to find how to unify this with classy-object as syntax is mostly similar
 		- should this insert assertions instead of error checks?
 		  probably not, as assertions are soft failures, but worth considering
@@ -199,15 +204,18 @@ if native? :function [
 			]] block? values
 		]
 		;@@ share it with the classy-object instead of duplicating? but it accumulated a few differences
-		extract-value-checks: function [field [any-word!] types [block!] values [block! none!] /local check] [
+		extract-value-checks: function [field [any-word!] types [block!] values [block! none!] /local check words] [
 			field: to get-word! field
 			typeset: clear []
 			options: clear []
 			parse types [any [
-				set type word! (append typeset type)
+				copy words some word! (append typeset words)
 				opt [
 					set check paren! #debug [(
-						mask: either datatype? type: get type [type][reduce to block! type]
+						mask: clear []
+						foreach type words [			;@@ use map-each
+							append mask either datatype? type: get type [type][reduce to block! type]
+						]
 						append/only append options mask make-check check field
 					)]
 				]

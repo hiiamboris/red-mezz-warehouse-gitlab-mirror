@@ -41,10 +41,11 @@ Red [
 		  #type which accepts in any order (all are optional):
 			- [block with type/typeset names]
 			  by default any-type! is allowed
-			  may contain (parens with expressions to test value's validity if it belongs to the preceding type)
+			  may contain (parens with expressions to test value's validity for ALL preceding types)
+			  i.e. x [integer! float! (x >= 0) none!] tests both integer and float
 			- (paren with an expression to test the value's validity)
 			  by default all values are accepted
-			  applies to all accepted types that do NOT have a type-specific value check
+			  applies to all accepted types that do NOT have a type-specific value check (in type block)
 			- equality type: one of [= == =?]
 			  by default no equality test is performed and on-change always gets called
 			  tip: `==` is good for scalars and strings, `=?` for blocks
@@ -335,15 +336,18 @@ context [
 	;; used as default value check (that always succeeds) - this simplifies and speeds up the check
 	truthy-test: func [x [any-type!]] [true]
 
-	extract-value-checks: function [field [set-word!] types [block!] values [word!] /local check] [
+	extract-value-checks: function [field [set-word!] types [block!] values [word!] /local check words] [
 		field: to get-word! field
 		typeset: clear []
 		options: clear []
 		parse types [any [
-			set type word! (append typeset type)
+			copy words some word! (append typeset words)
 			opt [
 				set check paren! (
-					mask: either datatype? type: get type [type][reduce to block! type]
+					mask: clear []
+					foreach type words [				;@@ use map-each
+						append mask either datatype? type: get type [type][reduce to block! type]
+					]
 					append/only append options mask as block! check
 				)
 			]
