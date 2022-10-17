@@ -199,6 +199,7 @@ Red [
 				set-quiet word :new						;) restores the new value again
 			which would double the check time, which is esp. critical for words that don't have checks
 			It also can't be held outside the object or object will never be recycled by GC.
+			Another reason to hide it is it's intended to set by the object creator, not changed by object's users.
 			
 		Why this syntax?
 			I need to balance between readability and conciseness:
