@@ -280,6 +280,7 @@ Red [
 #include %debug.red
 #include %assert.red
 #include %error-macro.red
+#include %count.red
 
 
 on-change-dispatch: function [
@@ -398,7 +399,7 @@ context [
 			|	set name [get-word! | get-path!]
 			]] p: (new-line p on)
 		|	remove [#on-change [
-				set args block! if (3 = length? args) set body block!
+				set args block! if (3 = count args word!) set body block!
 			|	set name [get-word! | get-path!]
 			|	p: (ERROR "Invalid #on-change handler at (mold/flat/part p 50)")
 			]]
