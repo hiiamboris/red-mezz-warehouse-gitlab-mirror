@@ -35,7 +35,7 @@ Red [
 					print ["changing s to" val]
 				]
 				#type == [string!]						;) change tolerance and type restriction for S
-			]
+			]											;) my-spec is a block!
 			
 		Supported specifiers are:
 		  #type which accepts in any order (all are optional):
@@ -328,6 +328,17 @@ classify-object: function [
 	change next call to lit-word! class
 ]
 
+class?: function [										;-- class-of is taken already
+	"Determine class of an object"
+	obj     [object!]
+	; return: [word! none!] "NONE if not classified"
+][
+	all [												;-- `try` approach is slower
+		in obj 'on-change*
+		call: find body-of :obj/on-change* 'on-change-dispatch
+		to word! :call/2
+	]
+]
 
 classes: make map! 20
 
