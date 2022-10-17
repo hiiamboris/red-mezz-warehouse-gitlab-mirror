@@ -277,43 +277,51 @@ Red [
 	}
 ]
 
-; #include %debug.red
+#include %debug.red
+#include %assert.red
 #include %error-macro.red
 
 
-context [
-	set 'on-change-dispatch function [
-		"General on-change function built for object validation"
-		class [word!]
-		obj   [object!]
-		word  [any-word!]
-		old   [any-type!]
-		new   [any-type!]
-	][
-		if info: classes/:class/:word [
-			;; love these names but this single `set` slows everything down by 15-20%; so using path accessors instead
-			;; left as a reminder:  set [equals: types: values: on-change:] info 
-			unless info/1 :old :new [
-				; word: bind to word! word obj			;@@ bind part fixed early Sept 2022
-				word: to word! word						;@@ to word! required for now
-				#debug [								;-- disable checks in release ver
-					unless find info/2 type? :new [		;-- check type
-						set-quiet word :old				;-- in case of error, word must have the old value
-						new':   mold/flat/part :new 20
-						types': mold to block! info/2
-						either empty? types'
-							[ERROR "Word (word) is marked constant and cannot be set to (new')"]
-							[ERROR "Word (word) can't accept `(new')` of type (mold type? :new), only (types')"]
-					]
-					unless info/3 :new [				;-- check value
-						set-quiet word :old				;-- in case of error, word must have the old value
-						new':    mold/flat/part :new 40
-						values': mold body-of :info/3
-						ERROR "Word (word) can't accept `(new')` value, only (values')"
-					]
+on-change-dispatch: function [
+	"General on-change function built for object validation"
+	class [word!]
+	obj   [object!]
+	word  [any-word!]
+	old   [any-type!]
+	new   [any-type!]
+][
+	if info: classes/:class/:word [
+		;; love these names but this single `set` slows everything down by 15-20%; so using path accessors instead
+		;; left as a reminder:  set [equals: types: values: on-change:] info 
+		unless info/1 :old :new [
+			; word: bind to word! word obj				;@@ bind part fixed early Sept 2022
+			word: to word! word							;@@ to word! required for now
+			#debug [									;-- disable checks in release ver
+				unless find info/2 type? :new [			;-- check type
+					set-quiet word :old					;-- in case of error, word must have the old value
+					new':   mold/flat/part :new 20
+					types': mold to block! info/2
+					either empty? types'
+						[ERROR "Word (word) is marked constant and cannot be set to (new')"]
+						[ERROR "Word (word) can't accept `(new')` of type (mold type? :new), only (types')"]
 				]
-				info/4 obj word :new
+				unless info/3 :new [					;-- check value
+					set-quiet word :old					;-- in case of error, word must have the old value
+					new':    mold/flat/part :new 40
+					values': mold either 'switch/default = first body: body-of :info/3 [
+						;@@ not so refactoring-safe extraction, how to improve?
+						as paren! first either at-type: find/only first find body block! type? :new [
+							find at-type block!			;-- type switch clause
+						][
+							find/last body block!		;-- fallback switch clause
+						]
+					][
+						body
+					]
+					ERROR "Failed (values') for (type? :new) value: (new')"
+				]
 			]
+			info/4 obj word :new
 		]
 	]
 ]
@@ -389,7 +397,11 @@ context [
 			|	ahead word! set op ['== | '= | '=?]
 			|	set name [get-word! | get-path!]
 			]] p: (new-line p on)
-		|	remove [#on-change [set args block! set body block! | set name [get-word! | get-path!]]]
+		|	remove [#on-change [
+				set args block! if (3 = length? args) set body block!
+			|	set name [get-word! | get-path!]
+			|	p: (ERROR "Invalid #on-change handler at (mold/flat/part p 50)")
+			]]
 		|	set next-field [set-word! | end] (
 				if any [op types values args body name] [		;-- don't include untyped words (for speed)
 					unless field [
@@ -446,74 +458,123 @@ classy-object!: object declare-class/manual 'classy-object! [
 ]
 
 
-; do [
-comment [												;; test code
-	typed: make classy-object! probe declare-class 'test [
+#debug [#localize [#assert [							;-- checks are disabled without #debug, will fail tests
+	msg?: func [error] [
+		parse error: form error [
+			remove thru ["Error: " [{"} | "{"]] to [["}" | {"}] "^/"] remove to end
+		]
+		error
+	]
+	typed: make classy-object! declare-class 'test-class-1 [
 		x: 1		#type == [integer!] (x >= 0)
 		s: "str"	#type =? [any-string!] (0 < length? s) 
 	]
-	
-	classify-object 'test typed
-	
-	; ?? spec
-	?? typed
-	print mold/all typed
-	?? classes
+	classify-object 'test-class-1 typed
+	'test-class-1 = class? typed
 	
 	typed/x: 2
-	print try [typed/x: "abc"]
-	print try [typed/x: -1]
+	typed/x = 2
+	error? try [typed/x: "abc"]
+	error? try [typed/x: -1]
+	typed/x = 2
+	
 	typed/s: "def"
-	print try [typed/s: 1]
-	print try [typed/s: ""]
-	?? typed
-
-	my-spec: declare-class 'my-class [
+	typed/s = "def"
+	error? try [typed/s: 1]
+	error? try [typed/s: ""]
+	typed/s = "def"
+	
+	var: 0
+	my-spec: declare-class 'test-class-2 [
 		x: 1	#type [integer!] ==
-		y: 0%	#type [number! (print "number check!" y >= 0) none!] (print "general check!" yes)
+		y: 0%	#type [number! (y >= 0) none!] (none? y)
 		
 		s: "data"
-		#on-change [obj val] [print ["changing s to" val]]
+		#on-change [obj word val] [var: val]
 		#type == [string!]
 		
-		zz: 0
+		z: 0
 	]
 	
 	my-object1: make classy-object! my-spec
 	my-object2: make classy-object! my-spec
-	my-other-spec: declare-class 'other-class/my-class [
+	my-other-spec: declare-class 'test-class-3/test-class-2 [
 		u: "unrestricted"
 		w: 'some-word	#type [word!]
+		m: none			#type [integer! float! (m = 1) word! ('word = m) none! logic!] (none? m)
 	]
 	my-object3: make my-object2 my-other-spec
 	
 	my-object1/x: 2
-	print try [my-object1/x: 'oops]
-	my-object1/y: none
+	my-object1/x = 2
+	error? err: try [my-object1/x: 'oops]
+	"Word x can't accept `oops` of type word!, only [integer!]" = msg? err
+	my-object1/x = 2
+	
+	none? my-object1/y: none
+	my-object1/y = none
+	
 	my-object1/y: 10000
-	print try [my-object1/y: -10000]
+	my-object1/y = 10000
+	error? err: try [my-object1/y: -10000]
+	"Failed (y >= 0) for integer value: -10000" = msg? err
+	my-object1/y = 10000
 	
 	my-object1/s: "new data"
+	my-object1/s == "new data"
 	my-object1/s: "new data"
 	my-object1/s: "New Data"
-	?? my-object1
+	my-object1/s == "New Data"
 	
-	print try [my-object3/w: 1:0]
-	print try [unset in my-object3 'w]
+	my-object2/s: "new data"
+	my-object2/s == "new data"
+	my-object2/s: "new data"
+	my-object2/s: "New Data"
+	my-object2/s == "New Data"
+	
+	error? err: try [my-object3/w: 1:0]
+	"Word w can't accept `1:00:00` of type time!, only [word!]" = msg? err
+	error? err: try [unset in my-object3 'w]
+	"Word w can't accept `unset` of type unset!, only [word!]" = msg? err
+	:my-object3/w = 'some-word
+	
+	;; error messages test in mixed checks scenario:
+	my-object3/m: 1
+	my-object3/m == 1
+	my-object3/m: 1.0
+	my-object3/m == 1.0
+	error? err: try [my-object3/m: 2.0]
+	"Failed (m = 1) for float value: 2.0" = msg? err
+	my-object3/m == 1.0
+	
+	my-object3/m: 'Word
+	my-object3/m == 'Word
+	error? err: try [my-object3/m: 'other]
+	"Failed ('word = m) for word value: other" = msg? err
+	my-object3/m == 'Word
+	error? err: try [my-object3/m: off]
+	"Failed (none? m) for logic value: false" = msg? err
+	my-object3/m == 'Word
+	
 	unset in my-object3 'u
-	?? my-object3
-		
-	#include %clock.red
-	class: 'test
-	o: object [x: 1 on-change*: func [w o n][]]
-	clock/times [o/x: 2] 1e7
-	clock/times [my-object1/zz: 1] 1e6
-	clock/times [my-object1/x: 2] 1e6
-	; clock/times [my-object1/y: random 99999] 1e6
-	clock/times [o/x: random 99999] 1e6
-	clock/times [my-object1/x: random 99999] 1e6
-	; clock/times [maybe o/x: 2] 1e6
-	m: #(1 2 3 4 5 6 7 8 9 0)
-	x: 3
-	clock/times [m/:x] 1e7
-]
+	unset? :my-object3/u
+	
+	; do [
+	comment [												;; benchmarks
+		#include %clock.red
+		class: 'test
+		o: object [x: 1 on-change*: func [w o n][]]
+		clock/times [o/x: 2] 1e7
+		clock/times [my-object1/zz: 1] 1e6
+		clock/times [my-object1/x: 2] 1e6
+		; clock/times [my-object1/y: random 99999] 1e6
+		clock/times [o/x: random 99999] 1e6
+		clock/times [my-object1/x: random 99999] 1e6
+		; clock/times [maybe o/x: 2] 1e6
+	]
+	
+	remove/key classes 'test-class-1					;-- cleanup
+	remove/key classes 'test-class-2
+	remove/key classes 'test-class-3
+]]];; #debug [#localize [#assert []]]
+
