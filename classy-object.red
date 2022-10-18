@@ -461,7 +461,7 @@ classy-object!: object declare-class/manual 'classy-object! [
 #debug [#localize [#assert [							;-- checks are disabled without #debug, will fail tests
 	msg?: func [error] [
 		parse error: form error [
-			remove thru ["Error: " [{"} | "{"]] to [["}" | {"}] "^/"] remove to end
+			remove thru ["Error: " opt [{"} | "{"]] to [opt ["}" | {"}] "^/"] remove to end
 		]
 		error
 	]
