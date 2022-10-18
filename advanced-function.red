@@ -212,10 +212,7 @@ if native? :function [
 				copy words some word! (append typeset words)
 				opt [
 					set check paren! #debug [(
-						mask: clear []
-						foreach type words [			;@@ use map-each
-							append mask either datatype? type: get type [type][reduce to block! type]
-						]
+						mask: reduce to block! make typeset! words		;-- break typesets into types
 						append/only append options mask make-check check field
 					)]
 				]
