@@ -141,13 +141,21 @@ Red [
 		See also %typed-object.red which is a different (and incompatible) approach
 	}
 	benchmarks: {
+		baseline:
 		0.25 μs		object/word: value						;) with empty but existing on-change*
-		1.21 μs		maybe object/word: value
 		0.98 μs		classy-object/untracked-word: value		;) minimum overhead
-		1.45 μs		classy-object/tracked-word: same-value	;) overhead of equality test alone
-		2.43 μs		classy-object/tracked-word: new-value	;) with equality test only
+		
+		change blocked (compared with `maybe` which is simplest function-based approach to equality):
+		1.05 μs		maybe object/word: same-value
+		1.43 μs		classy-object/tracked-word: same-value	;) overhead of equality test alone
+		
+		change accepted:
+		1.34 μs		maybe object/word: new-value
+		2.34 μs		classy-object/tracked-word: new-value	;) with equality test only
+		
+		change accepted and type/value checks kick in:
 		3.04 μs		classy-object/tracked-word: new-value	;) with type test only
-		3.30 μs		classy-object/tracked-word: new-value	;) with value test (regardless of other tests present)
+		3.30 μs		classy-object/tracked-word: new-value	;) with value test (regardless of other tests present; max overhead)
 	}
 	limitations: {
 		on-change* cannot be redefined or it will break validation
@@ -294,8 +302,8 @@ on-change-dispatch: function [
 	new   [any-type!]
 ][
 	if info: classes/:class/:word [
-		;; love these names but this single `set` slows everything down by 15-20%; so using path accessors instead
-		;; left as a reminder:  set [equals: types: values: on-change:] info 
+		;; love nice names but they add considerable overhead, so calling `info/i` directly
+		;; left as a reminder:  set [equals: check: on-change:] info 
 		unless info/1 :old :new [
 			; word: bind to word! word obj				;@@ bind part fixed early Sept 2022
 			word: to word! word							;@@ to word! required for now
@@ -610,6 +618,8 @@ classy-object!: object declare-class/manual 'classy-object! [
 		clock/times [99999] 1e7
 		clock/times [random 99999] 1e7					;-- overhead of random itself over constant
 		clock/times [x >= 0] 1e7						;-- overhead of condition itself
+		clock/times [maybe o/x: 1] 1e6					;-- overhead of maybe
+		clock/times [maybe o/x: random 99999] 1e6		;-- overhead of maybe (new)
 		clock/times [o/x: random 99999] 1e6				;-- setting of normal tracked object
 		clock/times [cobj/a: 1] 1e6						;-- overhead of unchecked field in classy object
 		clock/times [cobj/b: 1] 1e6						;-- overhead of caching
