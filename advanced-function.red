@@ -203,7 +203,7 @@ if native? :function [
 				switch type? (word) (options)
 			]] block? values
 		]
-		;@@ share it with the classy-object instead of duplicating? but it accumulated a few differences
+		
 		extract-value-checks: function [field [any-word!] types [block!] values [block! none!] /local check words] [
 			field: to get-word! field
 			typeset: clear []
