@@ -272,7 +272,6 @@ Red [
 		- expose classes by their names so their on-change handlers could be called from inherited handlers
 		  useful when overriding one handler with another, and problem arises of keeping them in sync
 		- maybe before throwing an error I should print out part of the object where it happened?
-		- automated tests suite
 		- could class-typing be unified with instance-typing?
 	}
 ]
@@ -329,8 +328,8 @@ on-change-dispatch: function [
 
 classify-object: function [
 	"Assign a class to the object"
-	class [word!]
 	obj   [object!]
+	class [word!]
 ][
 	call: find body-of :obj/on-change* 'on-change-dispatch
 	unless call [ERROR "Object is unfit for classification: (mold/part obj 100)"]
@@ -442,7 +441,7 @@ context [
 		spec: modify-class class spec
 		unless manual [
 			insert spec compose [
-				classify-object (to lit-word! class) self
+				classify-object self (to lit-word! class)
 			]
 		]
 		spec												;-- spec can be passed to `make` now
@@ -455,7 +454,7 @@ classy-object!: object declare-class/manual 'classy-object! [
 	on-change*: function [word [any-word!] old [any-type!] new [any-type!]] [
 		on-change-dispatch 'classy-object! self word :old :new
 	]
-	classify-object 'classy-object! self
+	classify-object self 'classy-object!
 ]
 
 
@@ -470,7 +469,7 @@ classy-object!: object declare-class/manual 'classy-object! [
 		x: 1		#type == [integer!] (x >= 0)
 		s: "str"	#type =? [any-string!] (0 < length? s) 
 	]
-	classify-object 'test-class-1 typed
+	classify-object typed 'test-class-1
 	'test-class-1 = class? typed
 	
 	typed/x: 2
