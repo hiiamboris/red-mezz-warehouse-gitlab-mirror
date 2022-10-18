@@ -141,11 +141,13 @@ Red [
 		See also %typed-object.red which is a different (and incompatible) approach
 	}
 	benchmarks: {
-		0.24 μs		object/word: value					;) with empty but existing on-change*
+		0.25 μs		object/word: value						;) with empty but existing on-change*
 		1.21 μs		maybe object/word: value
-		1.07 μs		classy-object/untracked-word: value
-		1.59 μs		classy-object/tracked-word: same-value
-		2.88 μs		classy-object/tracked-word: new-value
+		0.98 μs		classy-object/untracked-word: value		;) minimum overhead
+		1.45 μs		classy-object/tracked-word: same-value	;) overhead of equality test alone
+		2.43 μs		classy-object/tracked-word: new-value	;) with equality test only
+		3.04 μs		classy-object/tracked-word: new-value	;) with type test only
+		3.30 μs		classy-object/tracked-word: new-value	;) with value test (regardless of other tests present)
 	}
 	limitations: {
 		on-change* cannot be redefined or it will break validation
@@ -280,6 +282,7 @@ Red [
 #include %assert.red
 #include %error-macro.red
 #include %count.red
+#include %setters.red									;-- uses 'anonymize'
 
 
 on-change-dispatch: function [
@@ -297,31 +300,12 @@ on-change-dispatch: function [
 			; word: bind to word! word obj				;@@ bind part fixed early Sept 2022
 			word: to word! word							;@@ to word! required for now
 			#debug [									;-- disable checks in release ver
-				unless find info/2 type? :new [			;-- check type
-					set-quiet word :old					;-- in case of error, word must have the old value
-					new':   mold/flat/part :new 20
-					types': mold to block! info/2
-					either empty? types'
-						[ERROR "Word (word) is marked constant and cannot be set to (new')"]
-						[ERROR "Word (word) can't accept `(new')` of type (mold type? :new), only (types')"]
-				]
-				unless info/3 :new [					;-- check value
-					set-quiet word :old					;-- in case of error, word must have the old value
-					new':    mold/flat/part :new 40
-					values': mold either 'switch/default = first body: body-of :info/3 [
-						;@@ not so refactoring-safe extraction, how to improve?
-						as paren! first either at-type: find/only first find body block! type? :new [
-							find at-type block!			;-- type switch clause
-						][
-							find/last body block!		;-- fallback switch clause
-						]
-					][
-						body
-					]
-					ERROR "Failed (values') for (type? :new) value: (new')"
+				if info/2 :new [
+					set-quiet word :old
+					do make error! info/2 :new
 				]
 			]
-			info/4 obj word :new
+			info/3 obj word :new
 		]
 	]
 ]
@@ -354,65 +338,118 @@ context [
 	;; used as default equality test, which always fails and allows to trigger on-change even if value is the same
 	falsey-compare: func [x [any-type!] y [any-type!]] [no]
 	
-	;; used as default value check (that always succeeds) - this simplifies and speeds up the check
-	truthy-test: func [x [any-type!]] [true]
+	;; used as default value check (that always fails) - this simplifies and speeds up the check
+	falsey-test: func [x [any-type!]] [no]
 
-	extract-value-checks: function [field [set-word!] types [block!] values [word!] /local check words] [
-		field: to get-word! field
+
+
+	;; another approach is to put 'do' directly into on-change-dispatch (and bind to it)
+	;; but then even unchecked words will pay the price of a function call
+	;; and unfortunately, both these approaches are unfit for advanced-function
+	;; as it will either become a mold hell, or not copyable (due to use of a bound decorated word for matrix)
+	make-check-func: function [field [get-word!] matrix [map!]] [
+		check: function compose [(to word! field) [any-type!]] compose [
+			;; trick here is to use paths (faster), and that needs a word (can't start it with a map)
+			;; besides, map is quite big, in case function gets molded (on error?) it's no good
+			do (as path! reduce [
+				anonymize 'matrix matrix
+				as paren! compose [type?/word (field)]
+			])
+		]
+		foreach [key blk] matrix [if block? blk [bind blk :check]]
+		:check
+	]
+	
+	;; must return 'none' when check succeeded!
+	skeleton: copy []									;@@ use map-each (not using to avoid dependency)
+	#localize [
+		foreach type to [] any-type! [repend skeleton [type none]]
+	]
+	skeleton: make map! skeleton
+	
+	make-type-matrix: function [word [get-word!] types [block! none!] fallback-check [paren! none!] options [block! none!]] [
+		matrix:   copy skeleton
+		accepted: either types [make typeset! types][any-type!]
+		if types [type-error: make-type-error word types]
+		foreach [type _] matrix [
+			matrix/:type: case [
+				not find accepted get type [type-error]
+				check: any [
+					if pos: find find options type paren! [pos/1]
+					fallback-check
+				][
+					make-value-check word check
+				]
+			]											;@@ or use remove/key instead of 'none'?
+		] 
+		matrix
+	]
+	
+	make-value-check: function [field [get-word!] check [paren!]] [
+		compose/deep [
+			unless (check) [
+				form reduce ["Failed" (mold check) "for" type? (field) "value:" mold/flat/part (field) 40]
+			]
+		]
+	]
+	
+	make-type-error: function [field [get-word!] types [block!]] [
+		compose/deep [									;@@ use reshape for this when it's fast
+			rejoin [(compose pick [						;-- new-lines matter here
+				["Word " (form field) " is locked and cannot be set to " mold/flat/part (field) 40]
+				["Word " (form field) " can't accept " type? (field) " value: " mold/flat/part (field) 40 ", only " (mold types)]
+			] empty? types)]
+		]
+	]
+
+	extract-value-checks: function [types [block!] /local check words] [
 		typeset: clear []
 		options: clear []
 		parse types [any [
 			copy words some word! (append typeset words)
 			opt [
-				set check paren! (
-					mask: clear []
-					foreach type words [				;@@ use map-each
-						append mask either datatype? type: get type [type][reduce to block! type]
-					]
-					append/only append options mask as block! check
-				)
+				set check paren! #debug [(
+					mask: to block! make typeset! words	;-- break typesets into type names
+					append/only append options mask check
+				)]
 			]
 		]]
-		unless empty? options [
-			default: either get values [as block! get values][[true]]
-			set values compose/only [switch/default type? (field) (options) (default)]
-		]
-		make typeset! typeset
+		reduce [typeset options]						;-- no copy needed, temporary blocks
 	]
-	
+
 	set 'modify-class function [
 		"Modify a named class"
 		class [word!]  "Class name (word)"
 		spec  [block!] "Spec block with validity directives"
 		/local next-field
 	][
-		
 		unless cmap: classes/:class [
 			ERROR "Unknown class (class), defined are: (mold/flat words-of classes)"
 		]
+		field?: [(unless field [ERROR "A set-word expected before (mold/flat/part p 50)"])]
 		parse spec: copy spec [any [
-			remove [#type 0 4 [
+			remove [p: #type (field?) 0 4 [
 				set types block!
-			|	set values paren!
+			|	set fallback paren!
 			|	ahead word! set op ['== | '= | '=?]
 			|	set name [get-word! | get-path!]
 			]] p: (new-line p on)
-		|	remove [#on-change [
+		|	remove [p: #on-change (field?) [
 				set args block! if (3 = count args word!) set body block!
 			|	set name [get-word! | get-path!]
-			|	p: (ERROR "Invalid #on-change handler at (mold/flat/part p 50)")
+			|	(ERROR "Invalid #on-change handler at (mold/flat/part p 50)")
 			]]
 		|	set next-field [set-word! | end] (
-				if any [op types values args body name] [		;-- don't include untyped words (for speed)
-					unless field [
-						ERROR "Type specification found without a preceding set-word at (mold/flat/part spec 70)"
-					]
-					info: any [cmap/:field cmap/:field: reduce [:falsey-compare  any-type!  :truthy-test  none]]
+				if any [op types fallback name args body] [		;-- don't include untyped words (for speed)
+					field: to get-word! field
+					info: any [cmap/:field cmap/:field: reduce [:falsey-compare :falsey-test none]]
 					if op     [info/1: switch op [= [:equal?] == [:strict-equal?] =? [:same?]]]
-					if types  [info/2: extract-value-checks field types 'values]
-					if values [info/3: function reduce [to word! field [any-type!]] as block! values]
-					if any [body name] [info/4: either name [get name][function args body]]
-					set [op: types: values: args: body: name:] none
+					if any [types fallback] [
+						set [types: options:] if types [extract-value-checks types]
+						info/2: make-check-func field make-type-matrix field types fallback options
+					]
+					if any [body name] [info/3: either name [get name][function args body]]
+					set [op: types: fallback: args: body: name:] none
 				]
 				field: next-field
 			)
@@ -492,8 +529,6 @@ classy-object!: object declare-class/manual 'classy-object! [
 		s: "data"
 		#on-change [obj word val] [var: val]
 		#type == [string!]
-		
-		z: 0
 	]
 	
 	my-object1: make classy-object! my-spec
@@ -508,7 +543,7 @@ classy-object!: object declare-class/manual 'classy-object! [
 	my-object1/x: 2
 	my-object1/x = 2
 	error? err: try [my-object1/x: 'oops]
-	"Word x can't accept `oops` of type word!, only [integer!]" = msg? err
+	"Word x can't accept word value: oops, only [integer!]" = msg? err
 	my-object1/x = 2
 	
 	none? my-object1/y: none
@@ -533,9 +568,9 @@ classy-object!: object declare-class/manual 'classy-object! [
 	my-object2/s == "New Data"
 	
 	error? err: try [my-object3/w: 1:0]
-	"Word w can't accept `1:00:00` of type time!, only [word!]" = msg? err
+	"Word w can't accept time value: 1:00:00, only [word!]" = msg? err
 	error? err: try [unset in my-object3 'w]
-	"Word w can't accept `unset` of type unset!, only [word!]" = msg? err
+	"Word w can't accept unset value: unset, only [word!]" = msg? err
 	:my-object3/w = 'some-word
 	
 	;; error messages test in mixed checks scenario:
@@ -562,15 +597,26 @@ classy-object!: object declare-class/manual 'classy-object! [
 	; do [
 	comment [												;; benchmarks
 		#include %clock.red
-		class: 'test
+		my-spec: declare-class 'test-class-2 [
+			a: 1
+			b: 1	#type ==
+			c: 1	#type [integer!]
+			d: 1	#type (d >= 0)
+			e: 1	#type == [integer! (e >= 0)]
+		]
+		cobj: make classy-object! my-spec
 		o: object [x: 1 on-change*: func [w o n][]]
-		clock/times [o/x: 2] 1e7
-		clock/times [my-object1/zz: 1] 1e6
-		clock/times [my-object1/x: 2] 1e6
-		; clock/times [my-object1/y: random 99999] 1e6
-		clock/times [o/x: random 99999] 1e6
-		clock/times [my-object1/x: random 99999] 1e6
-		; clock/times [maybe o/x: 2] 1e6
+		x: 1
+		clock/times [99999] 1e7
+		clock/times [random 99999] 1e7					;-- overhead of random itself over constant
+		clock/times [x >= 0] 1e7						;-- overhead of condition itself
+		clock/times [o/x: random 99999] 1e6				;-- setting of normal tracked object
+		clock/times [cobj/a: 1] 1e6						;-- overhead of unchecked field in classy object
+		clock/times [cobj/b: 1] 1e6						;-- overhead of caching
+		clock/times [cobj/b: random 99999] 1e6			;-- overhead of equality test
+		clock/times [cobj/c: 1] 1e6						;-- overhead of type test
+		clock/times [cobj/d: 1] 1e6						;-- overhead of condition
+		clock/times [cobj/e: random 99999] 1e6			;-- overhead of everything
 	]
 	
 	remove/key classes 'test-class-1					;-- cleanup
