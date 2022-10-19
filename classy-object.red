@@ -289,7 +289,6 @@ Red [
 #include %debug.red
 #include %error-macro.red
 #include %count.red
-#include %setters.red									;-- uses 'anonymize'
 #include %typecheck.red
 
 
