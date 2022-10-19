@@ -287,10 +287,10 @@ Red [
 ]
 
 #include %debug.red
-#include %assert.red
 #include %error-macro.red
 #include %count.red
 #include %setters.red									;-- uses 'anonymize'
+#include %typecheck.red
 
 
 on-change-dispatch: function [
@@ -349,82 +349,6 @@ context [
 	;; used as default value check (that always fails) - this simplifies and speeds up the check
 	falsey-test: func [x [any-type!]] [no]
 
-
-
-	;; another approach is to put 'do' directly into on-change-dispatch (and bind to it)
-	;; but then even unchecked words will pay the price of a function call
-	;; and unfortunately, both these approaches are unfit for advanced-function
-	;; as it will either become a mold hell, or not copyable (due to use of a bound decorated word for matrix)
-	make-check-func: function [field [get-word!] matrix [map!]] [
-		check: function compose [(to word! field) [any-type!]] compose [
-			;; trick here is to use paths (faster), and that needs a word (can't start it with a map)
-			;; besides, map is quite big, in case function gets molded (on error?) it's no good
-			do (as path! reduce [
-				anonymize 'matrix matrix
-				as paren! compose [type?/word (field)]
-			])
-		]
-		foreach [key blk] matrix [if block? blk [bind blk :check]]
-		:check
-	]
-	
-	;; must return 'none' when check succeeded!
-	skeleton: copy []									;@@ use map-each (not using to avoid dependency)
-	#localize [
-		foreach type to [] any-type! [repend skeleton [type none]]
-	]
-	skeleton: make map! skeleton
-	
-	make-type-matrix: function [word [get-word!] types [block! none!] fallback-check [paren! none!] options [block! none!]] [
-		matrix:   copy skeleton
-		accepted: either types [make typeset! types][any-type!]
-		if types [type-error: make-type-error word types]
-		foreach [type _] matrix [
-			matrix/:type: case [
-				not find accepted get type [type-error]
-				check: any [
-					if pos: find find options type paren! [pos/1]
-					fallback-check
-				][
-					make-value-check word check
-				]
-			]											;@@ or use remove/key instead of 'none'?
-		] 
-		matrix
-	]
-	
-	make-value-check: function [field [get-word!] check [paren!]] [
-		compose/deep [
-			unless (check) [
-				form reduce ["Failed" (mold check) "for" type? (field) "value:" mold/flat/part (field) 40]
-			]
-		]
-	]
-	
-	make-type-error: function [field [get-word!] types [block!]] [
-		compose/deep [									;@@ use reshape for this when it's fast
-			rejoin [(compose pick [						;-- new-lines matter here
-				["Word " (form field) " is locked and cannot be set to " mold/flat/part (field) 40]
-				["Word " (form field) " can't accept " type? (field) " value: " mold/flat/part (field) 40 ", only " (mold types)]
-			] empty? types)]
-		]
-	]
-
-	extract-value-checks: function [types [block!] /local check words] [
-		typeset: clear []
-		options: clear []
-		parse types [any [
-			copy words some word! (append typeset words)
-			opt [
-				set check paren! #debug [(
-					mask: to block! make typeset! words	;-- break typesets into type names
-					append/only append options mask check
-				)]
-			]
-		]]
-		reduce [typeset options]						;-- no copy needed, temporary blocks
-	]
-
 	set 'modify-class function [
 		"Modify a named class"
 		class [word!]  "Class name (word)"
@@ -452,10 +376,7 @@ context [
 					field: to get-word! field
 					info: any [cmap/:field cmap/:field: reduce [:falsey-compare :falsey-test none]]
 					if op     [info/1: switch op [= [:equal?] == [:strict-equal?] =? [:same?]]]
-					if any [types fallback] [
-						set [types: options:] if types [extract-value-checks types]
-						info/2: make-check-func field make-type-matrix field types fallback options
-					]
+					if any [types fallback] [info/2: typechecking/make-check-func field types fallback]
 					if any [body name] [info/3: either name [get name][function args body]]
 					set [op: types: fallback: args: body: name:] none
 				]
