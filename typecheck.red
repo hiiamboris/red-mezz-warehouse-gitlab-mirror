@@ -20,6 +20,7 @@ Red [
 
 #include %assert.red
 #include %setters.red									;-- uses 'anonymize'
+#include %catchers.red
 #include %localize-macro.red
 
 typechecking: context [
