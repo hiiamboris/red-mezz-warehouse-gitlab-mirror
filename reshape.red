@@ -7,14 +7,51 @@ Red [
 ]
 
 
-; #include %localize-macro.red
-; #include %assert.red
+#include %localize-macro.red
+#include %assert.red
 
 ;@@ TODO: implement it in R/S to be more useful
 context [
-	empty-types: make typeset! [none! unset!]
-	check: func [x [any-type!]] [either find empty-types type? :x [[]][:x]]
-
+	group!:  make typeset! [paren! block!]
+	boring!: complement make typeset! [group! ref!] 
+	
+	keep?: func [x [any-type!]] [
+		switch/default type?/word :x [none! unset! [[]]] [:x]
+	]
+	
+	;; this version has vastly reduced syntax, but is also much faster, about 3x slower than compose+when combo
+	;; syntax:
+	;;   @(expr)  - mix in expr result if it's not none or unset
+	;;   @[expr]  - insert expr result as single value
+	;;   [data] /if condition  - if condition succeeds, process data and keep it as a block
+	;;   (data) /if condition  - if condition succeeds, process data and mix it in
+	;;   @(expr) /if condition will be processed as @(expr) and /if kept literally, no special case made to avoid this
+	;;   ideally /if in this case should apply to evaluation and keeping of the result
+	;;   instead, one has to use: ( @(expr) ) /if condition
+	set 'reshape-light function [
+		"Rewrite INPUT block using lightened set of RESHAPE rules"
+		input [group!] /local e x
+	][
+		group: [any [p:
+			@ [
+				paren! keep pick (keep? do p/2)
+			|	block! keep            (do p/2)
+			]
+			;; these rules rely on `p:` being backtracked by explicitly failed rule
+			;; otherwise `e` would need to become a stack of offsets
+		|	ahead block! [
+				block! /if s: [if (do/next s 'e) :e opt [:p into block end skip] | :e]
+			|	into block
+			]
+		|	ahead paren! [
+				paren! /if s: [if (do/next s 'e) :e opt [:p into group end skip] | :e]
+			|	into [collect set x group keep (as paren! x)]	;-- into block will force block type, have to work around
+			]
+		|	keep pick [skip any boring!]
+		]]
+		as input parse/case input block: [collect group]
+	]
+	
 	set 'reshape function [
 		"Deeply replace construction patterns in the BLOCK"
 		block [block! paren!] "Will not be copied if does not contain any patterns"
@@ -43,7 +80,7 @@ context [
 				p: if (p =? cond-start) break
 			|	               set x [block! | paren!] (append/only r     reshape x)
 			|	[['! | /use  ] set x           paren!] (append/only r  do reshape x)
-			|	[[ @ | /mixin] set x           paren!] (append r check do reshape x)
+			|	[[ @ | /mixin] set x           paren!] (append r keep? do reshape x)
 			; |	[[     /skip ] set x skip            ] (append/only r :x)	@@ needs more design, I don't like it
 			|	set x skip (append/only r :x)
 			]
@@ -195,5 +232,45 @@ context [
 	; ;; escape mechanism: needed when reshape block contains other calls to reshape
 	; [[! (1 + 2)]] = reshape [  /skip [!(1 + 2)] ]
 	; [ ! (1 + 2) ] = reshape [@(/skip [!(1 + 2)])]
+
+
+
+
+
+
+
+
+
+	[             ] = reshape-light []
+	( as paren! []) = reshape-light as paren! []
+	[ 1           ] = reshape-light [@(1)]
+	[ []          ] = reshape-light [@[[]]]
+	( reduce [()] ) = reshape-light [@[()]]
+	[ #[none]     ] = reshape-light [@[none]]
+	[             ] = reshape-light [@([])]
+	[             ] = reshape-light [@(())]
+	[             ] = reshape-light [@(none)]
+	[ #[false]    ] = reshape-light [@(false)]
+
+	;; conditional inclusion
+	[             ] = reshape-light [(1 2) /if no]
+	[ 1 2         ] = reshape-light [(1 2) /if yes]
+	[ x y         ] = reshape-light [( @['x] @('y) ) /if yes]
+	[             ] = reshape-light [( @['x] @('y) ) /if no ]
+
+	;; should not skip everything before the first pattern
+	[ x [3] x 7 ] = reshape-light [
+		x
+		[@[1 + 2]]
+		x
+		@[3 + 4]
+	]
+
+	;; one-liners should work
+	[(1)     ] = reshape-light [ ((1) /if yes)]
+	[( )     ] = reshape-light [ ((1) /if no )]
+	
+	;; resilience to keep/collect type issues and word overrides
+	[1 (2 (3) (4)) (5 6)] = reshape-light [1 (2 (3) ((4) /if yes)) ((5 6) /if yes)]
 
 ]]
