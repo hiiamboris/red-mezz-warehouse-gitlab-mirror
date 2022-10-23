@@ -33,7 +33,7 @@ context [
 		switch/default type?/word :x [none! unset! [[]]] [:x]
 	]
 	
-	;; this version has vastly reduced syntax, but is also much faster, about 5x slower than compose+when combo, but better on big data
+	;; this version has vastly reduced syntax, but is also much faster, about 4x slower than compose+when combo, but better on big data
 	;; syntax:
 	;;   @(expr)  - mix in expr result if it's not none or unset
 	;;   @[expr]  - insert expr result as single value
@@ -50,14 +50,16 @@ context [
 		|	ahead block! into =block=
 		|	ahead paren! into [collect set x =group= keep (as paren! x)]	;-- into =block= will force block type, have to work around
 		]
+		=keep-line=: [any [
+			keep pick some boring!
+		|	=common=
+		|	not /if keep skip
+		]]
 		=line=: [
-			/? collect set x any [
-				keep pick some boring!
-			|	=common=
-			|	not /if keep skip
-			] [
-				/if s: opt [if (do/next s 'e) keep pick (x)] :e		;-- keep only if /if succeeds
-			|	keep pick (x)										;-- false alarm, keep as normal data
+			/? p: thru /if s: [
+				;; fails to backtrack `:p`, because `e` may be overridden by deeper levels:
+				if (do/next s 'e) :e opt [:p =keep-line= end skip] 
+			|	:e
 			]
 		]
 		=group=: [any [
@@ -282,5 +284,8 @@ context [
 
 	;; resilience to keep/collect type issues and word overrides
 	[1 (2 (3) (4)) (5 6)] = reshape-light [1 (2 (3) (/? 4 /if yes)) (/? 5 6 /if yes)]
+
+	;; no processing of disabled items
+	[             ] = reshape-light [/? @(do make error! "oops") /if no]
 
 ]]
