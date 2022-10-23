@@ -4,8 +4,21 @@ Red [
 	author:  @hiiamboris
 	license: 'BSD-3
 	usage: {See in the docs, and in the tests below}
+	notes: {
+		Problem of this design is there's no good way to put reshape into other reshape.
+		/skip is one option but I don't like it
+		Maybe mark each processed inner block somehow?
+		That is, it would still deeply scan it, but will skip unmarked blocks?
+		Seems even more boring
+		On/off markers?
+		[ [< processed >] not processed] ??
+		Just don't process expressions?
+		[ [processed] @([not processed]) ] ??
+		
+		For 'light' version I wanted `? ... /if cond` syntax, but `?` is a word so has a lot of parsing overhead
+		`/? ... /if cond` is much faster
+	}
 ]
-
 
 #include %localize-macro.red
 #include %assert.red
@@ -13,43 +26,47 @@ Red [
 ;@@ TODO: implement it in R/S to be more useful
 context [
 	group!:  make typeset! [paren! block!]
-	boring!: complement make typeset! [group! ref!] 
+	; line-junk!: complement make typeset! [group! ref! refinement!] 
+	boring!: complement make typeset! [group! ref! refinement! word!] 
 	
 	keep?: func [x [any-type!]] [
 		switch/default type?/word :x [none! unset! [[]]] [:x]
 	]
 	
-	;; this version has vastly reduced syntax, but is also much faster, about 3x slower than compose+when combo
+	;; this version has vastly reduced syntax, but is also much faster, about 5x slower than compose+when combo, but better on big data
 	;; syntax:
 	;;   @(expr)  - mix in expr result if it's not none or unset
 	;;   @[expr]  - insert expr result as single value
-	;;   [data] /if condition  - if condition succeeds, process data and keep it as a block
-	;;   (data) /if condition  - if condition succeeds, process data and mix it in
-	;;   @(expr) /if condition will be processed as @(expr) and /if kept literally, no special case made to avoid this
-	;;   ideally /if in this case should apply to evaluation and keeping of the result
-	;;   instead, one has to use: ( @(expr) ) /if condition
+	;;   ? data /if condition  - if condition succeeds, process data and keep it
 	set 'reshape-light function [
 		"Rewrite INPUT block using lightened set of RESHAPE rules"
 		input [group!] /local e x
 	][
-		group: [any [p:
-			@ [
-				paren! keep pick (keep? do p/2)
-			|	block! keep            (do p/2)
+		=common=: [
+			@ p: [
+				paren! keep pick (keep? do p/1)
+			|	block! keep            (do p/1)
 			]
-			;; these rules rely on `p:` being backtracked by explicitly failed rule
-			;; otherwise `e` would need to become a stack of offsets
-		|	ahead block! [
-				block! /if s: [if (do/next s 'e) :e opt [:p into block end skip] | :e]
-			|	into block
+		|	ahead block! into =block=
+		|	ahead paren! into [collect set x =group= keep (as paren! x)]	;-- into =block= will force block type, have to work around
+		]
+		=line=: [
+			/? collect set x any [
+				keep pick some boring!
+			|	=common=
+			|	not /if keep skip
+			] [
+				/if s: opt [if (do/next s 'e) keep pick (x)] :e		;-- keep only if /if succeeds
+			|	keep pick (x)										;-- false alarm, keep as normal data
 			]
-		|	ahead paren! [
-				paren! /if s: [if (do/next s 'e) :e opt [:p into group end skip] | :e]
-			|	into [collect set x group keep (as paren! x)]	;-- into block will force block type, have to work around
-			]
-		|	keep pick [skip any boring!]
+		]
+		=group=: [any [
+			keep pick some boring!
+		|	=common=
+		|	=line=
+		|	keep skip
 		]]
-		as input parse/case input block: [collect group]
+		as input parse/case input =block=: [collect =group=]
 	]
 	
 	set 'reshape function [
@@ -60,7 +77,7 @@ context [
 		unless parse/case block [											;-- scan the block first - if no patterns are found, just return itself
 			to [
 				block! | paren! | '! | @ |
-				/if | /else | /do | /use | /mixin ;| /skip
+				/if | /else | /do | /use | /mixin | /skip
 			] p: to end
 		] [return block]
 
@@ -81,7 +98,7 @@ context [
 			|	               set x [block! | paren!] (append/only r     reshape x)
 			|	[['! | /use  ] set x           paren!] (append/only r  do reshape x)
 			|	[[ @ | /mixin] set x           paren!] (append r keep? do reshape x)
-			; |	[[     /skip ] set x skip            ] (append/only r :x)	@@ needs more design, I don't like it
+			|	[[     /skip ] set x skip            ] (append/only r :x)	;@@ needs more design, I don't like it
 			|	set x skip (append/only r :x)
 			]
 			:line-end
@@ -230,16 +247,11 @@ context [
 	unset? first reshape [!(1 /if no )]
 
 	; ;; escape mechanism: needed when reshape block contains other calls to reshape
-	; [[! (1 + 2)]] = reshape [  /skip [!(1 + 2)] ]
-	; [ ! (1 + 2) ] = reshape [@(/skip [!(1 + 2)])]
+	[[! (1 + 2)]] = reshape [  /skip [!(1 + 2)] ]
+	[ ! (1 + 2) ] = reshape [@(/skip [!(1 + 2)])]
 
 
-
-
-
-
-
-
+	;; light version tests
 
 	[             ] = reshape-light []
 	( as paren! []) = reshape-light as paren! []
@@ -253,24 +265,22 @@ context [
 	[ #[false]    ] = reshape-light [@(false)]
 
 	;; conditional inclusion
-	[             ] = reshape-light [(1 2) /if no]
-	[ 1 2         ] = reshape-light [(1 2) /if yes]
-	[ x y         ] = reshape-light [( @['x] @('y) ) /if yes]
-	[             ] = reshape-light [( @['x] @('y) ) /if no ]
-
-	;; should not skip everything before the first pattern
-	[ x [3] x 7 ] = reshape-light [
-		x
-		[@[1 + 2]]
-		x
-		@[3 + 4]
-	]
-
-	;; one-liners should work
-	[(1)     ] = reshape-light [ ((1) /if yes)]
-	[( )     ] = reshape-light [ ((1) /if no )]
+	[(1 2) /if no ] = reshape-light [(1 2) /if no]
+	[(1 2) /if yes] = reshape-light [(1 2) /if yes]
+	[             ] = reshape-light [/? 1 2 /if no]
+	[ 1 2         ] = reshape-light [/? 1 2 /if yes]
+	[ x y         ] = reshape-light [/? @['x] @('y) /if yes]
+	[             ] = reshape-light [/? @['x] @('y) /if no ]
+	[(1)          ] = reshape-light [(/? 1 /if yes)]
+	[( )          ] = reshape-light [(/? 1 /if no )]
+	[             ] = reshape-light [/? (/? 1 /if yes) /if no]
+	[( )          ] = reshape-light [/? (/? 1 /if no)  /if yes]
+	[(1)          ] = reshape-light [/? (/? 1 /if yes) /if yes]
 	
+	;; deep processing
+	[ x [3] x (7) ] = reshape-light [x [@[1 + 2]] x (@[3 + 4])]
+
 	;; resilience to keep/collect type issues and word overrides
-	[1 (2 (3) (4)) (5 6)] = reshape-light [1 (2 (3) ((4) /if yes)) ((5 6) /if yes)]
+	[1 (2 (3) (4)) (5 6)] = reshape-light [1 (2 (3) (/? 4 /if yes)) (/? 5 6 /if yes)]
 
 ]]
