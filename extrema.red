@@ -1,5 +1,5 @@
 Red [
-	title:   "Extremi-related mezzanines"
+	title:   "Extrema-related mezzanines"
 	purpose: "Find minimum and maximum points over a series"
 	author:  @hiiamboris
 	license: 'BSD-3
