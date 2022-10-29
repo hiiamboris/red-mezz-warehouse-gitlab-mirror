@@ -64,6 +64,9 @@ Red [
 			Similar to (and is based on) set-quiet routine but supports paths and more readable set-word syntax.
 			It's useful either to group multiple changes into one on-change signal,
 			or when on-change incurs too much overhead for no gain (e.g. setting of face facets is 25x faster this way).
+			WARNING: due to it's visual appearance, the following code may deceive the reader:
+				object [quietly x: 100]
+			Since set-word gets converted into a word, `x` becomes global, and the object becomes empty!
 
 		IMPORT
 			Syntax:
