@@ -333,7 +333,7 @@ class?: function [										;-- class-of is taken already
 	; return: [word! none!] "NONE if not classified"
 ][
 	all [												;-- `try` approach is slower
-		function? in obj 'on-change*
+		function? select obj 'on-change*				;-- may be unset, have to verify
 		call: find body-of :obj/on-change* 'on-change-dispatch
 		to word! :call/2
 	]
