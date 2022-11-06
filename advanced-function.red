@@ -79,9 +79,11 @@ Red [
 			
 			>> probe f: function [/ref x [integer! float!] (x >= 0)] [x]
 			func [/ref x [integer! float!]][
-			    unless (x >= 0) [						;) general value check does not require a switch
-			        do make error! form reduce [
-			            "Failed" "(x >= 0)" "for" type? :x "value:" mold/flat/part :x 40
+			    if :x [									;) if is required to see if value was even set
+			    	unless (x >= 0) [					;) general value check does not require a switch
+				        do make error! form reduce [
+				            "Failed" "(x >= 0)" "for" type? :x "value:" mold/flat/part :x 40
+				        ]
 			        ]
 			    ] 
 			    x
@@ -174,7 +176,7 @@ Red [
 		- need to find how to unify this with classy-object as syntax is mostly similar
 		- should this insert assertions instead of error checks?
 		  probably not, as assertions are soft failures, but worth considering
-		- externalize typecheck for use in layouts, to replace %typecheck.red
+		- function names as words for checks? 
 		- automated test suite
 	}
 ]
@@ -229,15 +231,18 @@ if native? :function [
 		insert-check: function [
 			body            [block!]
 			word            [get-word!]
+			ref?			[logic!] "True if words comes after a refinement"
 			default         [defaults! none!]
 			types           [block! none!]
 			options         [block! none!]
 			general-check   [block! none!]
 		][
+			if types [typeset: make typeset! types]
 			if default [
 				default: reduce [to set-word! word default]
-				logic?: either types [to logic! find make typeset! types logic!][yes]
+				logic?: either types [to logic! find typeset logic!][yes]
 			]
+			need-none-check?: all [ref? either types [not find typeset none!][no]]
 			check: case [
 				any [not empty? options  all [default logic?]] [	;-- general case - switch
 					unless options [options: make block! 2]
@@ -255,7 +260,12 @@ if native? :function [
 						unless (word) (default)
 					]
 				]
-				general-check [general-check]
+				all [general-check need-none-check?] [			;-- 'none' = no parameter, and should not be checked
+					compose/only [								;-- new-line matters here
+						if (word) (general-check)
+					]
+				]
+				general-check [general-check]					;-- 'none' is valid and should be checked as any other value
 				'else [ [] ]
 			]
 			new-line insert body check on
@@ -263,6 +273,7 @@ if native? :function [
 		
 		native-function: :function
 		set 'function native-function [spec [block!] body [block!] /local word types] [
+			ref?: no
 			parse spec: copy spec [any [				;-- copy so multiple functions can be created
 				[	set word spec-word!
 				|	not 'return change set word set-word! (to word! word)
@@ -280,10 +291,11 @@ if native? :function [
 						change/only pos types
 					]
 					if any [types values default] [
-						insert-check body to get-word! word default types options general-check
+						insert-check body to get-word! word ref? default types options general-check
 					]
 					set [default: values: general-check:] none
 				)
+			|	refinement! (ref?: yes)					;-- refinements args can be none even if it's not in the typeset
 			|	skip
 			]]
 			native-function spec body
