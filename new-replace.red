@@ -56,49 +56,31 @@ replace: function [
 	seek-pattern-from-pos: [							;-- primary `find` use
 		series: pos
 		value:  :pattern
-		case:   case
-		same:   same
-		only:   only
-		part:   part
-		length: length
+		case same only part length
 	]
 	;-- could have compose-d these, but don't want allocations:
 	seek-tail-from-patpos: [							;-- determines size of `find` pattern
+		case same only part length
 		series: pat-pos
 		value:  :pattern
 		tail:   true
 		; match:  true									;@@ bug #4943
-		case:   case
-		same:   same
-		only:   only
-		part:   part
-		length: length
 	]
 	seek-list-from-pos: [								;-- looks for lists when /deep
+		part length
 		series: pos
 		value:  any-list!
-		part:   part
-		length: length
 	]
 	inner-replace-at-lstpos: [							;-- used on inner lists
+		pattern value once deep case same only part length
 		series:  lst-pos/1
-		pattern: :pattern
-		value:   :value
-		; all:     all
-		once:    once
-		deep:    deep
-		case:    case
-		same:    same
-		only:    only
-		part:    part
-		length:  length
+		; all
 	]
 	change-at-patpos: [
+		value only
 		series: pat-pos
-		value:  :value
 		part:   true
 		range:  size
-		only:   only
 	]
 
 

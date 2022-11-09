@@ -101,11 +101,9 @@ mapparse: function [
 	] once
 	catch-a-break [
 		apply (in system/words 'parse) [
+			case part length
 			input:  series
 			rules:  =rule=
-			case:   case
-			part:   part
-			length: length
 		]
 	]
 	series

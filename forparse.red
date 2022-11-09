@@ -88,11 +88,9 @@ forparse: function [
 	=rule=: [any [=match= | =else=]]
 	if error? catch-a-break [
 		apply (in system/words 'parse) copy/deep [
+			case part length
 			input:  series
 			rules:  =rule=
-			case:   case
-			part:   part
-			length: length
 		]
 	][
 		unset 'r										;-- break should return unset
