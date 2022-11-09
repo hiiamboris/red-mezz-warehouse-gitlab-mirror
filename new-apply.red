@@ -66,6 +66,7 @@ Red [
 #include %error-macro.red
 #include %localize-macro.red
 
+;@@ NOTE: this impelementation is intentionally not optimized as Red code, but written in R/S style for easier transition!
 ;@@ TODO: automatically set refinement to true if any of it's arguments are provided?
 apply: function [
 	"Call a function NAME with a set of arguments ARGS"
@@ -77,17 +78,23 @@ apply: function [
 	/local value
 ][
 	if word? :args [args: context? args]
-	if all [not verb  block? :args] [					;-- evaluate expressions
+	if all [not verb  block? :args] [					;-- evaluate expressions, create a /verb-like block
 		buf: clear copy args
 		pos: args
 	 	while [not tail? bgn: pos] [
-	 		unless set-word? :pos/1 [ERROR "Expected set-word at (mold/part args 30)"]
-	 		while [set-word? first pos: next pos][]		;-- skip 1 or more set-words
-	 		set/any 'value do/next end: pos 'pos
-	 		repeat i offset? bgn end [repend buf [bgn/:i :value]]
+	 		either word? :pos/1 [
+	 			repend buf [pos/1 get/any pos/1]
+	 			pos: next pos
+	 		][
+		 		unless set-word? :pos/1 [
+		 			ERROR "Expected word or set-word at (mold/part args 30)"
+		 		]
+		 		while [set-word? first pos: next pos][]	;-- skip 1 or more set-words
+		 		set/any 'value do/next end: pos 'pos
+		 		repeat i offset? bgn end [repend buf [bgn/:i :value]]
+		 	]
 	 	]
 	 	args: buf
-	 	; ? args
 	]
 	
 	;@@ TODO: hopefully in args=block case we'll be able to make it O(n)
@@ -177,6 +184,10 @@ apply: function [
 	none?          apply find-me-needle [series: "here's the nEedle"]  
 	none?          apply find-me-needle [series: ["needle"]]  
 	[["needle"]] = apply find-me-needle [series: ["dont poke me with yer" ["needle"]]]  
+
+	obj: object [value1: 1 value2: 2]					;-- shortened form
+	3 = do bind [apply add [value1 value2]] obj
+		
 	
 	;@@ calling literals not possible at mezz level:
 	 ; 5  = apply :add [value2: 2  value1: 3]				;-- should accept function/native literals
