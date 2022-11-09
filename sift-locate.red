@@ -4,16 +4,34 @@ Red [
 	author:  @hiiamboris
 	license: BSD-3
 	notes: {
-		See sift-locate.md for details
+		See sift-locate.md for usage details
 		
-		BUGS:
-		need to get rid of the preprocessor here! not an option!
-		setting `x: does []` is enough to fail the tests, because it errors on fetch-next `x/p/q`
-		it might have almost worked if conditions were bound to for-each spec before preprocessing
-		but still: what if `x/p/q` is a non-nullary func where `x` is not yet defined? 
+		Design notes:
+		
+		Loop would be faster if I could expand it into `any [all [...]]` construct.
+		But expansion requires expansion of standalone blocks, and replacement of standalone type(set) names.
+			e.g. `find [1 | 3 | 5]` should not become expanded into any/all
+			or `parse x ['a | 'b | 'c]`...
+			and `number!` should become `find number! type? :subject`
+			but `find number! :x` should not
+		To know what token stands alone that requires preprocessor.
+		But preprocessor is a source of very unexpected bugs.
+		E.g. if pattern uses path `x/p/q` where `x` at runtime will be an object,
+		but globally `x` will be `func [/p a /q b]`, it will mess the arity!
+		or preprocessor may fail saying that `x` has no /p or /q refinements!
+		Moreover, `x` may be of different type on every iteration and `x/p/q` have different arity!
+		
+		Current implementation does not use the preprocessor, so it should be correct.
+		Price is it has to make do with slower loop performance.
+		But since both sift & locate are based on mezz apply and new-each, they're slow anyway!
+		
+		Path existence (to silence errors coming from invalid path items) is checked with `try`.
+		But I have to still raise errors if path is not part of the rule (e.g. comes from a called function).
+		So path in the returned error is looked up in the rule to be sure. Error rethrown if path not found.
 	}
 ]
 
+#include %include-once.red
 #include %localize-macro.red
 #include %assert.red
 
@@ -21,199 +39,99 @@ Red [
 #include %new-each.red									;-- based on extended foreach/map-each capabilities
 #include %new-apply.red									;-- need `apply` to dispatch refinements
 
+
+
 context [
-	;-- this one is tricky but much faster than `attempt` and try/attempt are probably the only type-agnostic tests
-	;-- get succeeds = path exists = we get `not none` = true
-	;-- get fails = no path = we get `not error` = false
-	;-- should not return false if path exists but has a falsey value!
-	path-exists?: function [:path [path! get-path!]] [
-		; not try [get/any path  none]					;@@ no longer working :( no longer fast :(
-		; not try compose/into [(path)  none] clear []
-		not try [
-			either path? path [
-				x: get/any path							;-- x: is a workaround for #4988
-			][
-				get/any path
-			]
-			none
-		]
-		;@@ maybe to hell with this func, let it fail and rethrow the errors unless they're path-related?
+	ref-or-block!: make typeset! [refinement! block!]
+	expand-paths: function [
+		tests   [block!] "Modified in place!"
+		subject [word! none!]
+		/local ref
+	][
+		repl: pick [
+			(as path! compose [(subject) (to word! ref)])
+			(ERROR "Cannot use refinements without column selected at (mold/only/part p 40)")
+		] word? subject
+		parse tests rule: compose/deep [any [
+			p: change only set ref refinement! (repl)
+		|	ahead block! into rule
+		|	to [ref-or-block! | end]
+		]]
+		tests
 	]
+	
 	#assert [
-		(b: [a 1]             path-exists? b/a)
-		;@@ this technically fails, but I don't care since my aim is to avoid path errors rather than a precise check:
-		; (b: [a 1]         not path-exists? b/b)
-		(o: object [a: 1]     path-exists? o/a)
-		(o: object [a: 1] not path-exists? o/b)
+		[.. subj/x = 1 subj/y [subj/z <> 2]] = expand-paths [.. /x = 1 /y [/z <> 2]] 'subj
 	]
+	
+	run-tests: function [
+		tests   [block!] "Paths should be expanded already"
+		subject [block!] "Code to get subject or to throw the error" 
+	][
+		trap/catch [									;@@ without /all may crash - #5239
+			while [not any [tail? tests :tests/1 == '|]] [	;-- succeed by reaching tail or pipe
+				set/any 'result do/next pos: tests 'tests
+				if pos =? back tests [					;-- standalone token
+					switch type?/word :result [
+						block!    [result: run-tests pos/1 subject]		;-- new ruleset
+						datatype! [result: result = type? do subject]
+						typeset!  [result: find result type? do subject]
+					]
+				]
+				any [
+					:result								;-- succeed, test forward
+					tests: find/case/tail tests '|		;-- fail, find next alternative
+					return no							;-- fail the whole
+				]
+			]
+			yes
+		][
+			unless all [
+				error? e: thrown
+				e/type = 'script
+				find [unset-path invalid-path bad-path-type bad-path-type2] e/id
+				find/only/same pos e/arg1				;-- path comes from the tests, not from deeper code
+			][
+				do e
+			]
+			no
+		]
+	]
+	
 
 	anonymous-hyphen: anonymize '- none					;-- a safe-to-assign hyphen for use in spec
-	spec-end-marker: ['..]								;-- readable delimiter between spec and tests
-
-	;-- tests (not spec) rewriter used in expand-pattern
-	expand-tests: function [
-		tests [block!] "modified in place!"
-		subject [word! none!]
-		tested-paths [block!]
-		/local ref w b
-	][
-		alternatives: reduce [chain: copy []]
-		nexpr: 0										;-- count expressions so we open `all` clause when needed
-		nalts: 1										;-- count alternatives so we open `any` clause when needed
-
-		finish-chain: [
-			pos: back tail alternatives
-			either nexpr = 1 [
-				change/part pos pos/1 1					;-- unwrap the block
-			][
-				; insert pos 'all							;-- open `all` clause, even for empty blocks (nexpr = 0)
-				either nexpr > 0 [
-					insert pos 'all						;-- open `all` clause
-				][
-					change pos 'true					;@@ special case until REP#85 is implemented in Red
-				]
-			]
-			clear tested-paths
+	
+	prepare: function [series pattern] [
+		;; split pattern into spec and tests
+		parse/case pattern [
+			;; spec may extend up to the tail, useful e.g. for sifting of some columns unconditionally
+			copy spec to [quote .. | end] opt skip tests:
 		]
-		finish-alts: [
-			if nalts > 1 [
-				alternatives: compose/only [any (alternatives)]	;-- open `any` clause
-			]
+		tests: copy/deep tests							;-- will be deeply modified
+		;; anonymize hyphens and collect word/paren slots (to figure out if default subject is possible to assign)
+		subject: parse/case spec [collect any [
+			change quote - (anonymous-hyphen)
+		|	ahead word! '| to end						;-- no subject after pipe delimiter
+		|	block!
+		|	keep skip
+		]]
+		;; subject can only be an explicit word
+		;; default subject only possible if spec is empty (no hyphens, no parens)
+		words: either set-word? :spec/1 [next spec][spec]	;-- [p:] is considered an empty spec - needs a subject
+		system/words/case [
+			tail? words [insert words subject: anonymize 'subject none]
+			all [single? words word? :words/1] [subject: words/1]
+			'else [subject: none]
 		]
-		test-path: [									;-- tests path for existence so no path error handling should be required on user's end
-			unless any [
-				single? path							;-- ignore paths of length=1 (e.g. resulting from function calls)
-				find/only head tested-paths path		;-- don't repeat tests for already tested paths
-			][
-				append chain compose/deep [
-					path-exists? (path)
-				]
-				nexpr: nexpr + 1
-				append/only tested-paths path
-			]
+		
+		expand-paths tests subject
+		subject: either subject [
+			reduce [to get-word! subject]
+		][
+			[ERROR "Cannot use type checks without column selected"]	;-- no space in the message for location :(
 		]
-
-		=refs-paths?=: [
-			(path: none)
-			p: (n: offset? p e)							;-- don't peek into the next expression
-			if (n > 0)
-			ahead [0 n [p:
-				change only set ref refinement! (
-					unless subject [					;-- can be extended in the future
-						ERROR "Cannot use refinements without column selected at (mold/only/part p 40)"
-					]
-					path: as path! compose [(subject) (to word! ref)]
-					do test-path
-					as get-path! path					;-- refinement changes into path
-				)
-			|	set path [path! | get-path!] (			;-- should be tested for existence, excluding function refinements
-					set/any [sub-path: value:] preprocessor/value-path? as path! path
-					if any-function? :value [path: sub-path]	;-- remove refinements from function call path
-					do test-path
-				)
-			|	skip
-			]]
-			if (path)									;-- fail if no refinement was found
-		]
-
-		=single?=: [if (e =? next s)]
-
-		=types?=: [										;-- type checks
-			ahead [
-				change set w word! (
-					unless subject [					;-- can be extended in the future
-						ERROR "Cannot use type checks without column selected at (mold/part p 40)"
-					]
-					get-sub: to get-word! subject
-					case [
-						datatype? get/any w [compose [ (w)   =? type? (get-sub) ]]	;-- `=?` is a bit faster than `=`
-						typeset?  get/any w [compose [ find (w) type? (get-sub) ]]
-						'else [w]						;-- normally - no change
-					]
-				) e:									;-- update expression end offset after change
-			]
-		]
-
-		=group?=: [										;-- expression group (opens `all` clause)
-			ahead [
-				change set b block! (expand-tests b subject tail tested-paths)
-				e:										;-- update expression end offset after change
-			]
-		]
-
-		=alternative?=: [
-			'| s: (										;-- update start so this token is skipped
-				do finish-chain
-				append/only alternatives chain: copy []
-				nalts: nalts + 1
-				nexpr: 0
-			)
-		]
-
-		=add-expr=: [(
-			unless s =? e [
-				insert/part pos: tail chain s e
-				new-line pos yes						;-- for more readability when inspecting expanded tests
-				nexpr: nexpr + 1
-			]
-		)]
-
-		parse tests =tests=: [
-			e: any [s:
-				=alternative?=
-			|	(e: preprocessor/fetch-next s)
-				opt [=refs-paths?= | =single?= [=types?= | =group?=]]
-				=add-expr= :e
-			]
-		]
-		do finish-chain
-		do finish-alts
-
-		alternatives
-	]
-
-	;@@ left global temporarily for manual testing!
-	set 'expand-pattern function [
-		"Rewrite sift/locate PATTERN into plain Red code"
-		pattern [block!]
-		; return: [block!] "[spec tests]: spec in *each format, tests - just code"
-		/local w
-	][
-	; expand-pattern: function [pattern [block!] /local w] [
-		pattern: copy/deep pattern						;-- will be modified in place
-		=spec=: [										;-- processes the spec to get default subject and possibly insert it
-			(	subject: clear []
-				step: 0									;-- count step so we know when to insert default subject
-			)
-			opt [set-word! | refinement!] insertion-point:
-			any [
-				not spec-end-marker [
-					'| | block!							;-- these do not affect step
-				|	[	change '- (anonymous-hyphen)	;-- `-` should not be `set` by *each as it's a native
-					|	paren!
-					|	set w word! (append subject w)	;-- look for candidates into default subject
-					] (step: step + 1)
-				]
-			]
-			spec-end:
-			[ spec-end-marker | end | p: (ERROR "Unexpected pattern format at (mold/only/part p 40)") ]
-			p: (
-				if step = 0 [							;-- no words defined? special case
-					append subject w: anonymize 'subject none	;-- add default subject if no words are found
-					insert insertion-point w
-					p: next p							;-- correct parsing offset for previous insertion
-					spec-end: next spec-end
-				]
-				subject: if single? subject [subject/1]	;-- default subject can only be set if it's unambiguous
-				spec: copy/part pattern spec-end
-			) :p
-		]
-
-		parse pattern [=spec= p:]
-		tested-paths: clear []							;-- used to remove path existence test dupes (some anyway)
-		tests: expand-tests p subject tested-paths
-
-		reduce [spec tests]
+		
+		reduce [spec tests subject]
 	]
 	
 	set 'locate function [
@@ -223,28 +141,23 @@ context [
 		/back "Locate last occurrence (starts from the tail)"
 		/case "Values are matched using strict comparison"
 		/same "Values are matched using sameness comparison"
-		/local pos
+		/local spec tests pos result
 	][
-		set [spec: tests:] expand-pattern pattern
-
-		;@@ this doesn't work (temporarily) because for-each anonymizes spec words
-		;@@ R/S implementation will let `function` to the binding and this will work
-		; unless set-word? spec/1 [						;-- we need position to track & return
-		; 	insert spec to set-word! 'pos
-		; ]
-		; code: compose [if (tests) [result: get spec/1 break]]
-		; reverse: back
-		; apply for-each 'local
-
-		;@@ so we have to access lower level functions from anonymous ctx
-		each-ctx: context? first find body-of :for-each 'fill-info
-		code: compose [if (tests) [result: skip ii/series ii/offset break]]	;@@ return won't work from here (caught by for-each-core)
-		if ii: each-ctx/fill-info spec series code back case same [
-			each-ctx/for-each-core ii [
-				if ii/matched? ii/code					;-- ii/code is bound, original `code` isn't!
-			] []
+		set [spec: tests: subject:] prepare series pattern
+		unless set-word? spec/1 [						;-- we need position to track & return
+			insert spec to set-word! 'pos
 		]
-
+		__iter: func [tests subject 'pos] [				;@@ temporary kludge - there's risk of spec overriding used words
+			if run-tests tests subject [
+				set/any 'result get/any pos
+				break
+			]
+		]
+		apply for-each [
+			spec series case same
+			reverse: back
+			code: compose/only [__iter (tests) (subject) (spec/1)]
+		]
 		result
 	]
 
@@ -256,38 +169,27 @@ context [
 		/case "Values are matched using strict comparison"
 		/same "Values are matched using sameness comparison"
 	][
-		set [spec: tests:] expand-pattern pattern
-		spec-words: parse spec [collect any [
+		set [spec: tests: subject:] prepare series pattern
+		columns: parse spec [collect any [				;-- selected columns to keep in the result
 			'- | '| | set w word! keep (to get-word! w)
 		|	skip
 		]]
-		buf: copy []
-		code: compose/deep [							;@@ has to be composed, otherwise tests & spec don't get bound by map-each
-			reduce/into [(spec-words)] clear buf		;-- tests may change word values, so we have to reduce them before that
-			; either (tests) [buf][continue]				;@@ no longer works when tests evaluate to unset!
-			any [all [(tests) buf] continue]
+		buf: copy columns
+		__iter: func [tests subject columns] [			;@@ temporary kludge - there's risk of spec overriding used words
+			reduce/into columns clear buf				;-- tests may change word values, so we have to reduce them before that
+			; either run-tests tests subject [buf][continue]	;@@ no longer works when tests evaluate to unset!
+			any [all [run-tests tests subject  buf] continue]
 		]
-		self: drop: yes									;-- preserve input type, omit rows not passing the tests
 		unless scalar? series [series: copy series]		;-- don't modify the original
-		apply map-each 'local
-	]
-
-	;-- see REP#85 for why `all []` should be left and it's expected to be true
-	; #assert [
-	; 	[ [subject] [any [all [] all []]] ]
-	; 	= expand-pattern [.. |]
-	; 	[ [subject] [all []] ]
-	; 	= expand-pattern []
-	; ]
-	;@@ but that doesn't work yet and a special case is made:
-	#assert [
-		[ [subject] [any [true true]] ]
-		= expand-pattern [.. |]
-		[ [subject] [true] ]
-		= expand-pattern []
+		apply map-each [
+			spec series case same
+			self: drop: yes								;-- preserve input type, omit rows not passing the tests
+			code: compose/only [__iter (tests) (subject) (columns)]
+		]
 	]
 	
 ]
+
 
 #localize [#assert [
 	;-- basic tests
@@ -321,7 +223,7 @@ context [
 	o3: object [p: object [r: 3]]
 	(reduce [o1]) = sift reduce [o1 o2 o3] [x .. x/p/q        ] 	;-- should not error out on non-existing paths
 	(reduce [o1 o2 o3]) = sift reduce [o1 o2 o3] [x .. :x/p/q ] 	;-- get-paths too!
-	; (reduce [o1]) = sift reduce [o1 o2 o3] [x .. :x/p/q       ] 	no longer a valid test in new Red
+	(reduce [o1 o2 o3]) = sift reduce [o1 o2 o3] [x .. :x/p/q ] 	;-- x/p/q returns unset, which is truthy - all items pass
 	(reduce [o1]) = sift reduce [o1 o2 o3] [x .. x/p/q > 0    ] 
 	(reduce [o2]) = sift reduce [o1 o2 o3] [x .. /p x = o2    ] 
 	(reduce [o3]) = sift reduce [o1 o2 o3] [x .. y: /p y/r > 2] 
@@ -346,7 +248,6 @@ context [
 
 	[5 7 9] = (i: 1 sift [1 3 5 7 9] [x .. (i: i + 1) x > i     ]) 	;-- usage of side effects
 	[5 7 9] = (i: 2 sift [1 3 5 7 9] [x .. x > i | (i: i + 1) no]) 
-
 
 	;-- LOCATE basic tests
 	[a 1 b 2 c  ] = locate      [a 1 b 2 c] [.. word!   ] 
