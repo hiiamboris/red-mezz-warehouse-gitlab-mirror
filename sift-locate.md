@@ -112,33 +112,3 @@ e.g. `[x y .. x > 0 [y < 5 | z > 10]]` -> `[x y .. all [x > 0 any [y < 5 z > 10]
 
 **Note**: some of these cases require use of the **preprocessor** to determine expression bounds, so avoid overly tricky dynamic code (e.g. construction of functions used in tests as a side effect of tests evaluation).
 
-
-### Expand-pattern
-
-Is a function used by both `sift` and `locate` to rewrite their dialected pattern as Red code.\
-It returns the block: `[spec tests]`
-
-You can use it to learn how the dialect works under the hood or debug your patterns.
-
-
-E.g.:
-```
->> probe expand-pattern [.. /x + /y = /z]
-[[subject] [all [
-    path-exists? 'subject/x 
-    path-exists? 'subject/y 
-    path-exists? 'subject/z 
-    :subject/x + :subject/y = :subject/z
-]]]
-
->> probe expand-pattern [p: x - - .. /1 = /2 [integer! | float!]]
-[[p: x - -] [all [
-    path-exists? 'x/1 
-    path-exists? 'x/2 
-    :x/1 = :x/2 
-    any [
-        integer! =? type? :x 
-        float! =? type? :x
-    ]
-]]]
-```
