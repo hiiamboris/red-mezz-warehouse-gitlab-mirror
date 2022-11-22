@@ -32,7 +32,8 @@ Red [
 ; #include %error-macro.red								;-- included by for-each.red
 ; #include %bind-only.red								;-- included by for-each.red
 ; #include %for-each.red								;-- included by map-each.red
-#include %map-each.red
+; #include %map-each.red								;-- included by sift-locate.red
+#include %sift-locate.red
 #include %xyloop.red									;-- included by explore.red
 #include %relativity.red								;-- included by explore.red
 ; #include %explore.red									;@@ temporary
