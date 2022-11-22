@@ -73,9 +73,9 @@ context [
 				set/any 'result do/next pos: tests 'tests
 				if pos =? back tests [					;-- standalone token
 					switch type?/word :result [
-						block!    [result: run-tests pos/1 subject]		;-- new ruleset
-						datatype! [result: result = type? do subject]
-						typeset!  [result: find result type? do subject]
+						block!    [if block? :pos/1 [result: run-tests pos/1 subject]]		;-- new ruleset
+						datatype! [if word?  :pos/1 [result: result = type? do subject]]
+						typeset!  [if word?  :pos/1 [result: find result type? do subject]]
 					]
 				]
 				any [
