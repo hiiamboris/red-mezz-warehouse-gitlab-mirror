@@ -119,6 +119,7 @@ These functions mainly help one follow design-by-contract guidelines in one's co
 | Source file                              | Description |
 | ---                                      | --- |
 | [relativity](relativity.red)             | Face coordinate systems translation mezzanines |
+| [color-models](color-models.red)         | Reliable statistically neutral conversion between common color models |
 | [contrast-with](contrast-with.red)       | Pick a color that would contrast with the given one |
 | [is-face?](is-face.red)                  | Reliable replacement for FACE? which doesn't work on user-defined faces |
 | [do-queued-events](do-queued-events.red) | Flush the View event queue |

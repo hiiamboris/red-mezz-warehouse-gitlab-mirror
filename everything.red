@@ -60,6 +60,7 @@ Red [
 
 #include %do-atomic.red
 #include %do-queued-events.red
+#include %color-models.red
 #include %contrast-with.red
 #include %is-face.red
 
