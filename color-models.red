@@ -93,10 +93,9 @@ HSL2RGB: function [
 	D:  L - (C / 2)										;-- darkest channel
 	B:  C + D											;-- brightest channel
 	M:  C * (1 - absolute H' % 2 - 1) + D				;-- middle channel
-	R:  do pick [B M D D M B B] i:  1 + to integer! H'	;-- BMD to RGB map
-	G:  do pick [M B B M D D M] i						;-- 7th=1th - for H=360 case
-	B:  do pick [D D M B B M D] i
-	RGB: reduce [R G B]
+	RGB: reduce pick [
+		[B M D] [M B D] [D B M] [D M B] [M D B] [B D M] [B M D]	;-- 7th=1th - for H=360 case
+	] 1 + to integer! H'
 	if tuple [
 		forall RGB [RGB/1: to-byte RGB/1]				;@@ use map-each
 		RGB: to tuple! RGB
