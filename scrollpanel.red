@@ -46,10 +46,12 @@ context [
 		hsc: panel/hsc  vsc: panel/vsc
 		pane: panel/pane
 		unless hsc =? pick tail pane -2 [
-			move find/same pane hsc tail pane
+			take find/same pane hsc						;-- someone might have deleted the scrollbars :/
+			append pane hsc
 		]
 		unless vsc =? last pane [
-			move find/same pane vsc tail pane
+			take find/same pane vsc
+			append pane vsc
 		]
 		;; now create reactions
 		foreach face any [pane []] [
@@ -62,6 +64,7 @@ context [
 			react/link/later func [panel face] [		;-- don't do update-total for each face, do it only once
 				[face/offset face/size]
 				;@@ TODO: use react/unlink to remove reactions from the old panel when face moves from one into another
+				;@@ also when scrolling each child triggers it's own update-total - need to avoid that
 				if panel =? select face 'parent [
 					update-total panel
 					; check-size panel
@@ -108,7 +111,7 @@ context [
 		origin: (hidden/x * max 0.0 min 1.0 hsc/data / (1.0 - hsc/selected))
 		     by (hidden/y * max 0.0 min 1.0 vsc/data / (1.0 - vsc/selected))
 		if 0x0 <> shift: origin - panel/origin [
-			do-unseen [
+			do-atomic [do-unseen [
 				foreach face panel/pane [
 					if face/type <> 'scroller [
 						; print ["MOVING" face/type "FROM" face/offset "BY" 0x0 - shift]
@@ -117,7 +120,7 @@ context [
 				]
 				panel/origin: origin
 				; attempt [show panel]
-			]
+			]]
 		]
 	]
 
@@ -179,8 +182,8 @@ context [
 			init: [
 				context copy/deep [
 					panel: face
-					react [[panel/pane]            check-pane panel]
-					react [[panel/size panel/size] check-size panel]		;-- size & total change may trigger scrollers update
+					react [[panel/pane]             check-pane panel]
+					react [[panel/size panel/total] check-size panel]		;-- size & total change may trigger scrollers update
 				]
 			]
 		]
@@ -260,3 +263,4 @@ context [
 ; view/no-wait/flags elastic [p: scrollpanel 100x200 [b: base 200x150] #scale] 'resize
 ; view/flags probe [s: scrollpanel with [anchors: [scale scale]] 500x400 [t: base 500x400] react [probe t/size: face/size - 20]] 'resize
 ; view/flags probe elastic [s: scrollpanel 500x400 [t: base 500x400] #scale react [probe t/size: s/size - 20]] 'resize
+
