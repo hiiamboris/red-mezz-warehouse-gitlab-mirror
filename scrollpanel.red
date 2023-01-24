@@ -15,7 +15,7 @@ Red [
 #include %do-atomic.red
 #include %do-unseen.red
 #include %relativity.red
-#include %show-trace.red
+; #include %show-trace.red
 
 context [
 	by: make op! :as-pair
