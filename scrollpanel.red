@@ -21,6 +21,7 @@ context [
 	by: make op! :as-pair
 
 	update-total: function [panel] [
+		unless panel/dirty? [exit]
 		e: negate s: 99999x99999
 		foreach face any [panel/pane []] [
 			if all [
@@ -36,6 +37,7 @@ context [
 		maybe panel/total: e - s
 		; maybe panel/total: e - s + 1					;-- +1 for possible rounding errors during scrollbar positioning
 		maybe panel/origin: 0x0 - s
+		quietly panel/dirty?: no
 	]
 
 	watched: make hash! 100
@@ -45,13 +47,15 @@ context [
 		;; scrollers should be on top, so should always be the last
 		hsc: panel/hsc  vsc: panel/vsc
 		pane: panel/pane
-		unless hsc =? pick tail pane -2 [
-			take find/same pane hsc						;-- someone might have deleted the scrollbars :/
-			append pane hsc
-		]
-		unless vsc =? last pane [
-			take find/same pane vsc
-			append pane vsc
+		do-atomic [
+			unless hsc =? pick tail pane -2 [
+				take find/same pane hsc					;-- someone might have deleted the scrollbars :/
+				append pane hsc
+			]
+			unless vsc =? last pane [
+				take find/same pane vsc
+				append pane vsc
+			]
 		]
 		;; now create reactions
 		foreach face any [pane []] [
@@ -64,14 +68,10 @@ context [
 			react/link/later func [panel face] [		;-- don't do update-total for each face, do it only once
 				[face/offset face/size]
 				;@@ TODO: use react/unlink to remove reactions from the old panel when face moves from one into another
-				;@@ also when scrolling each child triggers it's own update-total - need to avoid that
-				if panel =? select face 'parent [
-					update-total panel
-					; check-size panel
-				]
+				if panel =? select face 'parent [maybe panel/dirty?: yes]
 			] [panel face]
 		]
-		if modified? [update-total panel]
+		if modified? [maybe panel/dirty?: yes]
 	]
 
 	;; determine scrollers positions, offsets, visibility based on panel/total and panel size
@@ -106,12 +106,12 @@ context [
 	scroll: function [panel [object!]] [
 		hsc: panel/hsc  vsc: panel/vsc
 		hidden: max 0x0 panel/total - panel/size + (vsc/size/x by hsc/size/y)
-		; ?? hidden
 		;@@ BUG: for some reasons scroller/data + selected goes out of [0..1] segment
 		origin: (hidden/x * max 0.0 min 1.0 hsc/data / (1.0 - hsc/selected))
 		     by (hidden/y * max 0.0 min 1.0 vsc/data / (1.0 - vsc/selected))
 		if 0x0 <> shift: origin - panel/origin [
 			do-atomic [do-unseen [
+				panel/dirty?: yes						;-- this adds a pending update-total and avoids every face/offset from triggering it
 				foreach face panel/pane [
 					if face/type <> 'scroller [
 						; print ["MOVING" face/type "FROM" face/offset "BY" 0x0 - shift]
@@ -122,6 +122,8 @@ context [
 				; attempt [show panel]
 			]]
 		]
+		;@@ reaction may have left untriggered due to cycle (how to avoid?):
+		;@@ update-total -> /total change -> check-size -> scroll -> child/offset change -> update-total
 	]
 
 	scrollpanel?: function [face [object!]] [
@@ -171,6 +173,7 @@ context [
 				
 				origin: 0x0
 				total:  0x0
+				dirty?: yes								;-- used to group multiple offset updates
 				scroll-to: func ["Scroll to the FACE to make it visible" face [object!]] [
 					scroll-to-face self face
 				]
@@ -184,6 +187,7 @@ context [
 					panel: face
 					react [[panel/pane]             check-pane panel]
 					react [[panel/size panel/total] check-size panel]		;-- size & total change may trigger scrollers update
+					react [[panel/dirty?]           update-total panel]
 				]
 			]
 		]
