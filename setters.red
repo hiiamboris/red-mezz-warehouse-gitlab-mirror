@@ -64,9 +64,6 @@ Red [
 			Similar to (and is based on) set-quiet routine but supports paths and more readable set-word syntax.
 			It's useful either to group multiple changes into one on-change signal,
 			or when on-change incurs too much overhead for no gain (e.g. setting of face facets is 25x faster this way).
-			WARNING: due to it's visual appearance, the following code may deceive the reader:
-				object [quietly x: 100]
-			Since set-word gets converted into a word, `x` becomes global, and the object becomes empty!
 
 		IMPORT
 			Syntax:
@@ -177,7 +174,7 @@ anonymize: function [
 ;@@ unfortunate limitation: only applicable to objects, set-quiet cannot work with /x /y of a pair or components of time/date
 #macro ['quietly [set-path! | set-word!]] func [s e /local path] [
 	either set-word? s/2 [
-		compose [set-quiet (to lit-word! s/2)]			;-- set-quiet returns the value after #5146
+		compose [set-quiet quote (s/2)]					;-- set-quiet returns the value after #5146
 	][
 		path: to block! s/2								;-- required for R2 that can't copy/part paths!
 		token: switch type?/word token: last path [
