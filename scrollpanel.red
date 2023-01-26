@@ -20,8 +20,6 @@ Red [
 context [
 	by: make op! :as-pair
 	
-indent: ""
-
 	update-total: function [panel] [
 		if panel/updates <= 0 [exit]
 		e: negate s: 99999x99999
@@ -37,10 +35,6 @@ indent: ""
 		]
 		if e/x < s/x [e: s]
 		maybe panel/total: e - s
-		; if e - s <> panel/total [
-			; quietly panel/total: e - s
-			; check-size panel
-		; ]
 		; maybe panel/total: e - s + 1					;-- +1 for possible rounding errors during scrollbar positioning
 		maybe panel/origin: 0x0 - s
 		quietly panel/updates: 0
