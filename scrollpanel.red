@@ -19,9 +19,11 @@ Red [
 
 context [
 	by: make op! :as-pair
+	
+indent: ""
 
 	update-total: function [panel] [
-		unless panel/dirty? [exit]
+		if panel/updates <= 0 [exit]
 		e: negate s: 99999x99999
 		foreach face any [panel/pane []] [
 			if all [
@@ -35,9 +37,13 @@ context [
 		]
 		if e/x < s/x [e: s]
 		maybe panel/total: e - s
+		; if e - s <> panel/total [
+			; quietly panel/total: e - s
+			; check-size panel
+		; ]
 		; maybe panel/total: e - s + 1					;-- +1 for possible rounding errors during scrollbar positioning
 		maybe panel/origin: 0x0 - s
-		quietly panel/dirty?: no
+		quietly panel/updates: 0
 	]
 
 	watched: make hash! 100
@@ -68,10 +74,13 @@ context [
 			react/link/later func [panel face] [		;-- don't do update-total for each face, do it only once
 				[face/offset face/size]
 				;@@ TODO: use react/unlink to remove reactions from the old panel when face moves from one into another
-				if panel =? select face 'parent [maybe panel/dirty?: yes]
+				if panel =? select face 'parent [panel/updates: panel/updates + 1]
 			] [panel face]
 		]
-		if modified? [maybe panel/dirty?: yes]
+		if modified? [
+			panel/updates: panel/updates + 1
+			update-total panel							;-- force an update since reactivity often skips it due to cycles
+		 ]
 	]
 
 	;; determine scrollers positions, offsets, visibility based on panel/total and panel size
@@ -111,7 +120,7 @@ context [
 		     by (hidden/y * max 0.0 min 1.0 vsc/data / (1.0 - vsc/selected))
 		if 0x0 <> shift: origin - panel/origin [
 			do-atomic [do-unseen [
-				panel/dirty?: yes						;-- this adds a pending update-total and avoids every face/offset from triggering it
+				panel/updates: panel/updates + 1		;-- this adds a pending update-total and avoids every face/offset from triggering it
 				foreach face panel/pane [
 					if face/type <> 'scroller [
 						; print ["MOVING" face/type "FROM" face/offset "BY" 0x0 - shift]
@@ -173,7 +182,7 @@ context [
 				
 				origin: 0x0
 				total:  0x0
-				dirty?: yes								;-- used to group multiple offset updates
+				updates: 0								;-- counter used to group multiple offset updates
 				scroll-to: func ["Scroll to the FACE to make it visible" face [object!]] [
 					scroll-to-face self face
 				]
@@ -187,7 +196,7 @@ context [
 					panel: face
 					react [[panel/pane]             check-pane panel]
 					react [[panel/size panel/total] check-size panel]		;-- size & total change may trigger scrollers update
-					react [[panel/dirty?]           update-total panel]
+					react [[panel/updates]          update-total panel]
 				]
 			]
 		]
