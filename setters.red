@@ -181,6 +181,6 @@ anonymize: function [
 			word! [to lit-word! token]
 			get-word! paren! [token]
 		]
-		compose [set-quiet in (to path! copy/part path back tail path) (token)]	
+		compose [set-quiet in (to path! copy/part path back tail path) (:token)]	
 	]	
 ]
