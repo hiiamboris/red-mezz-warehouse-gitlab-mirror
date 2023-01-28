@@ -68,7 +68,7 @@ context [
 			react/link/later func [panel face] [		;-- don't do update-total for each face, do it only once
 				[face/offset face/size]
 				;@@ TODO: use react/unlink to remove reactions from the old panel when face moves from one into another
-				if panel =? select face 'parent [panel/updates: panel/updates + 1]
+				if panel =? select face 'parent [panel/updates: 1 + select panel 'updates]
 			] [panel face]
 		]
 		if modified? [
