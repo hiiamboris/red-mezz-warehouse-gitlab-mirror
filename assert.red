@@ -77,7 +77,10 @@ context [
 				msg: either left = 1 [first end: back end][""]
 				err: next find form try [do make error! ""] "^/*** Stack:"
 				prin ["ASSERTION FAILED!" msg "^/" err "^/"]
-				expect copy/part at copied index? bgn at copied index? end		;-- expects single expression, or will report no error
+				expr: copy/part at copied index? bgn at copied index? end		;-- expects single expression, or will report no error
+				if expect expr [
+					print ["Assertion code is not repeatable (modifies itself?):^/" mold expr]
+				]
 				;-- no error thrown, to run other assertions
 			]
 		]
