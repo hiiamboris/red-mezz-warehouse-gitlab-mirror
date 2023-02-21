@@ -22,21 +22,38 @@ Red [
 #include %shallow-trace.red
 
 
+;; shallow-trace based approach wins so far
 ;; NOTE: safe in recursion: stepwise [2 (stepwise [3]) * .]  -- returns 6, not 9
 stepwise: function [
 	"Evaluate code by setting `.` word to the result of each expression"
-	. [block!] "Block of code"		;-- can't name this `code`, else `code` name will be exposed to itself by `bind` -- will be fixed by native bind/only
+	. [block!] "Block of code"		;@@ can't name this `code`, else `code` name will be exposed to itself by `bind` -- will be fixed by native bind/only
 ][
 	shallow-trace 
-		func [x [any-type!] _] [set/any '. :x]		;-- save result of the last expr in `.`
+		func [x [any-type!] _] [set/any '. :x]			;-- save result of the last expr in `.`
 		also
-			bind . '.								;-- `.` inside code block should refer to the local word
-			unset '.								;-- first usage of `.` inside the code should yield `unset` rather than the code itself
+			bind . '.									;-- `.` inside code block should refer to the local word
+			unset '.									;-- first usage of `.` inside the code should yield `unset` rather than the code itself
 ]
 
 
 comment {
-	;; this version has 2-3x bigger memory footprint, and is ~5% slower
+	;; using interpreter trace: should be faster, but unsafe because expr in parens counts as expr in block
+	;; i.e. `stepwise [2 (stepwise [3]) * .]` returns 9 :(
+	context [
+		set 'stepwise function [
+			"Evaluate CODE by setting `.` word to the result of each expression"
+			. [block!]
+		][
+			.: bind . '.
+			do/trace (also . unset '.) :tracer
+		]
+		
+		tracer: func [event code offset value [any-type!] ref [any-type!] frame] bind [
+			[expr] set/any '. value
+		] :stepwise
+	] 
+
+	;; this version has 2-3x bigger memory footprint than the other shallow-trace based, and is ~5% slower
 	stepwise: function [
 		"Evaluate CODE by setting `.` word to the result of each expression"
 		code [block!]

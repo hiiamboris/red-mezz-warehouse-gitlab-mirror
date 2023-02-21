@@ -21,6 +21,10 @@ Red [
 ; #debug on
 ;@@ TODO: morph input inp-rule (to map! rule) should not wrap it into a block
 ;@@ TODO: use interpreter for function rules (but not routines) - favoring simplicity over speed
+;@@ TODO: block! rule should fail if it doesn't reach the tail of it!
+;@@       and it should only work for lists, not fallback to paren!
+;@@ TODO: ability to return the tree without any out-rules (and any inside data.. just the tree)
+;@@ TODO: base tree on doubly-linked lists maybe?? to avoid index updates problem (see shift-tree)
 
 morph-ctx: context [
 

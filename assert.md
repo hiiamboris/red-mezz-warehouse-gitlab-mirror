@@ -14,7 +14,7 @@
    	...
    ]
    ```
-   This feature requires set-words to be hidden, which is achieved by [`#localize` macro](localize-macro.red).
+   This feature requires set-words to be hidden, which is achieved by [`#localize` macro](localize-macro.red). 
 
 2. **Run-time state validity checking**
 
@@ -29,6 +29,7 @@
 
 3. **Function argument verification**
 
+   A common variant of (2), where instead of cryptic errors pointing to some logic inside the function we want to declare that it's simply improperly used.
    ```
    my-func: func [x [integer!] "0 to 10 !!"] [
    	#assert [all [0 <= x x <= 10]]
@@ -94,16 +95,16 @@ diagonal?: function [
 ```
 When included this file prints:
 ```
-ASSERTION FAILED!  
-ERROR: [3 = diagonal? [0x0 5x4]] check failed with false 
+ASSERTION FAILED!
+  Check [3 = diagonal? [0x0 5x4]] failed with false
   Reduction log:
-    diagonal? [0x0 5x4]            => 6.4031242374328485 
-    3 = 6.4031242374328485         => false 
-ASSERTION FAILED! But of course this will fail 
-ERROR: [4 = diagonal? [0x0 5x4]] check failed with false 
+    diagonal? [0x0 5x4]              => 6.4031242374328485
+    3 = 6.4031242374328485           => false
+ASSERTION FAILED! But of course this will fail
+  Check [4 = diagonal? [0x0 5x4]] failed with false
   Reduction log:
-    diagonal? [0x0 5x4]            => 6.4031242374328485 
-    4 = 6.4031242374328485         => false 
+    diagonal? [0x0 5x4]              => 6.4031242374328485
+    4 = 6.4031242374328485           => false
 ```
 Full reduction log helps you see what happened. Notice the error message I provided. Evaluation continues despite the errors.
 
@@ -111,18 +112,23 @@ More real world uses can be found in my [mezz-warehouse repo](https://gitlab.com
 
 ### Guidelines
 
-1. **Do write** unit tests, especially for functions without side effects and those you share with the others.
+1. **Do write** unit tests and parameter assertions, especially for functions without side effects and those you share with the others.
+
+   Often when developing a solution we make assumptions about how our code works and how our data looks (e.g. `x` will be positive, and `f` should only return a `string`). If we don't write down these assumptions right away while our mind is deep in the problem, we'll forget them and when they will fail we'll have to fully reconstruct the logic of that code in our head to recall what assumptions we made while writing it and why. Writing them down saves a lot of time later.
 
    If your function requires I/O, isolate I/O from algorithms used and write tests for those algorithms.
-
+   
 2. **Keep** tests for every function **right after** it's definition. This way:
-   - you will always immediately know what code is covered by tests and what isn't
-   - your tests will be kept in sync with changes in the function
-   - tests will automatically run every time you include the function<br><br>
+   - you will always immediately know what code is *covered* by tests and what isn't
+   - your tests will be *kept in sync* with changes in the function
+   - tests will automatically run every time you include the function, so you will know it's *not regressed*
+   - this practice *allows you* to *trust* this code and when you hit a bug you will *know it's not here*, and will look at other possibilities<br><br>
 
+   Of course, this will also work in separate test files, which have their use cases as well.
+   
 3. In complex programs after you modify some shared state, and you expect this state to honor some constraints, do **test those constraints** after the change. This may save your time spent on debugging.
 
-4. Know that they may fail to work at all because of preprocessor bugs. In that case try re-including `assert.red` within that particular source file.
+4. Know that they assertions fail to work at all because of preprocessor bugs. In that case try re-including `assert.red` within that particular source file.      
 
 5. `#assert` design principle is: *succeed fast, fail informatively*.
 
@@ -149,9 +155,13 @@ More real world uses can be found in my [mezz-warehouse repo](https://gitlab.com
 
 **Why a macro and not a function?**
 
-- Each Red token takes some time (e.g. ~80ns on my laptop) to evaluate and sets interpreter's baseline speed. If we can remove assertions during load phase, we can speed the code up. Effectively this means users will more readily use it, extending tests coverage.
+- Each Red token takes some time (e.g. \~80ns on my laptop) to evaluate and sets interpreter's baseline speed. If we can remove assertions during load phase, we can speed the code up. Effectively this means users will more readily use it, extending tests coverage.
 - Reduced compiled binary size.
 - Ability to have both mandatory and optional assertions: `#assert` can be switched on/off, `assert` is always evaluated.
+
+**Words leakage**
+
+I do not want to make every assertion `#localize` it's words automatically because this will be a performance hit and memory creep during evaluation of *every* assertion (the cost is creation of a new function for every expression).
 
 **Failure behavior**
 
@@ -159,7 +169,7 @@ It's not enough to show that assertion failed. If we did, one would have to litt
 
 Instead, we want to evaluate assertion code step by step and show full backtrace in case of failure.
 
-We also do not want to throw an error and stop the program. Assertion may be wrong itself (too strict, or temporarily fails due to some work going on). Or most code parts may work just fine even if some unused feature fails the tests. Most annoying is when an assertion fails inside a piece of code in a complex program and whole program aborts because of it, losing all state and any ability to debug it while it's hot.
+We also do not want to throw an error and stop the program. Assertion may be wrong itself (too strict, or temporarily fails due to some work going on). Or most code parts may work just fine even if some unused feature fails the tests. Most annoying is when an assertion fails inside a piece of code in a complex program and whole program aborts because of it, losing all state and any ability to debug it while it's hot. By continuing after failure we can get bigger overview of failing parts before we dive into fixes.
 
 A message should always be displayed however. Failure indication, backtrace and possibly a user-provided message. Ideally we want the line number as well, but that's not yet possible AFAIK.
 
