@@ -13,7 +13,16 @@ Red [
 	}
 ]
 
-;@@ TODO: tests
+; #include %assert.red
+
+
+;-- returns none for: zero (undefined exponent), +/-inf (overflow), NaN (undefined)
+exponent-of: function [									;@@ also exported by format-readable
+	"Returns the exponent E of X = m * (10 ** e), 1 <= m < 10"
+	x [number!]
+][
+	attempt [to 1 round/floor log-10 absolute to float! x]
+]
 
 format-number: function [
 	"Format a number"
@@ -21,22 +30,52 @@ format-number: function [
 	integral [integer!] "Minimal size of integral part (>0 to pad with zero, <0 to pad with space)"
 	frac     [integer!] "Exact size of fractional part (0 to remove it, >0 to enforce it, <0 to only use it for non-integer numbers)"
 ][
+	#assert [
+		1.#inf <> absolute num
+		not nan? num
+	]
 	frac: either integer? num [max 0 frac][absolute frac]	;-- support for int/float automatic distinction
-	r: form num
-	if percent? num [take/last r]						;-- temporarily remove the suffix
-	dot: any [find r #"."  tail r]
+	expo: any [exponent-of num  0]
+	if percent? num [expo: expo + 2]
+	;; form works between 1e-4 <= x < 1e16 for floats, < 1e13 for percent so 12 is the target
+	digits: form num * (10 ** (12 - expo))
+	remove find/last digits #"."
+	if percent? num [take/last digits]					;-- temporarily remove the suffix
+	if expo < -1 [insert/dup digits #"0" -1 - expo]		;-- zeroes after dot
+	insert dot: skip digits 1 + expo #"."
 	if 0 < n: (absolute integral) + 1 - index? dot [	;-- pad the integral part
 		char: pick "0 " integral >= 0
-		insert/dup r char n
+		insert/dup digits char n
 		dot: skip dot n
 	]
 	clear either frac > 0 [								;-- pad the fractional part
 		dot: change dot #"."
-		append/dup r #"0" frac - length? dot
+		append/dup digits #"0" frac - length? dot
 		skip dot frac
 	][
 		dot
 	]
-	if percent? num [append r #"%"]
-	r
+	if percent? num [append digits #"%"]
+	digits
+]
+
+#assert [
+	"0"                 = format-number 0 0 0
+	"123"               = format-number 123 0 0
+	"123"               = format-number 123.456 0 0
+	"123.4"             = format-number 123.456 0 1
+	"123.45"            = format-number 123.456 0 2
+	"123.456000"        = format-number 123.456 0 6
+	".456000"           = format-number 0.456 0 6
+	"0.456000"          = format-number 0.456 1 6
+	"000.456000"        = format-number 0.456 3 6
+	"000.000000"        = format-number 0.000000456 3 6
+	"000.0000004"       = format-number 0.000000456 3 7
+	"000.000000456000"  = format-number 0.000000456 3 12
+	"0%"                = format-number 0% 0 0
+	"123%"              = format-number 123% 0 0
+	"123%"              = format-number 123.456% 0 0
+	"123.456000%"       = format-number 123.456% 0 6
+	"000.000000%"       = format-number 0.000000456% 3 6
+	"000.000000456000%" = format-number 0.000000456% 3 12
 ]
