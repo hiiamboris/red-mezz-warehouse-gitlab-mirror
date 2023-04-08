@@ -8,33 +8,35 @@ Red [
 
 ; #include %map-each.red
 
-context [
-
-	set 'is-face? function [
-	    "Test if VALUE is a face! instance"
-	    value      "Value to test"
-	    /alive     "Return TRUE only if the face has a low-level handle"
-	    ; return:	[logic!]
-	][
-		to logic! all [
-			object? :value
-			any [
-				(class-of value) = class-of face!
-				all tests
-			]
-			any [
-				not alive
-				all [
-					block? state: select value 'state
-					handle? first state
+if object? :face! [										;-- for non-view-enabled builds
+	context [
+	
+		set 'is-face? function [
+		    "Test if VALUE is a face! instance"
+		    value      "Value to test"
+		    /alive     "Return TRUE only if the face has a low-level handle"
+		    ; return:	[logic!]
+		][
+			to logic! all [
+				object? :value
+				any [
+					(class-of value) = class-of face!
+					all tests
+				]
+				any [
+					not alive
+					all [
+						block? state: select value 'state
+						handle? first state
+					]
 				]
 			]
 		]
+	
+		tests: map-each/eval w words-of face! [[
+			'in bind 'value :is-face? to lit-word! w
+		]]
 	]
-
-	tests: map-each/eval w words-of face! [[
-		'in bind 'value :is-face? to lit-word! w
-	]]
 ]
 
 comment {

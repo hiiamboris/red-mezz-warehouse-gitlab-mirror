@@ -20,15 +20,17 @@ Red [
 #macro [#debug 'on       ] func [s e] [*debug?*: on  []]
 #macro [#debug 'off      ] func [s e] [*debug?*: off []]
 #macro [#debug 'set word!] func [s e] [
-	either block? :*debug?* [
+	either block? get/any '*debug?* [
 		append *debug?* s/3
 	][
 		*debug?*: reduce [s/3]
 	]
 	[]
 ]
-#macro [#debug not ['on | 'off | 'set] opt word! block!] func [[manual] s e /local code] [
-	if either block? s/2 [:*debug?* <> off][attempt [find *debug?* s/2]] [
+; #macro [#debug not ['on | 'off | 'set] opt word! block!] func [[manual] s e /local code] [	;-- not R2-compatible!
+#macro [#debug [['on | 'off | 'set] (c: [end skip]) | (c: [])] c opt word! block!] func [[manual] s e /local code] [
+	; if either block? s/2 [:*debug?* <> off][attempt [find *debug?* s/2]] [	;-- not R2-compatible
+	if either block? s/2 [all [value? '*debug?*  off <> get/any '*debug?*]][attempt [find *debug?* s/2]] [
 		code: e/-1
 	]
 	remove/part s e
