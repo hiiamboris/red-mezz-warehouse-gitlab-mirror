@@ -80,12 +80,17 @@ Red [
 #include %setters.red
 #include %format-readable.red
 
-#macro [ahead word! '*** to end] func [[manual] s e] [	;-- [manual] to support macros inside of it ;@@ + workaround for #3554
+; #macro [ahead word! '*** to end] func [[manual] s e] [	;-- [manual] to support macros inside of it ;@@ + workaround for #3554
+#macro [p: word! :p '*** to end] func [[manual] s e] [	;-- [manual] to support macros inside of it ;@@ + workaround for #3554
 	back clear change s reduce ['clock-each copy next s]
 ]
 
-; #macro [ahead paren! into ['* some [thru '*]]] func [[manual] s e] [	-- this doesn't work in compiler (R2 parse)
-#macro [p: paren! :p into [ahead word! '* some [thru [ahead word! '*]]]] func [[manual] s e] [
+; #macro [ahead paren! into [ahead word! '* some [thru [ahead word! '*]]]] func [[manual] s e] [	-- this doesn't work in compiler (R2 parse)
+#macro [
+	p: paren! :p into [
+		p: word! :p '* to end p: (p: back p) :p word! :p '* end
+	]
+] func [[manual] s e] [
 	e: s/1
 	if '* = pick e length? e [							;-- R2 compatibility headaches
 		remove s
