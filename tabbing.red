@@ -17,14 +17,9 @@ unless object? get/any 'tabbing [						;-- avoid multiple inclusion and multiple
 		
 		list-faces: function [window [object!]] [
 			also clear list
-			foreach-face window [
-				all [
-					find focusables face/type
-					face/enabled?
-					face/visible?
-					append list face
-				]
-			]
+			foreach-face/with window [
+				if find focusables face/type [append list face]
+			] [any [all [face/enabled? face/visible?] continue]]	;-- filters out invisible/disabled tab-panel pages
 		]
 		
 		tab-handler: function [face event] [
