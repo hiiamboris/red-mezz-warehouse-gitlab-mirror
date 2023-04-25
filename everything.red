@@ -35,8 +35,9 @@ Red [
 ; #include %map-each.red								;-- included by sift-locate.red
 #include %sift-locate.red
 #include %xyloop.red									;-- included by explore.red
-#include %relativity.red								;-- included by explore.red
-; #include %explore.red									;@@ temporary
+; #include %relativity.red								;-- included by explore.red and tabbing.red
+#include %tabbing.red
+#include %explore.red
 #include %bulk.red	
 
 #include %clock.red
