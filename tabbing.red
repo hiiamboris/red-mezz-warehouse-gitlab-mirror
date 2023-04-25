@@ -26,7 +26,7 @@ unless object? get/any 'tabbing [						;-- avoid multiple inclusion and multiple
 		
 		tab-handler: function [face event] [
 			if result: all [
-				find key-events event/type				;-- consume all tab key events
+				key-events/(event/type)					;-- consume all tab key events
 				event/key = #"^-"
 				face/type <> 'area
 				'done
