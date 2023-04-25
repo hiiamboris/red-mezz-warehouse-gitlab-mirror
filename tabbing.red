@@ -23,12 +23,13 @@ unless object? get/any 'tabbing [						;-- avoid multiple inclusion and multiple
 		]
 		
 		key-events: make hash! [key key-down key-up]
+		avoid-faces: make hash! [area rich-text base]	;-- rich-text is GUI console face (completion), base is used as spaces host
 		
 		tab-handler: function [face event] [
 			if result: all [
 				find key-events event/type				;-- consume all tab key events
 				event/key = #"^-"
-				face/type <> 'area
+				not find avoid-faces face/type
 				'done
 			][
 				all [
