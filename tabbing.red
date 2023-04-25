@@ -22,17 +22,25 @@ unless object? get/any 'tabbing [						;-- avoid multiple inclusion and multiple
 			] [any [all [face/enabled? face/visible?] continue]]	;-- filters out invisible/disabled tab-panel pages
 		]
 		
+		key-events: make hash! [key key-down key-up]
+		
 		tab-handler: function [face event] [
-			all [
-				event/type = 'key-down
+			if result: all [
+				find key-events event/type				;-- consume all tab key events
 				event/key = #"^-"
-				not empty? list: list-faces window-of face
-				found:  any [find/same list face  list]
-				offset: pick [-1 1] event/shift?
-				index:  (index? found) + offset - 1 // (max 1 length? list) + 1
-				set-focus list/:index
+				face/type <> 'area
 				'done
+			][
+				all [
+					event/type = 'key-down				;-- only switch on one event type (should be repeatable - key or key-down)
+					list:   list-faces window-of face
+					found:  any [find/same list face  list]
+					offset: pick [-1 1] event/shift?
+					index:  (index? found) + offset - 1 // (max 1 length? list) + 1
+					set-focus list/:index
+				]
 			]
+			result
 		]
 	
 		unless find/same system/view/handlers :tab-handler [insert-event-func :tab-handler]
