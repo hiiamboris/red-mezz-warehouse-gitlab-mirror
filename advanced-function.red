@@ -272,7 +272,11 @@ if native? :function [
 		]
 		
 		native-function: :function
-		set 'function native-function [spec [block!] body [block!] /local word types] [
+		set 'function native-function [
+			"Defines a function, making all set-words in the body local, and with default args and value checks support"
+			spec [block!] body [block!]
+			/local word types
+		][
 			ref?: no
 			parse spec: copy spec [any [				;-- copy so multiple functions can be created
 				[	set word spec-word!
