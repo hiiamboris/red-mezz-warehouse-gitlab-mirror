@@ -38,7 +38,7 @@ format-number: function [
 	expo: any [exponent-of num  0]
 	if percent? num [expo: expo + 2]
 	;; form works between 1e-4 <= x < 1e16 for floats, < 1e13 for percent so 12 is the target
-	digits: form num * (10 ** (12 - expo))
+	digits: form absolute num * (10 ** (12 - expo))
 	remove find/last digits #"."
 	if percent? num [take/last digits]					;-- temporarily remove the suffix
 	if expo < -1 [insert/dup digits #"0" -1 - expo]		;-- zeroes after dot
@@ -56,26 +56,34 @@ format-number: function [
 		dot
 	]
 	if percent? num [append digits #"%"]
+	if num < 0 [insert digits #"-"]
 	digits
 ]
 
 #assert [
 	"0"                 = format-number 0 0 0
 	"123"               = format-number 123 0 0
+	"-123"              = format-number -123 0 0
 	"123"               = format-number 123.456 0 0
 	"123.4"             = format-number 123.456 0 1
 	"123.45"            = format-number 123.456 0 2
 	"123.456000"        = format-number 123.456 0 6
+	"-123.456000"       = format-number -123.456 0 6
 	".456000"           = format-number 0.456 0 6
+	"-.456000"          = format-number -0.456 0 6
 	"0.456000"          = format-number 0.456 1 6
+	"-0.456000"         = format-number -0.456 1 6
 	"000.456000"        = format-number 0.456 3 6
 	"000.000000"        = format-number 0.000000456 3 6
 	"000.0000004"       = format-number 0.000000456 3 7
 	"000.000000456000"  = format-number 0.000000456 3 12
+	"-000.000000456000" = format-number -0.000000456 3 12
 	"0%"                = format-number 0% 0 0
 	"123%"              = format-number 123% 0 0
+	"-123%"             = format-number -123% 0 0
 	"123%"              = format-number 123.456% 0 0
 	"123.456000%"       = format-number 123.456% 0 6
 	"000.000000%"       = format-number 0.000000456% 3 6
 	"000.000000456000%" = format-number 0.000000456% 3 12
+	"-000.000000456000%"= format-number -0.000000456% 3 12
 ]
