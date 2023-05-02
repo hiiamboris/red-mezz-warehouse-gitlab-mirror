@@ -120,7 +120,7 @@ context [
 		words: either set-word? :spec/1 [next spec][spec]	;-- [p:] is considered an empty spec - needs a subject
 		system/words/case [
 			tail? words [insert words subject: anonymize 'subject none]
-			all [single? words word? :words/1] [subject: words/1]
+			all [single? subject] [subject: subject/1]
 			'else [subject: none]
 		]
 		
@@ -224,13 +224,14 @@ context [
 	(reduce [o1]) = sift reduce [o1 o2 o3] [x .. x/p/q        ] 	;-- should not error out on non-existing paths
 	(reduce [o1 o2 o3]) = sift reduce [o1 o2 o3] [x .. :x/p/q ] 	;-- get-paths too!
 	(reduce [o1 o2 o3]) = sift reduce [o1 o2 o3] [x .. :x/p/q ] 	;-- x/p/q returns unset, which is truthy - all items pass
-	(reduce [o1]) = sift reduce [o1 o2 o3] [x .. x/p/q > 0    ] 
-	(reduce [o2]) = sift reduce [o1 o2 o3] [x .. /p x = o2    ] 
-	(reduce [o3]) = sift reduce [o1 o2 o3] [x .. y: /p y/r > 2] 
-	(reduce [o3]) = sift reduce [o1 o2 o3] [x .. x: /p x/r > 2] 	;-- x: override should not affect the result
-	error?     try [sift reduce [o1 o2 o3] [x .. (x/p/q)     ]] 	;-- should error out since path is escaped
-	(reduce [o3]) = sift reduce ['a 'b o3] [.. object!        ] 
-	(reduce [o3]) = sift reduce ['a o2 o3] [.. object!  [r: 3] = to [] /p] 
+	(reduce [o1]) = sift reduce [o1 o2 o3]       [x .. x/p/q > 0    ] 
+	(reduce [o2]) = sift reduce [o1 o2 o3]       [x .. /p x = o2    ]	;-- 'x' as subject 
+	(reduce [o2]) = sift reduce [o1 1 o2 2 o3 3] [x - .. /p x = o2  ]	;-- even in presence of an anonymous column
+	(reduce [o3]) = sift reduce [o1 o2 o3]       [x .. y: /p y/r > 2] 
+	(reduce [o3]) = sift reduce [o1 o2 o3]       [x .. x: /p x/r > 2] 	;-- x: override should not affect the result
+	error?     try [sift reduce [o1 o2 o3]       [x .. (x/p/q)     ]] 	;-- should error out since path is escaped
+	(reduce [o3]) = sift reduce ['a 'b o3]       [.. object!        ] 
+	(reduce [o3]) = sift reduce ['a o2 o3]       [.. object!  [r: 3] = to [] /p] 
 	unset [o1 o2 o3]
 
 	"^/^/^/" = sift "ab^/cd^/ef^/gh" [x .. x = lf]					;-- should preserve input type
