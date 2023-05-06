@@ -17,7 +17,7 @@ keep-type: function [
 	list [any-block!]
 	type [datatype! typeset!] "Typesets are accepted"
 ][
-	r: make type? list 10
+	r: clear copy list
 	parse list [collect into r any thru keep type]				;-- can use FORPARSE here, but this is faster
 	r
 ]
