@@ -98,7 +98,7 @@ Red [
 
 once: func [
 	"Set value of WORD to VAL only if it's unset"
-	:word [set-word!]
+	'word [set-word!]
 	val   [default!] "New value"
 ][
 	if unset? get/any word [set word :val]
@@ -107,7 +107,7 @@ once: func [
 
 default: func [
 	"If SUBJ's value is none, set it to VAL"
-	:subj [set-word! set-path!]
+	'subj [set-word! set-path!]
 	val   [default!] "New value"
 ][
 	; if set-path? subj [subj: as path! subj]				;-- get does not work on set-paths
@@ -117,7 +117,7 @@ default: func [
 
 maybe: func [
 	"If SUBJ's value is not strictly equal to VAL, set it to VAL (for use in reactivity)"
-	:subj [set-word! set-path!]
+	'subj [set-word! set-path!]
 	val   [default!] "New value"
 	/same "Use =? as comparator"
 ][

@@ -47,7 +47,7 @@ context [
 	;; we must ignore set-words, e.g. `return:`
 	arg-typeset: make typeset! [word! get-word! lit-word! refinement!]
 
-	set 'apply function [
+	set 'mezz-apply function [							;@@ name to be used during transition; to be excluded eventually
 		"Call a function named NAME with a set of arguments ARGS"
 		'name [word! path!]		"Use parens to pass expression results"
 		args [block! object!]	"Block is implicitly converted to an object"

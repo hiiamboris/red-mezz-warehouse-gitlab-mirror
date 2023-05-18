@@ -146,10 +146,7 @@ context [
 	] bind [
 		with-thrown [
 			plan: [set/any 'result do code  'ok]
-			set 'thrown either all [					;-- returns 'ok or error object ;@@ use `apply`
-				try/all plan
-			][	try     plan
-			]
+			set 'thrown try/:all plan					;-- returns 'ok or error object
 			case [
 				thrown == 'ok   [:result]
 				block? :handler [do handler]

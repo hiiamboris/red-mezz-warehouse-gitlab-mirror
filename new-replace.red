@@ -53,35 +53,16 @@ replace: function [
     /part  "Limit the replacement region"
     	length [number! series!]
 ][
-	seek-pattern-from-pos: [							;-- primary `find` use
-		series: pos
-		value:  :pattern
-		case same only part length
-	]
-	;-- could have compose-d these, but don't want allocations:
-	seek-tail-from-patpos: [							;-- determines size of `find` pattern
-		case same only part length
-		series: pat-pos
-		value:  :pattern
-		tail:   true
-		; match:  true									;@@ bug #4943
-	]
-	seek-list-from-pos: [								;-- looks for lists when /deep
-		part length
-		series: pos
-		value:  any-list!
-	]
-	inner-replace-at-lstpos: [							;-- used on inner lists
-		pattern value once deep case same only part length
-		series:  lst-pos/1
-		; all
-	]
-	change-at-patpos: [
-		value only
-		series: pat-pos
-		part:   true
-		range:  size
-	]
+	seek-pattern-from-pos: 								;-- primary `find` use
+		[find/:case/:same/:only/:part pos :pattern length]
+	seek-tail-from-patpos:								;-- determines size of `find` pattern
+		[find/:case/:same/:only/:part/tail/match pat-pos :pattern length]
+	seek-list-from-pos:									;-- looks for lists when /deep
+		[find/:part pos any-list! length]
+	inner-replace-at-lstpos:							;-- used on inner lists
+		[replace/:once/:deep/:case/:same/:only/:part lst-pos/1 :pattern :value length] ; all
+	change-at-patpos:
+		[change/:only/part pat-pos :value size]
 
 
 	; if deep [all: true]									;-- /deep doesn't make sense without /all
@@ -94,7 +75,7 @@ replace: function [
 		size: either only [
 			1
 		][
-			offset? pat-pos apply find seek-tail-from-patpos
+			offset? pat-pos do seek-tail-from-patpos
 		]
 		; if system/words/all [							;-- to avoid forming value on every change, do it explicitly
 		if all [										;-- to avoid forming value on every change, do it explicitly
@@ -107,18 +88,18 @@ replace: function [
 
 	pos: series
 	either not deep [
-		if pat-pos: apply find seek-pattern-from-pos [
+		if pat-pos: do seek-pattern-from-pos [
 			do when-found
-			pos: apply change change-at-patpos
+			pos: do change-at-patpos
 			unless once [
-				while [pat-pos: apply find seek-pattern-from-pos] [
-					pos: apply change change-at-patpos
+				while [pat-pos: do seek-pattern-from-pos] [
+					pos: do change-at-patpos
 				]
 			]
 		]
 	][
-		if pat-pos: apply find seek-pattern-from-pos [do when-found]
-		lst-pos:    apply find seek-list-from-pos
+		if pat-pos: do seek-pattern-from-pos [do when-found]
+		lst-pos:    do seek-list-from-pos
 		;-- a bit tricky to use 2 `find`s in parallel, but this leverages fast lookups at hashtables:
 		forever [
 			action: system/words/case [
@@ -136,22 +117,22 @@ replace: function [
 			]
 			switch action [
 				replace [
-					pos: apply change change-at-patpos
+					pos: do change-at-patpos
 					system/words/case [
 						list-gone? [					;-- list was replaced by the change
-							lst-pos: apply find seek-list-from-pos
+							lst-pos: do seek-list-from-pos
 						]
 						lst-pos [						;-- list index moved after the change
 							new-size: offset? pat-pos pos
 							lst-pos: skip lst-pos new-size - size
 						]
 					]
-					pat-pos: apply find seek-pattern-from-pos
+					pat-pos: do seek-pattern-from-pos
 				]
 				deep-replace [
-					apply replace inner-replace-at-lstpos
+					do inner-replace-at-lstpos
 					pos: next lst-pos
-					lst-pos: apply find seek-list-from-pos
+					lst-pos: do seek-list-from-pos
 				]
 			]
 			if once [break]

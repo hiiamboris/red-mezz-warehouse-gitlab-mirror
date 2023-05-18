@@ -99,13 +99,7 @@ mapparse: function [
 		[thru =change= series:]
 		[any [=change= | =else=]]
 	] once
-	catch-a-break [
-		apply (in system/words 'parse) [
-			case part length
-			input:  series
-			rules:  =rule=
-		]
-	]
+	catch-a-break [parse/:case/:part series =rule= length]
 	series
 ]
 

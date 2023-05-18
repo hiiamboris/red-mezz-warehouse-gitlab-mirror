@@ -31,7 +31,8 @@ count: function [
 ][
 	n: 0 
 	tail: not reverse
-	while [series: apply find 'local] [n: n + 1]
+	while [series: find/:only/:case/:same/:reverse/:tail/:part/:skip series :value length size] [n: n + 1]
+	; while [series: apply find 'local] [n: n + 1]
 	n
 ]
 

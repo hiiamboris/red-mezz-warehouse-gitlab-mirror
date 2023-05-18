@@ -28,7 +28,7 @@ count: function [
 ][
     match: head or tail
     unless tail: not reverse: tail [series: system/words/tail series]
-	n: 0 while [series: apply find 'local] [n: n + 1]
+	n: 0 while [series: find/:case/:same/:only/:match/:tail/:reverse series :value] [n: n + 1]
     n
 ]
 
