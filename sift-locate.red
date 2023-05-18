@@ -37,7 +37,7 @@ Red [
 
 #include %setters.red									;-- we need `anonymize`
 #include %new-each.red									;-- based on extended foreach/map-each capabilities
-#include %new-apply.red									;-- need `apply` to dispatch refinements
+; #include %new-apply.red									;-- need `apply` to dispatch refinements
 
 
 

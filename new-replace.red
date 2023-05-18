@@ -34,7 +34,7 @@ Red [
 ]
 
 
-#include %new-apply.red
+; #include %new-apply.red
 
 
 replace: function [

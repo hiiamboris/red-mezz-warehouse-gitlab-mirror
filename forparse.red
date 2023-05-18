@@ -62,7 +62,7 @@ Red [
 
 
 #include %selective-catch.red
-#include %new-apply.red
+; #include %new-apply.red
 
 ;@@ BUG: this traps exit & return - can't use them inside forparse
 ;@@ BUG: break/return will return nothing, because - see #4416
