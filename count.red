@@ -14,46 +14,79 @@ Red [
 ]
 
 
-#include %new-apply.red
+; #include %new-apply.red
 
 count: function [
-	"Count occurrences of VALUE in SERIES (using `=` by default)"
-	series [series!]
+	"Count occurrences of value in series (using `=` by default)"
+	series [series!]									;-- docstrings & arg names mirror FIND action
 	value  [any-type!]
-	/case "Use strict comparison (`==`)"
-	/same "Use sameness comparison (`=?`)"
-	/only "Treat series and typesets as single values"
-	/head "Count the number of subsequent values at series' head"
-	/tail "Count the number of subsequent values at series' tail"	;@@ doesn't work for strings! #3339
+	/part "Limit the counting range"
+		length [number! series!]
+	/only "Treat series and typeset value arguments as single values"
+	/case "Perform a case-sensitive search"
+	/same {Use "same?" as comparator}
+	/skip "Treat the series as fixed size records"
+		size [integer!]
+	/reverse "Count from current index to the head"
+	; /any & /with - TBD in FIND
+	; return: [integer!]
 ][
-    match: head or tail
-    unless tail: not reverse: tail [series: system/words/tail series]
-	n: 0 while [series: find/:case/:same/:only/:match/:tail/:reverse series :value] [n: n + 1]
-    n
+	n: 0 
+	tail: not reverse
+	while [series: find/:only/:case/:same/:reverse/:tail/:part/:skip series :value length size] [n: n + 1]
+	; while [series: apply find 'local] [n: n + 1]
+	n
 ]
 
-{
-	Toomas's version without apply: (and /case /same)
+#assert [
+	0 = count              [          ] 1
+	3 = count              [1 1 1     ] 1 
+	2 = count              [1 2 1     ] 1 
+	3 = count              [1 2 3     ] integer! 
+	2 = count/skip         [1 2 3 4   ] integer! 2 
+	0 = count/only         [1 2 3     ] integer! 
+	1 = count/only  reduce [1 integer!] integer! 
+	2 = count         next [1 2 3     ] integer! 
+	1 = count/reverse next [1 2 3     ] integer! 
+	3 = count/reverse tail [1 2 3     ] integer! 
+	2 = count              [1 [1] 1   ] [1]
+	1 = count/only         [1 [1] 1   ] [1]
+]
 
-count: func [series item /only /head /tail /local cnt pos with-only without][
-    cnt: 0
-    set [       with-only                             without                  ] case [
-        tail [[[find/reverse/match/only series item] [find/reverse/match series item]]]
-        head [[[find/match/tail/only    series item] [find/match/tail    series item]]]
-        true [[[find/tail/only          series item] [find/tail          series item]]]
-    ]
-    if tail [series: system/words/tail series]
-    while [all [pos: either only with-only without series: pos]] [cnt: cnt + 1]
-    cnt
-]	
-}
-
-; probe count/head "aaabbc" "a"
-; probe count/head "aaabbc" "aa"
-; probe count/head "aaabbc" "aaa"
-; probe count/tail [1 2 2 3 3 3] 3
 
 comment {
+	;; older version:
+	
+	count: function [
+		"Count occurrences of VALUE in SERIES (using `=` by default)"
+		series [series!]
+		value  [any-type!]
+		/case "Use strict comparison (`==`)"
+		/same "Use sameness comparison (`=?`)"
+		/only "Treat series and typesets as single values"
+		/head "Count the number of subsequent values at series' head"
+		/tail "Count the number of subsequent values at series' tail"	;@@ doesn't work for strings! #3339
+	][
+	    match: head or tail
+	    unless tail: not reverse: tail [series: system/words/tail series]
+		n: 0 while [series: find/:case/:same/:only/:match/:tail/:reverse series :value] [n: n + 1]
+	    n
+	]
+
+	;; Toomas's version without apply: (and /case /same)
+
+	count: func [series item /only /head /tail /local cnt pos with-only without][
+	    cnt: 0
+	    set [       with-only                             without                  ] case [
+	        tail [[[find/reverse/match/only series item] [find/reverse/match series item]]]
+	        head [[[find/match/tail/only    series item] [find/match/tail    series item]]]
+	        true [[[find/tail/only          series item] [find/tail          series item]]]
+	    ]
+	    if tail [series: system/words/tail series]
+	    while [all [pos: either only with-only without series: pos]] [cnt: cnt + 1]
+	    cnt
+	]	
+
 	;; limited and ugly but fast version
 	count: function [
 		"Count occurrences of X in S (using `=` by default)"
