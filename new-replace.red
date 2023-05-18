@@ -55,15 +55,14 @@ replace: function [
 ][
 	seek-pattern-from-pos: 								;-- primary `find` use
 		[find/:case/:same/:only/:part pos :pattern length]
-	seek-tail-from-patpos:								;-- determines size of `find` pattern
+	seek-tail-from-patpos:								;-- determines size of `find` pattern - needed by change/part
 		[find/:case/:same/:only/:part/tail/match pat-pos :pattern length]
 	seek-list-from-pos:									;-- looks for lists when /deep
 		[find/:part pos any-list! length]
 	inner-replace-at-lstpos:							;-- used on inner lists
 		[replace/:once/:deep/:case/:same/:only/:part lst-pos/1 :pattern :value length] ; all
-	change-at-patpos:
+	change-at-patpos:									;-- actual replacement
 		[change/:only/part pat-pos :value size]
-
 
 	; if deep [all: true]									;-- /deep doesn't make sense without /all
 	; if deep [once: false]								;-- /deep doesn't make sense with /once
