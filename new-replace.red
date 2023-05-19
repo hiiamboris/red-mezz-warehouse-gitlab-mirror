@@ -34,112 +34,99 @@ Red [
 ]
 
 
+#include %assert.red
 ; #include %new-apply.red
 
 
+;; 'replace' is 'find'-based to have as little surprises as possible and be as general as 'find' (e.g. there's no /same in Parse)
 replace: function [
 	"Replaces every pattern in series with a given value, in place"
     series  [any-block! any-string! binary! vector!] "The series to be modified"	;-- series! barring image!
     pattern [any-type!] "Specific value to look for"
     value   [any-type!] "New value to replace with"
-    ; /all   "Replace all occurrences, not just the first"
-    ; /deep  "Replace pattern in all sub-lists as well (implies /all)"
-    /once  "Replace only first occurrence, return position after replacement"	;-- makes no sense with /deep, returns series unchanged if no match
-    /deep  "Replace pattern in all sub-lists as well"
+    /once  "Replace only the first occurrence, return position after replacement"	;-- makes no sense with /deep, returns series unchanged if no match
+    /deep  "Replace pattern in all sublists and paths as well"
     /case  "Search for pattern case-sensitively"
-    /same  {Search for pattern using "same?" comparator}
-    ;-- /only applies to both pattern & value, but how else? or we would have /only-pattern & /only-value
-    /only  "Treat series and typeset pattern and series value argument as single values"
-    /part  "Limit the replacement region"
-    	length [number! series!]
+    /same  "Search for pattern using `same?` comparator"
+    ;@@ /only applies to both pattern & value, but how else? or we would have /only-pattern & /only-value
+    /only  "Treat type/typeset/series pattern, as well as series value, as single item"
+    /part  "Limit the lookup region"
+    	limit [integer! series!]
 ][
-	seek-pattern-from-pos: 								;-- primary `find` use
-		[find/:case/:same/:only/:part pos :pattern length]
-	seek-tail-from-patpos:								;-- determines size of `find` pattern - needed by change/part
-		[find/:case/:same/:only/:part/tail/match pat-pos :pattern length]
-	seek-list-from-pos:									;-- looks for lists when /deep
-		[find/:part pos any-list! length]
-	inner-replace-at-lstpos:							;-- used on inner lists
-		[replace/:once/:deep/:case/:same/:only/:part lst-pos/1 :pattern :value length] ; all
-	change-at-patpos:									;-- actual replacement
-		[change/:only/part pat-pos :value size]
-
-	; if deep [all: true]									;-- /deep doesn't make sense without /all
-	; if deep [once: false]								;-- /deep doesn't make sense with /once
-	if all [deep once] [do make error! "/deep and /once refinements are mutually exclusive"]
-	unless any-block? :series [deep: no]
-
-	;-- delay size estimation and value forming until actual match
-	when-found: [
-		size: either only [
-			1
-		][
-			offset? pat-pos do seek-tail-from-patpos
-		]
-		; if system/words/all [							;-- to avoid forming value on every change, do it explicitly
-		if all [										;-- to avoid forming value on every change, do it explicitly
-			any-string? series
-			not any-string? :value
-		][
-			value: to string! :value					;-- like R2, using to-string instead of form
-		]
-	]
-
-	pos: series
-	either not deep [
-		if pat-pos: do seek-pattern-from-pos [
-			do when-found
-			pos: do change-at-patpos
-			unless once [
-				while [pat-pos: do seek-pattern-from-pos] [
-					pos: do change-at-patpos
-				]
-			]
+	if all [deep once] [cause-error 'script 'bad-refines []]	;-- incompatible
+	unless any-block? series [deep: off]
+	
+	pos: series											;-- starting offset may be adjusted if part is negative
+	either limit [
+		if integer? limit [limit: skip pos limit]		;-- convert limit to series, or will have to update it all the time
+		if back?: negative? offset? pos limit [			;-- ensure negative limit symmetry
+			pos:   limit
+			limit: series
 		]
 	][
-		if pat-pos: do seek-pattern-from-pos [do when-found]
-		lst-pos:    do seek-list-from-pos
-		;-- a bit tricky to use 2 `find`s in parallel, but this leverages fast lookups at hashtables:
-		forever [
-			action: system/words/case [
-				all [lst-pos pat-pos] [
-					either 0 <= o: offset? pat-pos lst-pos [	;-- o=0 case: pattern takes priority over list; otherwise list comes after pattern
-						list-gone?: o < size					;-- found list position will be overwritten
-						'replace
-					][
-						'deep-replace
-					]
-				]
-				pat-pos [list-gone?: no  'replace]
-				lst-pos ['deep-replace]
-				'else   [break]
+		limit: tail series
+	]
+	
+	;; two reasons to use a separate buffer: to avoid multiple content moves, and to ease tracking of /part which would move otherwise
+	result: clear copy/part start: pos limit
+	
+	;; pattern size will be found out after first match:
+	size: [size: offset? match find/:case/:same/:only/match/tail match :pattern]
+	
+	while [0 < left: offset? pos limit] [
+		; match: find/:case/:same/:only/:part pos :pattern limit
+		match: find/:case/:same/:only/:part pos :pattern left			;@@ workaround for #5319
+		end: any [match limit]
+		if deep [										;-- replace in inner lists up to match location
+			;; using any-list! makes paths real hard to create dynamically, so any-block! here
+			while [list: find/part pos any-block! offset? pos end] [	;@@ workaround for #5319 
+			; while [list: find/part pos any-block! end] [
+				append/part result pos list
+				append/only result replace/deep/:case/:same/:only list/1 :pattern :value
+				pos: next list
 			]
-			switch action [
-				replace [
-					pos: do change-at-patpos
-					system/words/case [
-						list-gone? [					;-- list was replaced by the change
-							lst-pos: do seek-list-from-pos
-						]
-						lst-pos [						;-- list index moved after the change
-							new-size: offset? pat-pos pos
-							lst-pos: skip lst-pos new-size - size
-						]
-					]
-					pat-pos: do seek-pattern-from-pos
-				]
-				deep-replace [
-					do inner-replace-at-lstpos
-					pos: next lst-pos
-					lst-pos: do seek-list-from-pos
-				]
-			]
+		]
+		unless pos =? end [append/part result pos pos: end]				;@@ workaround for #5320
+		; append/part result pos pos: end
+		if match [										;-- replace the pattern
+			append/:only result :value
+			pos: skip match do size
 			if once [break]
 		]
 	]
-
-	series
+	
+	end: change/part start result pos
+	either any [back? once] [end][start]
 ]
 
-
-; print "_WORK HERE_"
+;@@ move it into new-replace-tests
+#assert [
+	[[1] 2 [1] 1 [1]]      = head replace/once      [[1] 1 [1] 1 [1]] 1 2
+	      [[1] 1 [1]]           = replace/once      [[1] 1 [1] 1 [1]] 1 2
+	[[1] 1 [1] 1 [1]]      = head replace/once      [[1] 1 [1] 1 [1]] 3 2
+	tail?                         replace/once      [[1] 1 [1] 1 [1]] 3 2	;-- no match - returns tail (processed everything)
+	
+	[[2] 2 [2] 2 [2]]           = replace/deep      [[1] 1 [1] 1 [1]] 1 2
+	[[2] 2 [2] 2 [2]]           = replace/deep      [[1] 1 [1] 1 [1]] [1] 2
+	[2 1 2 1 2]                 = replace/deep/only [[1] 1 [1] 1 [1]] [1] 2
+	[2 1 2 1 2]                 = replace/only      [[1] 1 [1] 1 [1]] [1] 2
+	[2 1 2 1 2]                 = replace           [[1] 1 [1] 1 [1]] block! 2
+	[2 1 2 1 2]                 = replace/deep      [[1] 1 [1] 1 [1]] block! 2
+	[2 1 2 1 2]                 = replace/deep      [[1] 1 [[]] 1 [1]] block! 2
+	[[1] 2 1 [1] 2 1 [1]]       = replace           [[1] 1 [1] 1 [1]] 1 [2 1]
+	[[1] 2 1 [1] 2 1 [1]]       = replace           [[1] 1 [1] 1 [1]] [1] [2 1]
+	[[2 1] 2 1 [2 1] 2 1 [2 1]] = replace/deep      [[1] 1 [1] 1 [1]] 1 [2 1]
+	[[2 1] 2 1 [2 1] 2 1 [2 1]] = replace/deep      [[1] 1 [1] 1 [1]] [1] [2 1]
+	[[[2 1]] [2 1] [[2 1]] [2 1] [[2 1]]] = replace/deep/only [[1] 1 [1] 1 [1]] 1 [2 1]
+	[[2 1] 1 [2 1] 1 [2 1]]     = replace/deep/only [[1] 1 [1] 1 [1]] [1] [2 1]		;-- should not try to match the insertion
+	[2 1 2 1 1]                 = replace           [1 1 1 1 1] [1 1] [2 1]
+	[1 2 2 1 1]            = head replace/part skip [1 1 1 1 1] 3 1 2 -2		;-- negative /part
+	[1 1]                       = replace/part skip [1 1 1 1 1] 3 1 2 -2
+	[2 2 2 1 1]            = head replace/part skip [1 1 1 1 1] 3 1 2 -4
+	[1 1]                       = replace/part skip [1 1 1 1 1] 3 1 2 -4
+	[2 3 2 3 2 3 1 1]      = head replace/part skip [1 1 1 1 1] 3 1 [2 3] -4
+	[1 1]                       = replace/part skip [1 1 1 1 1] 3 1 [2 3] -4		;-- should be smart enough to return after the change here
+	; "<b> <b> <b>"                         = replace           "a a a" "a" <b>	;@@ #5321 - tags are broken, too hard to work around
+	; (as tag! "<b> <b> <b>")               = replace           <a a a> "a" <b>
+	; <a a a>                               = replace           <a a a> <a> <b>
+]
