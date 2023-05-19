@@ -56,45 +56,55 @@ replace: function [
 	if all [deep once] [cause-error 'script 'bad-refines []]	;-- incompatible
 	unless any-block? series [deep: off]
 	
-	pos: series											;-- starting offset may be adjusted if part is negative
+	start: series										;-- starting offset may be adjusted if part is negative
 	either limit [
-		if integer? limit [limit: skip pos limit]		;-- convert limit to series, or will have to update it all the time
-		if back?: negative? offset? pos limit [			;-- ensure negative limit symmetry
-			pos:   limit
+		if integer? limit [limit: skip start limit]		;-- convert limit to series, or will have to update it all the time
+		if back?: negative? offset? start limit [		;-- ensure negative limit symmetry
+			start: limit
 			limit: series
 		]
 	][
 		limit: tail series
 	]
 	
-	;; two reasons to use a separate buffer: to avoid multiple content moves, and to ease tracking of /part which would move otherwise
-	result: clear copy/part start: pos limit
-	
 	;; pattern size will be found out after first match:
 	size: [size: offset? match find/:case/:same/:only/match/tail match :pattern]
 	
-	while [0 < left: offset? pos limit] [
-		; match: find/:case/:same/:only/:part pos :pattern limit
-		match: find/:case/:same/:only/:part pos :pattern left			;@@ workaround for #5319
-		end: any [match limit]
-		if deep [										;-- replace in inner lists up to match location
-			;; using any-list! makes paths real hard to create dynamically, so any-block! here
-			while [list: find/part pos any-block! offset? pos end] [	;@@ workaround for #5319 
-			; while [list: find/part pos any-block! end] [
-				append/part result pos list
-				append/only result replace/deep/:case/:same/:only list/1 :pattern :value
-				pos: next list
-			]
-		]
-		unless pos =? end [append/part result pos pos: end]				;@@ workaround for #5320
-		; append/part result pos pos: end
-		if match [										;-- replace the pattern
-			append/:only result :value
-			pos: skip match do size
-			if once [break]
+	next-match: [match: find/:case/:same/:only/:part pos :pattern offset? pos limit]	;@@ offset = workaround for #5319
+	shallow-replace: [
+		unless pos =? match [append/part result pos match]			;@@ unless = workaround for #5320
+		append/:only result :value
+		pos: skip match do size
+	]
+	replace-in-sublists: [
+		;; using any-list! makes paths real hard to create dynamically, so any-block! here
+		while [list: find/part pos any-block! offset? pos match] [	;@@ offset = workaround for #5319
+		; while [list: find/part pos any-block! match] [
+			replace/deep/:case/:same/:only sublist: list/1 :pattern :value
+			unless pos =? list [append/part result pos list]		;@@ unless = workaround for #5320
+			append/only result sublist
+			pos: next list
 		]
 	]
 	
+	;; two reasons to use a separate buffer: O(1) performance and ease of tracking of /part which would move otherwise
+	result: clear copy/part start limit
+	pos: start
+	system/words/case [
+		once     [either do next-match shallow-replace [return limit]]
+		not deep [while next-match shallow-replace]
+		deep [
+			while next-match [
+				do replace-in-sublists
+				do shallow-replace
+			]
+			match: limit
+			do replace-in-sublists
+		]
+	]
+
+	;; global replace returns original offset: if part < 0 it's end (<> series), otherwise start
+	;; /once returns offset after match (or tail if no match, indicating full processing of input)
 	end: change/part start result pos
 	either any [back? once] [end][start]
 ]
@@ -107,6 +117,7 @@ replace: function [
 	tail?                         replace/once      [[1] 1 [1] 1 [1]] 3 2	;-- no match - returns tail (processed everything)
 	
 	[[2] 2 [2] 2 [2]]           = replace/deep      [[1] 1 [1] 1 [1]] 1 2
+	[[2] 2 [2] 2 [2] 3]         = replace/deep      [[1] 1 [1] 1 [1] 3] 1 2
 	[[2] 2 [2] 2 [2]]           = replace/deep      [[1] 1 [1] 1 [1]] [1] 2
 	[2 1 2 1 2]                 = replace/deep/only [[1] 1 [1] 1 [1]] [1] 2
 	[2 1 2 1 2]                 = replace/only      [[1] 1 [1] 1 [1]] [1] 2
