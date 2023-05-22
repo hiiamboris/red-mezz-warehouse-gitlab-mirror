@@ -25,7 +25,7 @@ qt-verbose: yes
 	--test-- "replace-6"	--assert [1 8 8]           = replace [1 2 3 2 3] [2 3] 8
 	--test-- "replace-7"	--assert 'a/b/g/d/g        = replace 'a/b/c/d/c 'c 'g
 	--test-- "replace-8"	--assert 'a/b/g/h/d/g/h    = replace 'a/b/c/d/c 'c 'g/h
-	--test-- "replace-9"	--assert #{640164}         = probe replace #{000100} #{00} #{64}
+	--test-- "replace-9"	--assert #{640164}         = replace #{000100} #{00} #{64}
 	--test-- "replace-10"	--assert %file.sub.ext     = replace %file!sub!ext #"!" #"."
 	--test-- "replace-11"	--assert <tag body end>    = replace <tag_body_end> "_" " "
 	--test-- "replace-12"	--assert [x: 123]          = replace [a: 123] quote a: quote x:
@@ -45,16 +45,16 @@ qt-verbose: yes
 
 ===start-group=== "replace/once"
 
-	--test-- "replace/once-1"	--assert [4 5]           = replace/once [1 2 3 4 5] 3 8
+	--test-- "replace/once-1"	--assert [4 5]                = replace/once [1 2 3 4 5] 3 8
 	--test-- "replace/once-1a"	--assert [1 2 8 4 5]     = head replace/once [1 2 3 4 5] 3 8
-	--test-- "replace/once-2"	--assert [4 5]           = replace/once [1 2 3 4 5] 3 [8 9]
+	--test-- "replace/once-2"	--assert [4 5]                = replace/once [1 2 3 4 5] 3 [8 9]
 	--test-- "replace/once-2a"	--assert [1 2 8 9 4 5]   = head replace/once [1 2 3 4 5] 3 [8 9]
-	--test-- "replace/once-3"	--assert [4 5]           = replace/once/only [1 2 3 4 5] 3 [8 9]
+	--test-- "replace/once-3"	--assert [4 5]                = replace/once/only [1 2 3 4 5] 3 [8 9]
 	--test-- "replace/once-3a"	--assert [1 2 [8 9] 4 5] = head replace/once/only [1 2 3 4 5] 3 [8 9]
-	--test-- "replace/once-4"	--assert [5]             = replace/once [1 2 3 4 5] [3 4] [8 9]
+	--test-- "replace/once-4"	--assert [5]             =      replace/once [1 2 3 4 5] [3 4] [8 9]
 	--test-- "replace/once-5"	--assert [1 2 8 5]       = head replace/once [1 2 3 4 5] [3 4] 8
 	--test-- "replace/once-6"	--assert [1 2 a 5]       = head replace/once [1 2 3 4 5] [3 4] 'a
-	--test-- "replace/once-7"	--assert tail?             replace/once [a b c d] 'not-there 'g
+	--test-- "replace/once-7"	--assert tail?                  replace/once [a b c d] 'not-there 'g
 	--test-- "replace/once-7a"	--assert [a g c d]       = head replace/once [a b c d] 'b 'g
 	--test-- "replace/once-8"	--assert 'a/b/g/d/e      = head replace/once 'a/b/c/d/e 'c 'g
 	--test-- "replace/once-9"	--assert 'a/b/g/h/i/d/e  = head replace/once 'a/b/c/d/e 'c 'g/h/i
@@ -92,18 +92,18 @@ qt-verbose: yes
 
 ===start-group=== "replace/case"
 
-	--test-- "replace/case-1"	--assert "axbAab" = head replace/case/once "aAbAab" "A" "x"
-	--test-- "replace/case-2"	--assert "axbxab"      = replace/case      "aAbAab" "A" "x"
-	--test-- "replace/case-3"	--assert %file.txt     = head replace/case/once %file.TXT.txt %.TXT ""
-	--test-- "replace/case-4"	--assert %file.txt     = replace/case %file.TXT.txt.TXT %.TXT ""
-	--test-- "replace/case-5"	--assert <tag xyXx>    = head replace/case/once <tag xXXx> "X" "y"
-	--test-- "replace/case-6"	--assert <tag xyyx>    = replace/case <tag xXXx> "X" "y"
-	--test-- "replace/case-7"	--assert 'a/X/o/X      = head replace/case/once 'a/X/x/X 'x 'o
-	--test-- "replace/case-8"	--assert 'a/o/x/o      = replace/case 'a/X/x/X 'X 'o
-	--test-- "replace/case-9"	--assert ["a" "B" "x"] = replace/case ["a" "B" "a" "b"] ["a" "b"] "x"
+	--test-- "replace/case-1"	--assert "axbAab"   = head replace/case/once "aAbAab" "A" "x"
+	--test-- "replace/case-2"	--assert "axbxab"   =      replace/case      "aAbAab" "A" "x"
+	--test-- "replace/case-3"	--assert %file.txt  = head replace/case/once %file.TXT.txt %.TXT ""
+	--test-- "replace/case-4"	--assert %file.txt  =      replace/case %file.TXT.txt.TXT %.TXT ""
+	--test-- "replace/case-5"	--assert <tag xyXx> = head replace/case/once <tag xXXx> "X" "y"
+	--test-- "replace/case-6"	--assert <tag xyyx> =      replace/case <tag xXXx> "X" "y"
+	--test-- "replace/case-7"	--assert 'a/X/o/X   = head replace/case/once 'a/X/x/X 'x 'o
+	--test-- "replace/case-8"	--assert 'a/o/x/o   =      replace/case 'a/X/x/X 'X 'o
+	--test-- "replace/case-9"	--assert ["a" "B" "x"]     replace/case ["a" "B" "a" "b"] ["a" "b"] "x"
 	--test-- "replace/case-10"	--assert (make hash! [x a b [a B]]) = head replace/case/once make hash! [a B a b [a B]] [a B] 'x
 	--test-- "replace/case-11"	--assert (quote :x/b/A/x/B) = replace/case quote :a/b/A/a/B [a] 'x
-	--test-- "replace/case-12"	--assert (quote (x A x)) = replace/case quote (a A a) 'a 'x
+	--test-- "replace/case-12"	--assert (quote (x A x))  = replace/case quote (a A a) 'a 'x
 
 ===end-group===
 
