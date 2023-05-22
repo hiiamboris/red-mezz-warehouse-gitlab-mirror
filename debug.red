@@ -37,4 +37,6 @@ Red [
 	if code [insert s code]
 	s
 ]
+
 ; #debug on		;@@ this prevents setting it to a word value because of double-inclusion #4422
+#do [unless value? '*debug?* [*debug?*: on]]			;-- only enable it for the first time
