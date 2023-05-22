@@ -3,34 +3,7 @@ Red [
 	purpose: "Simplify and empower it, move parse functionality into mapparse"
 	author:  @hiiamboris
 	license: 'BSD-3
-	notes: {
-		REPLACE is long due for a rewrite.
-		
-		Reasons are not only numerous bugs and inconsistencies with FIND,
-		but also because APPLY is available now (at least as a mezz),
-		we don't have to use PARSE to get /deep to work anymore.
-		I think lack of APPLY is the sole reason PARSE was used in the first place.
-		Design discussion is here: https://github.com/red/red/issues/4174
-
-		This implementation removes PARSE functionality from REPLACE, leaving it to MAPPARSE instead.
-		It also implements REP #83:
-			/all is the default case, while /once can be used to make a single replacement.
-			/only is supported along with other refinements that make sense
-		
-		Gregg has the idea of unifying REPLACE & MAPPARSE into one, but I couldn't do that so far.
-		I tried at first but hated what come out.
-		Reasons:
-		- zero shared code
-		- docstrings become very hard to write, ambiguous (main reason)
-		- pattern & value both change in meaning with /parse refinement
-		- how to tell /parse mode when block value should be code and when it should be a value?
-		- in /parse mode: /same makes no sense, /only does not apply to pattern anymore
-		- I don't wanna see monstrosities like `replace/parse/all/deep/case` in code
-		  (one of the key reasons why this implementation removes /all, second: /all being the most useful case)
-		- mapparse is consistent with forparse, and if we integrate it into replace, what do we do with forparse?
-		- forparse and mapparse are loops, so they support break & continue in their code blocks,
-		  so their operation logic does not align very much with that replace
-	}
+	notes: {See https://github.com/red/REP/issues/146}
 ]
 
 
