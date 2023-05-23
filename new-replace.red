@@ -114,14 +114,14 @@ context [
 		unless any-block? series [deep: off]
 		
 		start: series										;-- starting offset may be adjusted if part is negative
-		either limit [
+		either none =? limit [
+			limit: tail series
+		][
 			if integer? limit [limit: skip start limit]		;-- convert limit to series, or will have to update it all the time
 			if back?: negative? offset? start limit [		;-- ensure negative limit symmetry
 				start: limit
 				limit: series
 			]
-		][
-			limit: tail series
 		]
 		
 		if any [any-string? series binary? series] [		;-- if pattern/value needs forming, form it once rather than on each lookup
