@@ -9,7 +9,6 @@ Red [
 
 ; #include %assert.red
 #include %localize-macro.red
-; #include %new-apply.red
 
 
 context [
@@ -114,7 +113,7 @@ context [
 		unless any-block? series [deep: off]
 		
 		start: series										;-- starting offset may be adjusted if part is negative
-		either none =? limit [
+		either not limit [
 			limit: tail series
 		][
 			if integer? limit [limit: skip start limit]		;-- convert limit to series, or will have to update it all the time
@@ -139,21 +138,21 @@ context [
 		; while [not pos =? limit] [
 		while [0 < left: offset? pos limit] [
 			; match: find/:case/:same/:only/:part pos :pattern limit
-			match: do [find/:case/:same/:only/:part pos :pattern left]		;@@ left = workaround for #5319
+			match: find/:case/:same/:only/:part pos :pattern left			;@@ left = workaround for #5319
 			end: any [match limit]
 			if deep [										;-- replace in inner lists up to match location
 				;; using any-list! makes paths real hard to create dynamically, so any-block! here
 				while [list: find/part pos any-block! offset? pos end] [	;@@ offset = workaround for #5319 
 				; while [list: find/part pos any-block! end] [
 					append/part result pos list
-					append/only result do [replace2/deep/:case/:same/:only list/1 :pattern :value]
+					append/only result replace2/deep/:case/:same/:only list/1 :pattern :value
 					pos: next list
 				]
 			]
 			unless pos =? end [append/part result pos pos: end]				;@@ unless = workaround for #5320
 			; append/part result pos pos: end
 			if match [										;-- replace the pattern
-				do [append/:only result :value]
+				append/:only result :value
 				pos: skip match do size
 	 			if once [break]
 	 		]
@@ -200,7 +199,9 @@ context [
 		; (as tag! "<b> <b> <b>")               = replace           <a a a> "a" <b>
 		; <a a a>                               = replace           <a a a> <a> <b>
 	]
+]
 
+#localize [
 	benchmarks: [
 		print "^/in place, big buffer"
 		block: append/dup make [] n: 100'000 0 n
@@ -239,5 +240,5 @@ context [
 		block: [0] clock [repeat i 100'000 [replace2    block i - 1 i]]
 		block: [0] clock [repeat i 100'000 [replace/all block i - 1 i]]
 	]
-	; do benchmarks
+	do benchmarks
 ]
