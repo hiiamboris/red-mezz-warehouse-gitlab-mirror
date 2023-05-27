@@ -16,6 +16,7 @@ Red [
 #include %extrema.red
 #include %prettify.red
 #include %reshape.red
+#include %match.red
 #include %morph.red
 #include %leak-check.red
 
