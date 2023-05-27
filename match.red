@@ -32,11 +32,14 @@ matching: context [
 	]
 
 	non-wild: charset [not "*?"]
+	memoized: make map! 10
 	
 	compile-mask: function [
 		"Compile wildcard-based mask into a Parse rule"
 		mask [string!]
 	][
+		if rule: memoized/:mask [return rule]
+		
 		end-once: [end keep ('end) (end-once: [])]		;-- simplifies rule by keeping only innermost end requirement
 		wilds: [
 			keep some non-wild
@@ -46,9 +49,8 @@ matching: context [
 			|	collect [any wilds end-once]
 			]
 		]
-		rule: clear []
-		parse mask [collect into rule any wilds]
-		rule											;-- not copied (no need)
+		put memoized copy mask rule: parse mask [collect any wilds]
+		rule
 	]
 	
 	#assert [
