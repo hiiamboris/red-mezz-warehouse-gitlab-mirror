@@ -4,6 +4,7 @@ Red [
 	notes: {
 		Only supports wildcards for now (not implemented find/any syntax), and find/match.
 		Matching is done via naive recursive algorithm (but Parse-backed).
+		Discussion: https://matrix.to/#/%23red_sandbox%3Agitter.im/%24v_tat02NPmSF_PCj_0qAHJZOEHMO0Nwg4I6I_VGYD1A
 	}
 ]
 
