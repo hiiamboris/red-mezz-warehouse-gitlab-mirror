@@ -15,16 +15,17 @@ Red [
 	}
 ]
 
-
-do-unseen: func [
-	"Evaluate CODE with view/auto-sync?: off"
-	code [block!]
-	/local r e old
-][
-    old: system/view/auto-sync?
-    system/view/auto-sync?: no
-	e: try/all [set/any 'r do code  'ok]
-    system/view/auto-sync?: old
-    if error? e [do :e]									;-- rethrow the error AFTER restoring auto-sync
-	:r
+if object? :system/view [								;-- CLI programs skip this
+	do-unseen: func [
+		"Evaluate CODE with view/auto-sync?: off"
+		code [block!]
+		/local r e old
+	][
+	    old: system/view/auto-sync?
+	    system/view/auto-sync?: no
+		e: try/all [set/any 'r do code  'ok]
+	    system/view/auto-sync?: old
+	    if error? e [do :e]								;-- rethrow the error AFTER restoring auto-sync
+		:r
+	]
 ]

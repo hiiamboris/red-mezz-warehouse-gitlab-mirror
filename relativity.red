@@ -31,7 +31,7 @@ Red [
 	}
 ]
 
-if object? :face! [										;-- for non-view-enabled builds
+if object? :system/view [								;-- CLI programs skip this
 	context [
 		dpi: any [attempt [system/view/metrics/dpi] 96]			;@@ temporary workaround for #4740
 		ppd: dpi / 96.0	 						       			;-- pixels per (logical) dot = display scaling factor / 100%
@@ -133,4 +133,4 @@ if object? :face! [										;-- for non-view-enabled builds
 			screen-to-face face-to-screen xy face1 face2
 		]
 	]
-]
+];if object? :system/view [

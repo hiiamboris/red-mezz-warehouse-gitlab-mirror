@@ -11,6 +11,8 @@ Red [
 ]
 
 
+if object? :system/view [								;-- CLI programs skip this
+
 #include %setters.red
 #include %do-atomic.red
 #include %do-unseen.red
@@ -271,3 +273,5 @@ context [
 ; view/flags probe [s: scrollpanel with [anchors: [scale scale]] 500x400 [t: base 500x400] react [probe t/size: face/size - 20]] 'resize
 ; view/flags probe elastic [s: scrollpanel 500x400 [t: base 500x400] #scale react [probe t/size: s/size - 20]] 'resize
 
+];if object? :system/view [
+ 

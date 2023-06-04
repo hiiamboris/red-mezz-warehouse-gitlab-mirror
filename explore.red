@@ -139,6 +139,8 @@ Red [
 ]
 
 
+if object? :system/view [								;-- CLI programs skip this
+
 #include %assert.red
 #include %setters.red
 #include %with.red
@@ -413,3 +415,5 @@ explore: function [
 ; print 1
 ; explore to image! system/view/screens/1
 ; explore make image! 5x5 quit
+
+];if object? :system/view [

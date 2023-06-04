@@ -2,9 +2,10 @@ Red [
 	title:   "TAB navigation support for View"
 	author:  @hiiamboris
 	license: 'BSD-3
-	usage: {Just include it}
+	usage:   {Just include it}
 ]
 
+if object? :system/view [								;-- CLI programs skip this
 unless object? get/any 'tabbing [						;-- avoid multiple inclusion and multiple handler functions
 
 	#include %relativity.red							;-- needs 'window-of'
@@ -46,4 +47,5 @@ unless object? get/any 'tabbing [						;-- avoid multiple inclusion and multiple
 	
 		unless find/same system/view/handlers :tab-handler [insert-event-func :tab-handler]
 	]
-]
+];unless object? get/any 'tabbing [
+];if object? :system/view [
