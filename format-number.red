@@ -38,7 +38,7 @@ format-number: function [
 	expo: any [exponent-of num  0]
 	if percent? num [expo: expo + 2]
 	;; form works between 1e-4 <= x < 1e16 for floats, < 1e13 for percent so 12 is the target
-	digits: form absolute num * (10 ** (12 - expo))
+	digits: form absolute num * (10.0 ** (12 - expo))	;-- 10.0 (float) to avoid integer overflow here!
 	remove find/last digits #"."
 	if percent? num [take/last digits]					;-- temporarily remove the suffix
 	if expo < -1 [insert/dup digits #"0" -1 - expo]		;-- zeroes after dot
