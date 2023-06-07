@@ -37,7 +37,7 @@ Red [
 
 #include %setters.red									;-- we need `anonymize`
 #include %new-each.red									;-- based on extended foreach/map-each capabilities
-#include %new-apply.red									;-- need `apply` to dispatch refinements
+; #include %new-apply.red									;-- need `apply` to dispatch refinements
 
 
 
@@ -153,11 +153,8 @@ context [
 				break
 			]
 		]
-		apply for-each [
-			spec series case same
-			reverse: back
-			code: compose/only [__iter (tests) (subject) (spec/1)]
-		]
+		code: compose/only [__iter (tests) (subject) (spec/1)]
+		apply 'for-each [(spec) series code /case case /same same /reverse back]
 		result
 	]
 
@@ -181,11 +178,8 @@ context [
 			any [all [run-tests tests subject  buf] continue]
 		]
 		unless scalar? series [series: copy series]		;-- don't modify the original
-		apply map-each [
-			spec series case same
-			self: drop: yes								;-- preserve input type, omit rows not passing the tests
-			code: compose/only [__iter (tests) (subject) (columns)]
-		]
+		code: compose/only [__iter (tests) (subject) (columns)]
+		map-each/self/drop/:case/:same (spec) series code	;-- /self/drop to preserve input type, omit rows not passing the tests
 	]
 	
 ]

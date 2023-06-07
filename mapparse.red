@@ -55,7 +55,7 @@ Red [
 
 
 #include %selective-catch.red
-#include %new-apply.red
+; #include %new-apply.red
 
 ;@@ BUG: this traps exit & return - can't use them inside forparse
 ;@@ BUG: break/return will return nothing, because - see #4416
@@ -99,13 +99,7 @@ mapparse: function [
 		[thru =change= series:]
 		[any [=change= | =else=]]
 	] once
-	catch-a-break [
-		apply (in system/words 'parse) [
-			case part length
-			input:  series
-			rules:  =rule=
-		]
-	]
+	catch-a-break [parse/:case/:part series =rule= length]
 	series
 ]
 

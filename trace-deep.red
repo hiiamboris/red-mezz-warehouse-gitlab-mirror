@@ -123,16 +123,17 @@ context [
 
 			all [										;-- a function call - recurse into it
 				any [
-					word? :v1
+					if word? :v1 [fpath: v1]
 					all [									;-- get the path in objects/blocks.. without refinements
 						path? :v1
-						also set/any [v1: _:] preprocessor/value-path? v1
-							if single? v1 [v1: :v1/1]		;-- turn single path into word
+						also set/any [fpath: _:] preprocessor/value-path? v1
+							if single? fpath [fpath: :fpath/1]	;-- turn single path into word
 					]
 				]
-				find [native! action! function! routine!] type?/word get/any v1
+				find [native! action! function! routine!] type?/word get/any fpath
 			][
-				arity: either path? v2: get v1 [
+				v2: get fpath
+				arity: either path? v1 [
 					preprocessor/func-arity?/with spec-of :v2 v1
 				][	preprocessor/func-arity?      spec-of :v2
 				]

@@ -62,7 +62,7 @@ Red [
 
 
 #include %selective-catch.red
-#include %new-apply.red
+; #include %new-apply.red
 
 ;@@ BUG: this traps exit & return - can't use them inside forparse
 ;@@ BUG: break/return will return nothing, because - see #4416
@@ -86,13 +86,7 @@ forparse: function [
 	] deep
 	=match=: [pattern (set/any 'r catch-continue body)]	;-- set r to result of last iteration
 	=rule=: [any [=match= | =else=]]
-	if error? catch-a-break [
-		apply (in system/words 'parse) copy/deep [
-			case part length
-			input:  series
-			rules:  =rule=
-		]
-	][
+	if error? catch-a-break [parse/:case/:part series =rule= length] [
 		unset 'r										;-- break should return unset
 	]
 	:r
