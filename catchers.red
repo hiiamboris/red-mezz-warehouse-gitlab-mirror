@@ -139,6 +139,7 @@ context [
 		"Try to DO a block and return its value or an error"
 		code [block!]
 		/all   "Catch also BREAK, CONTINUE, RETURN, EXIT and THROW exceptions"
+		/keep  "Capture and save the call stack in the error object"
 		/catch "If provided, called upon exceptiontion and handler's value is returned"
 			handler [block! function!] "func [error][] or block that uses THROWN"
 			;@@ maybe also none! to mark a default handler that just prints the error?
@@ -146,7 +147,7 @@ context [
 	] bind [
 		with-thrown [
 			plan: [set/any 'result do code  'ok]
-			set 'thrown try/:all plan					;-- returns 'ok or error object
+			set 'thrown try/:all/:keep plan				;-- returns 'ok or error object
 			case [
 				thrown == 'ok   [:result]
 				block? :handler [do handler]
@@ -154,20 +155,6 @@ context [
 			]
 		]
 	] :with-thrown
-
-]
-
-
-attempt: func [
-	"Tries to evaluate a block and returns result or NONE on error"
-	code [block!]
-	/safer "Capture all possible errors and exceptions"
-][
-	either safer [
-		trap/all/catch code [none]
-	][
-		try [return do code] none						;-- faster than trap
-	]
 ]
 
 
@@ -206,13 +193,6 @@ attempt: func [
 	10      = trap/catch [1 + none] [10]				;-- /catch tests
 	'script = trap/catch [1 + none] [select thrown 'type]
 	6       = trap/all/catch [throw 3 1] [2 * select thrown 'arg1]
-
-	unset? attempt []
-	3    = attempt [1 + 2]
-	none = attempt [1 + none]
-	error? attempt [make error! "oops"]				;-- this is where it's different from native attempt
-	none = attempt/safer [throw 123]
-	none = attempt/safer [continue]
 ]
 
 {
