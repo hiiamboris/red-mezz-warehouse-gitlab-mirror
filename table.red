@@ -46,7 +46,7 @@ Red [
 #include %setters.red
 #include %keep-type.red
 #include %map-each.red
-#include %extremi.red
+#include %extrema.red
 #include %clock.red
 #include %clock-each.red
 #include %do-unseen.red
