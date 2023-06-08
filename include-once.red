@@ -48,7 +48,7 @@ Red [
 	not block? :included-scripts						;-- do not reinclude itself
 ][
 	;-- since it's now running in Red, we don't need R2 compatibility
-	#do [verbose-inclusion?: yes]						;-- comment this out to disable file names dump
+	; #do [verbose-inclusion?: yes]						;-- comment this out to disable file names dump
 	
 	#macro [#include] func [
 		[manual] s e
