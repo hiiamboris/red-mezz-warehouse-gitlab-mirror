@@ -165,3 +165,27 @@ HSL2RGB: function [
   	(HSL2RGB/tuple RGB2HSL 0.0.128    ) = 0.0.128    
 ]
 
+
+context [
+	;; gamma (transfer function) comes from https://en.wikipedia.org/wiki/SRGB#Transformation
+	gamma-inverse: func [c] [
+		either (c: c / 255) <= 0.04045 [c / 12.92][c + 0.055 / 1.055 ** 2.4]
+	]
+	gamma: func [x] compose/deep [
+		either x <= 0.0031308 [x * 12.92][x ** (1 / 2.4) * 1.055 - 0.055]
+	]
+
+	;; CIELab L* formula comes from https://stackoverflow.com/a/13558570 
+	;; see also https://en.wikipedia.org/wiki/Relative_luminance#Relative_luminance_and_%22gamma_encoded%22_colorspaces
+	;; grayscale example:  https://i.gyazo.com/bbdfa22004bc06ecd0cfa1a6276b784b.jpg
+	set 'brightness? function [
+		"Get brightness [0..1] of a color tuple as CIELAB achromatic luminance L*"
+		color [tuple!]
+	][
+		gamma add add
+			0.212655 * gamma-inverse color/1
+			0.715158 * gamma-inverse color/2
+			0.072187 * gamma-inverse color/3
+	]
+]
+
