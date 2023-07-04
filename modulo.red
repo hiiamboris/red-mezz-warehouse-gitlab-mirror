@@ -22,7 +22,7 @@ Red [
 			so..
 		3) a mod 0 = NaN/error
 			let the user deal with edge cases
-			this is how the modulo below is implemented
+			this is how the modulo below is implemented (error for both integer arguments, NaN otherwise)
 	}
 ]
 
@@ -57,7 +57,7 @@ context [
 					]									;-- (=0 case triggers error on the 1st line)
 				]]
 			]
-			trunc   []									;@@ TODO: move this check up when #4576 gets fixed
+			trunc   []
 			floor   [r: r + b % b]
 			'euclid [|b|: abs b  r: r + |b| % b]
 		]
@@ -93,7 +93,7 @@ context [
 
 #localize [#assert [
 	;; need a few values defined
-	-1.3877787807814457e-17 =? -x: 0.15 - 0.05 - 0.1		;-- comes from some test on the internet IIRC
+	-1.3877787807814457e-17 =? -x: 0.15 - 0.05 - 0.1	;-- comes from some test on the internet IIRC
 	 1.3877787807814457e-17 =? +x: 0 - -x
 	-a: -1e-16											;-- just a few values near float/epsilon
 	+a:  1e-16
@@ -382,12 +382,12 @@ context [
 	nan?   modulo/trunc 123  0.0   
 	nan?   modulo       12.5 0     
 	nan?   modulo       12.5 0.0   
-	; nan?   modulo       123  1.#inf	;@@ bugged - see #4900
-	; nan?   modulo/floor 123  1.#inf
-	; nan?   modulo/trunc 123  1.#inf
-	; nan?   modulo       123 -1.#inf
-	; nan?   modulo/floor 123 -1.#inf
-	; nan?   modulo/trunc 123 -1.#inf
+	nan?   modulo       123  1.#inf
+	nan?   modulo/floor 123  1.#inf
+	123 =  modulo/trunc 123  1.#inf
+	nan?   modulo       123 -1.#inf
+	nan?   modulo/floor 123 -1.#inf
+	123 =  modulo/trunc 123 -1.#inf
 	nan?   modulo       123  1.#nan
 	nan?   modulo/floor 123  1.#nan
 	nan?   modulo/trunc 123  1.#nan
