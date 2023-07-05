@@ -57,7 +57,7 @@ bulk: function [
 	[2 6 12] = bulk/all [do [a/* * b/*]]				;-- should affect inner blocks
 	12       = bulk     [a/* * b/*     ]
 	[2 4 6 ] = (bulk    [a/*: a/* * 2] a)				;-- set-words must work
-	[2 3 4 ] = bulk/all [s/*/b]							;-- asterisk doesn't have to be the last part of the path
+	[2 3 4 ] = bulk/all [ms/*/b]						;-- asterisk doesn't have to be the last part of the path
 	[["ab" "c"] ["" "def"]] = bulk/all [split ss/* "-"]
 	error? try [bulk [         ]]
 	error? try [bulk [b/1      ]]						;-- no asterisk
