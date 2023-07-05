@@ -79,6 +79,7 @@ Red [
 #include %shallow-trace.red
 #include %setters.red
 #include %format-readable.red
+#include %without-gc.red
 
 ; #macro [ahead word! '*** to end] func [[manual] s e] [	;-- [manual] to support macros inside of it ;@@ + workaround for #3554
 #macro [p: word! :p '*** to end] func [[manual] s e] [	;-- [manual] to support macros inside of it ;@@ + workaround for #3554
@@ -101,14 +102,24 @@ Red [
 ]
 
 once prof: context [									;-- don't reinclude or stats may be reset
-	;; data format: [code  code-copy  length-of-code  total-time  total-ram  iteration-count  ...]
-	data:         make hash! 120
-	;; block of time+ram & code pairs that weren't processed due to control flow escapes:
-	pending:      make block! 80
-	;; block of [marker  start-time  start-stats]
-	; manual-stack: make hash!  60						;@@ hash is buggy - #5118 (and #5096)
-	manual-stack: make block! 60
-	start-time:   none									;-- used to infer percentage of all time spent on profiled code
+	;; data format: [marker [iteration-count total-time total-ram] ...] (can't use a map because marker is code (block))
+	data:         make hash! 20
+	
+	;; stack of markers of currently entered into scopes (used by /manual)
+	marker-stack: make block! 60
+	
+	;; memoized copied expression blocks (used by /each)
+	expressions:  make hash! 60
+	
+	last-time:    none
+	last-stats:   none
+
+	reset: func ["Forget all collected profiling stats"] [
+		clear data
+		clear marker-stack
+		clear expressions
+		set [last-time last-stats] none
+	]
 
 	format-delta: function [
 		"Number formatter used internally by PROF/EACH"
@@ -122,177 +133,125 @@ once prof: context [									;-- don't reinclude or stats may be reset
 		pad/left s dot-index - dot + length? s
 	]
 
-	ellipsize: function [
-		"Molds block B with ellipsis if it's longer than N"
-		b [block!] n [integer!]
-	][
-		b: mold/flat/part b n + 1
-		if n < length? b [clear change skip b n - 4 "...]"]
-		b
+	;@@ get stats as a table (block), sorted output
+	show: function ["Print all profiling stats collected so far"] [
+		if empty? data [exit]									;-- nothing to show
+		width:   any [attempt [system/console/size/x - 40] 40]
+		t-total: elapsed: 0:0									;-- collect totals first
+		foreach [marker info] data [
+			if marker [t-total: t-total + info/2]				;-- no need to count time between markers
+			elapsed: elapsed + info/2
+		]
+		t-total: 1e3 * to float! t-total
+		elapsed: 1e3 * to float! elapsed
+		foreach [marker info] data [
+			if marker = none [continue]							;-- no need to show the baseline or time between markers
+			set [n: dt: ds:] info
+			dt:     (1e3 * to float! dt) / n					;-- always switch to millisecs so bigger times stand out
+			time:   pad format-delta dt 5 10					;-- 9'999.9999 ms: dot=5 total=10
+			ram:    format-delta (round/to ds / n 1) 12			;-- 999'999'999 b: dot=12, total=11
+			iter:   pad mold to tag! n 9						;-- '<999999> ' iterations: total=9
+			share:  pad format-delta 100% * dt * n / t-total 4 4	;-- '100%' = 4 chars total
+			marker: system/tools/tracers/mold-part marker width
+			print form reduce [iter share " " time "ms " ram "B " marker]
+		]
+		if last-time [
+			load: format-readable/size 100% * (t-total / elapsed) 2
+			print ["CPU load of profiled code:" load]
+		]
+		exit													;-- no return value
 	]
 
-	reset: func ["Forget all collected profiling stats"] [
-		clear data ()
-		start-time: none
+ 	commit: function [marker [immediate! any-string! block!] dt [time!] "elapsed time" ds [integer!] "RAM change"] [
+		same: block? marker
+		either cell: select/skip/only/:same data marker 2 [
+			change change change cell
+				cell/1 + 1
+				cell/2 + dt
+				cell/3 + ds
+		][
+			reduce/into [marker cell: reduce [1 dt ds]] tail data
+		]
+		cell
 	]
-
-	;@@ TODO: get stats as a table (block), sorted output
-	show: function [
-		"Print all profiling stats collected so far"
-		/only exprs [block!] "Block of blocks, each starting at a profiled expression (must be sequential)"
-	][
-		all [not only  not empty? pending  process none true]	;-- commit pending results if any
-		pos: data
-		all [only  none? pos: find/same/only pos exprs/1  exit]	;-- find where /only points to or exit if not found
-		to-show: clear []
-		width: any [attempt [system/console/size/x - 40] 40]
-		foreach [code: code-copy: len: dt: ds: n:] pos [
-			all [only  not code =? exprs/1  continue]			;-- skip results not selected for display
-			dt: (t: dt) / n										;-- always switch to microsecs so bigger times stand out
-			dt: pad format-delta dt 5 10						;-- 9'999.9999 ms: dot=5 total=10
-			ds: round/to ds / n 1
-			ds: format-delta ds 12								;-- 999'999'999 b: dot=12, total=11
-			unless block? code [code-copy: reduce [:code]]		;-- code-copy field is used by manual profiling mode
-			slice: ellipsize (copy/part code-copy len) width
-			n: pad mold to tag! n 8								;-- '<99999> ' iterations: total=8
-			repend to-show [n t dt "ms " ds " B " slice]		;-- 7 items
-			if only [exprs: next exprs]
-		]
-		t-total: sum extract next to-show 7						;-- obtain total time spent during evaluation of chosen exprs
-		if 0 = t-total [t-total: 1.0]							;-- avoid zero division
-		while [not empty? to-show] [
-			amnt: 100% * to-show/2 / t-total 4
-			to-show/2: pad format-delta amnt 4 5				;-- '100% ' = 5 chars
-			print rejoin copy/part to-show 7
-			remove/part to-show 7
-		]
-		if start-time [
-			elapsed: 1e3 * to float! difference now/precise/utc start-time
-			amnt: format-readable/size 100% * (t-total / elapsed) 2
-			print ["CPU load of profiled code:" amnt]
-		]
-		()
-	]
-
+	
 	manual: function [
 		"Profile time between start and end (can be reentrant)"
-		mark [immediate! any-string!] "Token that should be same for start and end"
+		marker [immediate! any-string!] "ID token that should be same for start and end"
 		/start /end
+		/extern last-time last-stats
 	][
+		time: now/precise/utc
+		
+		either last-time [
+			dt: difference time last-time
+			ds: stats - last-stats
+			commit last marker-stack dt ds				;-- commit last interval (no marker = unrelated code)
+		][
+			last-time:  time
+			last-stats: stats
+		]
+		
 		#assert [any [start end]]
 		either start [
-			unless start-time [self/start-time: now/precise/utc]
-			repend manual-stack [:mark now/precise/utc stats]
+			append/only marker-stack :marker
 		][
-			;; measure time & ram delta, remove the started marker
-			t: now/precise/utc
-			s: stats
-			pos: find/reverse/only/skip skip tail manual-stack -2 :mark 3
-			#assert [pos]
-			ms: 1e3 * to float! dt: difference t pos/2
-			ds: s - pos/3       
-			remove/part pos 3
-			
-			;; correct all other started markers by subtracting this one
-			pos: manual-stack
-			foreach [_ t s] pos [						;@@ should be for-each
-				pos/2: t + dt
-				pos/3: s + ds
-				pos: skip pos 3
-			]
-			
-			;; save result into data
-			either pos: find/only/skip data :mark 6 [
-				pos/4: pos/4 + ms
-				pos/5: pos/5 + ds
-				pos/6: pos/6 + 1
-			][
-				repend pos: tail data [:mark reduce [:mark] 1 ms ds 1]
-			] 
+			#assert [marker = last marker-stack]
+			take/last marker-stack
 		]
+		last-stats: stats
+		last-time:  now/precise/utc						;-- repeat timestamp for more precision
 	]
 
-	set 'clock-each											;-- left for backward compatibility
-	each: function [										;-- new interface: PROF/EACH
+	set 'clock-each										;-- left for backward compatibility
+	each: function [									;-- new interface: PROF/EACH
 		"Display execution time of each expression in CODE"
-		code [block!] "Result is only returned if N = 1"
+		code [block!] "Evaluation result is only returned if N = 1"
 		/times n [integer! float!] "Repeat the whole CODE N times (default: once); displayed time/RAM is per iteration"
 		/quiet "Don't print anything, just save the results for later display via PROF/SHOW"
 		/local result
 	][
 		n: to integer! any [n 1]
-		code-copy: any [									;-- preserve the original code in case it changes during execution
-			select/same/only data code						;-- could be preserved already
-			copy/deep code
-		]
-		test-code: compose [none none (code)]				;-- need 2 no-ops to: (1) negate startup time of `trace`, (2) establish a baseline
-		time+ram: make block! 64
-		repend pending [code code-copy n time+ram]			;-- stash stats in case the loop doesn't finish
-		timer: func [x [any-type!] pos [block!]] [			;-- collects timing of each expression
-			t2: now/utc/precise								;-- 2 time markers here - to minimize `timer` influence on timings
+		code-copy: copy/deep code						;-- preserve the original code in case it changes during execution ;@@ copy maps too
+		test-code: compose [#[none] #[none] (code)]		;-- need 2 no-ops to: (1) negate startup time of `shallow-trace`, (2) establish a baseline
+		
+		timer: func [result [any-type!] pos [block!]] [	;-- collects timing of each expression
+			t2: now/utc/precise							;-- 2 time markers here - to minimize `timer` influence on timings
 			s2: stats
-			dt: difference t2 t1
-			time+ram: change change change time+ram
-				dt      + any [time+ram/1 0.0]				;-- save both timing...
-				s2 - s1 + any [time+ram/2 0]				;-- ...allocations size...
-				index? pos									;-- ...and position
-			s1: stats
-			t1: now/utc/precise								;-- /utc is 2x faster
-			:x
-		]
-
-		loop n [											;-- profile the code
-			s1: stats
-			t1: now/utc/precise
-			set/any 'result shallow-trace :timer test-code	;-- this may throw out of the profiler
-			time+ram: head time+ram
-		]
-
-		process code quiet									;-- prepare & show the results
-		either n = 1 [:result][()]							;-- result is needed for transparent profiling with `***` and `(* *)`
-	]
-	
-	process: function [
-		"Process pending profiling results (if any)"
-		code [block! none!] "none to process everything"
-		quiet [logic!] "Show or not"
-	][
-		unless code [
-			while [code: self/pending/1] [process code quiet]
-			exit
-		]
-	
-		set [_: code-copy: n: time+ram:] pending: find/same/only/skip self/pending code 4
-		#assert [pending]
-		baseline: first sort extract time+ram 3				;-- use the minimal timing as baseline (should be `none`)
-		time+ram: skip time+ram 6							;-- hide startup time and baseline code
-		to-show: clear []									;-- list of expressions to print stats for
-		forall time+ram [									;-- save & maybe display the results
-			set [p1: dt: ds: p2:] back time+ram
-			dt: 1e3 * to float! dt - baseline				;-- into millisecs
-			i: p1 - 2										;-- p1 is off by 2 none values
-			either pos: find/same/only data at code i [		;-- already saved? increase total time and iteration count
-				pos/4: pos/4 + dt
-				pos/5: pos/5 + ds
-				pos/6: pos/6 + n
+			switch/default i: index? pos [
+				2 []									;-- ignore startup-related 'none'
+				3 [base: difference t2 t1]
 			][
-				reduce/into [								;-- code is saved for the first time
-					;-- code   moldable code   length   time RAM iterations
-					at code i  at code-copy i  p2 - p1  dt   ds  n
-				] pos: tail data
+				code-pos: at head code i: i - 2			;-- use original (unique) code block+offset as marker
+				unless expr: select/only/same/skip expressions code-pos 2 [
+					expr: copy/part code-copy code-copy: at head code-copy i
+					append/only append/only expressions code-pos expr
+				]
+				dt: max 0:0 (difference t2 t1) - base
+				commit expr dt (s2 - s1)
 			]
-			append/only to-show at code i
-			time+ram: next next time+ram
+			s1: stats
+			t1: now/utc/precise							;-- /utc is 2x faster
+			:result
 		]
-		remove/part pending 4
-		unless quiet [show/only to-show]
+
+		without-GC [
+			loop n [									;-- profile the code
+				s1: stats
+				t1: now/utc/precise
+				set/any 'result shallow-trace :timer test-code	;-- this may throw out of the profiler
+			]
+		]
+
+		unless quiet [show]
+		either n = 1 [:result][exit]					;-- result is needed for transparent profiling with `***` and `(* *)`
 	]
+	
 ]
 
-; recycle/off
 ; ; loop 10000 [(* 1 2 3 *)]
 ; loop 10 [(* wait 0.1 wait 0.01 wait 0.03 make [] 100000 *)]
-; ; loop 100 [(* 1 2 3 wait 0.002 *)]
+; loop 100 [(* 1 2 3 wait 0.002 *)]
 ; prof/show
 ; prof/each/times [1] 10000
 
