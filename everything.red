@@ -10,6 +10,7 @@ Red [
 #include %debug.red
 
 #include %with.red
+#include %without-gc.red
 #include %setters.red
 #include %catchers.red
 #include %step.red	
