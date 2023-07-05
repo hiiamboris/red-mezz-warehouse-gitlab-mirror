@@ -133,8 +133,22 @@ once prof: context [									;-- don't reinclude or stats may be reset
 		pad/left s dot-index - dot + length? s
 	]
 
-	;@@ get stats as a table (block), sorted output
-	show: function ["Print all profiling stats collected so far"] [
+	ordered?: function [
+		"Check if value1 comes before value2 in sort order"
+		value1 [any-type!] value2 [any-type!]
+	][
+		reduce/into [:value1 :value2] buf1: clear []
+		sort append buf2: clear [] buf1
+		:buf1/1 =? :buf2/1
+	]
+	
+	;@@ get stats as a table (block)
+	show: function [
+		"Print all profiling stats collected so far" 
+		/order column [word! block!] "Order output by one or more of: [count share time bytes marker]"
+		/reverse "Reverse the output order"
+		/header  "Output the column header"
+	][
 		if empty? data [exit]									;-- nothing to show
 		width:   any [attempt [system/console/size/x - 40] 40]
 		t-total: elapsed: 0:0									;-- collect totals first
@@ -144,16 +158,38 @@ once prof: context [									;-- don't reinclude or stats may be reset
 		]
 		t-total: 1e3 * to float! t-total
 		elapsed: 1e3 * to float! elapsed
-		foreach [marker info] data [
+		
+		;; form a queue to sort it
+		either column [
+			queue: append clear [] data
+			set [marker: info: count: time: bytes:] [1 2 1 2 3]
+			foreach column compose [(column)] [
+				#assert [find [count share time RAM marker] column]
+				cmp: func [a b] switch column [
+					count  [[a/:info/:count >= b/:info/:count]]
+					time   [[(a/:info/:time  / a/:info/:count) >= (b/:info/:time  / b/:info/:count)]]
+					bytes  [[(a/:info/:bytes / a/:info/:count) >= (b/:info/:bytes / b/:info/:count)]]
+					share  [[a/:info/:time  >= b/:info/:time]]
+					marker [[ordered? a/1 b/1]]			;-- ascending order here by default
+				]
+				sort/skip/compare/all queue 2 :cmp
+			]
+		][
+			queue: data
+		]
+		if reverse [system/words/reverse/skip queue 2]
+		
+		if header [print "Count   Share    Time/Run         Bytes/Run    Marker"]
+		foreach [marker info] queue [
 			if marker = none [continue]							;-- no need to show the baseline or time between markers
 			set [n: dt: ds:] info
 			dt:     (1e3 * to float! dt) / n					;-- always switch to millisecs so bigger times stand out
 			time:   pad format-delta dt 5 10					;-- 9'999.9999 ms: dot=5 total=10
 			ram:    format-delta (round/to ds / n 1) 12			;-- 999'999'999 b: dot=12, total=11
-			iter:   pad mold to tag! n 9						;-- '<999999> ' iterations: total=9
+			count:  pad mold to tag! n 9						;-- '<999999> ' iterations: total=9
 			share:  pad format-delta 100% * dt * n / t-total 4 4	;-- '100%' = 4 chars total
 			marker: system/tools/tracers/mold-part marker width
-			print form reduce [iter share " " time "ms " ram "B " marker]
+			print form reduce [count share " " time "ms " ram "B " marker]
 		]
 		if last-time [
 			load: format-readable/size 100% * (t-total / elapsed) 2
@@ -243,7 +279,7 @@ once prof: context [									;-- don't reinclude or stats may be reset
 			]
 		]
 
-		unless quiet [show]
+		unless quiet [show/header reset]
 		either n = 1 [:result][exit]					;-- result is needed for transparent profiling with `***` and `(* *)`
 	]
 	
