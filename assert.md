@@ -128,17 +128,13 @@ More real world uses can be found in my [mezz-warehouse repo](https://gitlab.com
    
 3. In complex programs after you modify some shared state, and you expect this state to honor some constraints, do **test those constraints** after the change. This may save your time spent on debugging.
 
-4. Know that they assertions fail to work at all because of preprocessor bugs. In that case try re-including `assert.red` within that particular source file.      
+4. Know that they assertions may fail to work at all due to preprocessor bugs. In that case try re-including `assert.red` within that particular source file.      
 
-5. `#assert` design principle is: *succeed fast, fail informatively*.
+5. Keep test expressions **side-effect free** if possible. See Repeatability clause below for more info.
 
-   For that, it has to make **a copy** of it's given block every time it's evaluated. When assertion fails, this copy is used to repeat the computation step by step. So:
-   - consider this copy in tight loops or when profiling memory usage
-   - don't use literal maps `#()` as they are not copied by `copy/deep` (bug [#2167](https://github.com/red/red/issues/2167#issuecomment-801358034)), or at least don't modify them in assertion code. Use `make map! []` instead of `#()`.<br><br>
+   To be as non-intrusive as possible, it makes no copies of the assertions block, so as with functions you have to explicitly copy any global (literal) series within before you modify them.
 
-6. Keep test expressions **side-effect free** if possible. See Repeatability clause below for more info.
-
-7. Use `assert` function directly (not as a macro) if you want to **test unconditionally** (even in release code).
+6. Use `assert` function directly (not as a macro) if you want to **test unconditionally** (even in release code).
 
 ## Design
 
@@ -183,23 +179,23 @@ This also enforces readable unittest layout.
 
 **Repeatability**
 
-Normally, whole unittest code should be repeatable any number of times. We may `#include` the file more than once after all.
+Normally, whole unittest code should be repeatable any number of times, so it's best to avoid modifying global data (e.g. literal blocks are global unless explicitly copied).
 
-But aforementioned requirements (be fast and at the same time print the whole evaluation log on error) impose another constraint: each *copy* of each test expression inside assert must be repeatable.
-
-Example:
+To be light `assert` doesn't copy expressions given to it, and doesn't turn on tracing until assertion fails. So upon failure it evaluates the failed assertion *again*, this time tracing it. Consider the following example:
 ```
 #assert [
 	b: []
 	[1] = append b 2
 ]
 ```
-This is wrong, because `[1] = append b 2` will fail with `[2]` result, then a copy of it will modify `b` again and we'll have `b = [2 2]` reported, which is likely unexpected.
+It's wrong because `b` is assigned a global empty block `[]` that is created during file's `load`. After that `[1] = append b 2` will fail with `[2]` result, and when evaluated second time, `b` will still be `[2]` and assertion will change it to `[2 2]`, making the error report somewhat surprising.
+
+It also can't be fixed by `b: copy []`, because this initialization line will not be re-evaluated (as it doesn't fail), but only `[1] = append b 2` will be.
 
 Proper way to write this is:
 ```
-#assert [(b: []  [1] = append b 2)]
+#assert [(b: copy []  [1] = append b 2)]
 ```
-In this case `b: []` will also be re-evaluated and failure report will be as expected.
+In this case both `copy` and `append` will be re-evaluated, producing an expected failure report.
 
-Of course, `#assert [[1] = append [] 2]` will do as well for this particular example.
+Of course, `#assert [[1] = append copy [] 2]` will do as well for this particular example.
