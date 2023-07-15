@@ -150,7 +150,7 @@ once prof: context [									;-- don't reinclude or stats may be reset
 		/header  "Output the column header"
 	][
 		if empty? data [exit]									;-- nothing to show
-		width:   any [attempt [system/console/size/x - 40] 40]
+		width:   any [attempt [system/console/size/x - 43] 40]	;-- 42 = len(<999999> 99% 9'999.99999 ms 999'000'000 B )
 		t-total: elapsed: 0:0									;-- collect totals first
 		foreach [marker info] data [
 			if marker [t-total: t-total + info/2]				;-- no need to count time between markers
@@ -184,12 +184,12 @@ once prof: context [									;-- don't reinclude or stats may be reset
 			if marker = none [continue]							;-- no need to show the baseline or time between markers
 			set [n: dt: ds:] info
 			dt:     (1e3 * to float! dt) / n					;-- always switch to millisecs so bigger times stand out
-			time:   pad format-delta dt 5 10					;-- 9'999.9999 ms: dot=5 total=10
+			time:   pad format-delta dt 5 11					;-- 9'999.99999 ms: dot=5 total=11
 			ram:    format-delta (round/to ds / n 1) 12			;-- 999'999'999 b: dot=12, total=11
 			count:  pad mold to tag! n 9						;-- '<999999> ' iterations: total=9
 			share:  pad format-delta 100% * dt * n / t-total 4 4	;-- '100%' = 4 chars total
 			marker: system/tools/tracers/mold-part marker width
-			print form reduce [count share " " time "ms " ram "B " marker]
+			print to string! reduce [count share " " time "ms " ram " B " marker]
 		]
 		if last-time [
 			load: format-readable/size 100% * (t-total / elapsed) 2
