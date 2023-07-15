@@ -4,7 +4,7 @@ Red [
 	author:  @hiiamboris
 	license: 'BSD-3
 	usage: {
-		Memo: (* *), ***, PROF/EACH, PROF/SHOW, PROF/RESET
+		Memo: (* *), ***, PROF/EACH, PROF/SHOW, PROF/RESET, PROF/MANUAL
 
 		(* *) MACRO that silently collects stats of any code piece
 
@@ -71,6 +71,32 @@ Red [
 
 		PROF/RESET
 			Forgets all profiling stats collected so far.
+			
+		PROF/MANUAL/START 'marker 
+		PROF/MANUAL/END 'marker
+			Measures time elapsed between /start and /end calls in real code. Marker is usually a word identifying the scope.
+			This is meant for global profiling of various complex aspects of the system.
+			Single aspect may be spread across multiple functions, so a single marker is used to unify them.
+			For example in Spaces I may run any test demo and using the profiling log analyze what parts need more optimization:
+				<42>      0%      .121   ms       4'980 B process-event
+				<40>      0%      .119   ms         528 B hovering
+				<58>      1%      .23    ms       2'982 B timers
+				<182>     0%      .041   ms         131 B invalidation
+				<58>     95%    38       ms      16'587 B drawing
+				<531>     0%      .0169  ms           2 B render
+				<935>     0%      .01    ms          89 B cache
+				<116>     0%      .062   ms         498 B list
+				<58>      0%      .082   ms       2'468 B fps-meter
+				<669>     1%      .041   ms           0 B deep-restore
+				<70>      0%      .085   ms         293 B scrollable
+				<10>      0%      .137   ms         484 B scroll-timer
+				<119>     0%      .033   ms         271 B vscroll
+				<20>      0%      .05    ms         356 B back-arrow
+				<20>      0%      .05    ms         250 B back-page
+				<20>      0%      .05    ms         310 B thumb
+				<20>      0%     0       ms         278 B forth-page
+				<20>      0%      .099   ms         334 B forth-arrow
+				CPU load of profiled code: 77%
 	}
 ]
 
