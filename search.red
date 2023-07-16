@@ -134,8 +134,8 @@ Red [
 ]
 
 
+#include %localize-macro.red	
 #include %assert.red	
-#include %setters.red	
 #include %advanced-function.red	
 	
 context [

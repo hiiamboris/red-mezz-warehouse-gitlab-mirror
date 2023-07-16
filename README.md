@@ -72,6 +72,7 @@ Notes:
 | [for-each](for-each.red)                   | Experimental design of an extended FOREACH |
 | [map-each](map-each.red)                   | Map one series into another, leveraging FOR-EACH power |
 | [bulk](bulk.red)                           | Bulk evaluation syntax support. [Read more](https://github.com/greggirwin/red-hof/tree/master/code-analysis#bulk-syntax)] |
+| [search](search.red)                       | Find root of a function with better than linear complexity. Supports [binary / bisection](https://en.wikipedia.org/wiki/Binary_search_algorithm), [interpolation / false position](https://en.wikipedia.org/wiki/Interpolation_search) and [jump](https://en.wikipedia.org/wiki/Jump_search) search. |
 
 Interestingly, `for-each` and `map-each` code showcases how limited `compose` is when building complex nested code with a lot of special cases.
 It works, but uglifies it so much that a question constantly arises: can we do something better than `compose`?
