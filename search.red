@@ -10,47 +10,49 @@ Red [
 		ARRAY-SEARCH (wrapper on SEARCH) returns [x1 x2] where abs(x2-x1) is either 0 or 1
 		
 		>> ? search
-		USAGE:
-		     SEARCH 'word X1 X2 F
-		
-		DESCRIPTION: 
-		     Iteratively narrow down segment X1..X2 while it contains F(x)=0, return [X1 F(X1) X2 F(X2)] box. 
-		     SEARCH is a function! value.
-		
-		ARGUMENTS:
-		     'word        [word! set-word!] "X argument name for the F(x) function."
-		     X1           [number!] {When both X1 and X2 are integers, treats X as discrete variable.}
-		     X2           [number!] 
-		     F            [block!] "Monotonic function F(x)."
-		
-		REFINEMENTS:
-		     /range       => Minimally acceptable X1..X2 interval to stop the search.
-		        xrange       [number!] 
-		     /error       => Minimally acceptable F(X1)..F(X2) interval to stop the search.
-		        frange       [number!] 
-		     /limit       => Max number of allowed iterations (throws an error if doesn't converge within it).
-		        nmax         [integer!] 
-		     /mode        => Use predefined [binary interp jump] or custom func [x1 f1 x2 f2] guessing algorithm (default: binary).
-		        guess        [word! function!] 
-		     /with        => Provide F(X1) and F(X2) if they are known.
-		        F1           [number!] 
-		        F2           [number!] 
+			USAGE:
+				 SEARCH 'word X1 X2 F
+			
+			DESCRIPTION: 
+				 Iteratively narrow down segment X1..X2 while it contains F(x)=offset, return [X1 F(X1) X2 F(X2)] box. 
+				 SEARCH is a function! value.
+			
+			ARGUMENTS:
+				 'word        [word! set-word!] "X argument name for the F(x) function."
+				 X1           [number!] {When both X1 and X2 are integers, treats X as discrete variable.}
+				 X2           [number!] 
+				 F            [block!] "Monotonic function F(x)."
+			
+			REFINEMENTS:
+				 /for         => F(x) value to look for (default: 0).
+					offset       [number!] 
+				 /range       => Minimally acceptable X1..X2 interval to stop the search.
+					xrange       [number!] 
+				 /error       => Minimally acceptable F(X1)..F(X2) interval to stop the search.
+					frange       [number!] 
+				 /limit       => Max number of allowed iterations (throws an error if doesn't converge within it).
+					nmax         [integer!] 
+				 /mode        => Use predefined [binary interp jump] or custom func [x1 f1 x2 f2] guessing algorithm (default: binary).
+					guess        [word! function!] 
+				 /with        => Provide F(X1) and F(X2) if they are known.
+					F1           [number!] 
+					F2           [number!] 
 		
 		>> ? array-search
-		USAGE:
-		     ARRAY-SEARCH array value
-		
-		DESCRIPTION: 
-		     Look for a smallest segment in a sorted array that contains value, return [X1 X2]. 
-		     ARRAY-SEARCH is a function! value.
-		
-		ARGUMENTS:
-		     array        [block! hash! vector!] 
-		     value        [number!] 
-		
-		REFINEMENTS:
-		     /mode        => Use predefined [binary interp jump] or custom func [x1 f1 x2 f2] guessing algorithm (default: binary).
-		        guess        [word! function!] 
+			USAGE:
+			     ARRAY-SEARCH array value
+			
+			DESCRIPTION: 
+			     Look for a smallest segment in a sorted array that contains value, return [X1 X2]. 
+			     ARRAY-SEARCH is a function! value.
+			
+			ARGUMENTS:
+			     array        [block! hash! vector!] 
+			     value        [number!] 
+			
+			REFINEMENTS:
+			     /mode        => Use predefined [binary interp jump] or custom func [x1 f1 x2 f2] guessing algorithm (default: binary).
+			        guess        [word! function!] 
         
         
 		*** EXAMPLES ***
@@ -64,8 +66,8 @@ Red [
 		
 		Example: numeric computation of 'e' up to 1e-5 precision
 		(searching for a value 1.0 of an analytic function F(x)=log-e(x) within [0.1 .. 5.0]):
-			>> search/mode/range x: 0.1 5.0 [(log-e x) - 1.0] 'binary 1e-5
-			== [2.7182748794555662 -0.0000025563987841037417 2.718284225463867 0.0000008818084054063036]
+			>> search/mode/range/for x: 0.1 5.0 [(log-e x) - 1.0] 'binary 1e-5
+			== [2.7182748794555662 0.9999974436012159 2.718284225463867 1.0000008818084054]
 			>> 2.718284225463867 - 2.7182748794555662
 			== 9.346008300603614e-6											;-- <= 1e-5
 		Note that to look for nonzero value of F, you can just subtract this value from the result of F.
@@ -122,7 +124,10 @@ Red [
 			Given that function F is expected to be slow, letting it run for too many iterations will freeze the program.
 			If this freeze goes unchecked it goes repeated, causing sluggish behavior 
 			and requiring one to debug the program to track down the source of the problem.
-			Timely error message may just save this debugging effort by telling exactly what's wrong. 
+			Timely error message may just save this debugging effort by telling exactly what's wrong.
+		
+		Why add a /for refinement?
+			Otherwise user has to manually offset returned F1 and F2, which is grunt work. 
 		
 		Other methods maybe to add (in the future):
 		- Secant, Newton, Steffensen, Inverse interp, Fixed point iteration - https://en.wikipedia.org/wiki/Root-finding_algorithms
@@ -149,15 +154,17 @@ context [
 		/mode "Use predefined [binary interp jump] or custom func [x1 f1 x2 f2] guessing algorithm (default: binary)"
 			guess [word! function!]
 	][
-		head remove next remove next search/:mode i: 1 length? array [array/:i - value] :guess
+		head remove next remove next search/for/:mode i: 1 length? array [array/:i] value :guess
 	]
 	
 	set 'search function [
-		"Iteratively narrow down segment X1..X2 while it contains F(x)=0, return [X1 F(X1) X2 F(X2)] box"
+		"Iteratively narrow down segment X1..X2 while it contains F(x)=offset, return [X1 F(X1) X2 F(X2)] box"
 		'word [word! set-word!] "X argument name for the F(x) function"
 		X1    [number!] "When both X1 and X2 are integers, treats X as discrete variable"
 		X2    [number!] (same? type? X1 type? X2)
 		F     [block!]  "Monotonic function F(x)"
+		/for   "F(x) value to look for (default: 0)"
+			offset: 0 [number!]
 		/range "Minimally acceptable X1..X2 interval to stop the search"
 			xrange: 0 [number!] (xrange >= 0)
 		/error "Minimally acceptable F(X1)..F(X2) interval to stop the search"
@@ -173,10 +180,10 @@ context [
 	][
 		;; special cases not handled by the general algorithm - for more robustness
 		case [
-			zero? f1 [return reduce [x1 f1 x1 f1]]		;-- zero is already found
-			zero? f2 [return reduce [x2 f2 x2 f2]]
-			same? sign? f1 sign? f2 [					;-- F(x) does not intersect zero
-				return reduce pick [ [x2 f2 x2 f2] [x1 f1 x1 f1] ] (abs f1) > (abs f2) 
+			f1 == offset [return reduce [x1 f1 x1 f1]]				;-- zero is already found
+			f2 == offset [return reduce [x2 f2 x2 f2]]
+			same? sign? df1: f1 - offset sign? df2: f2 - offset [	;-- F(x) does not intersect zero
+				return reduce pick [ [x2 f2 x2 f2] [x1 f1 x1 f1] ] (abs df1) > (abs df2) 
 			]
 		]
 		
@@ -198,9 +205,9 @@ context [
 				return reduce [x1 f1 x2 f2]
 			][
 				fx: call-f x: guess x1 f1 x2 f2
-				if any [x = x1 x = x2] [return reduce [x1 f1 x2 f2]]	;-- avoid deadlock on discrete sets with xrange=0
 				; print [to tag! i: 1 + any [i 0] x1 f1 ".." x2 f2 "->" x fx]
-				switch sign * sign? fx [
+				if any [x == x1 x == x2] [return reduce [x1 f1 x2 f2]]	;-- avoid deadlock on discrete sets with xrange=0
+				switch sign * sign? fx - offset [
 					 1 [x2: x f2: fx]					;-- F(x) has the sign of F2(x), replaces it
 					-1 [x1: x f1: fx]					;-- F(x) has the sign of F1(x), replaces it
 					 0 [return reduce [x fx x fx]]		;-- found zero, may stop right here
@@ -218,7 +225,7 @@ context [
 	;; x = x2 - f2*(x2-x1)/(f2-f1) = (x2f2-x2f1-x2f2+x1f2)/(f2-f1) = (x1f2-x2f1)/(f2-f1)
 	;; constant case f1=f2 is handled by frange check in the search body
 	interp: func [x1 f1 x2 f2] with :search [
-		to type divide subtract x1 * f2 x2 * f1 f2 - f1
+		to type divide subtract f2 - offset * x1 f1 - offset * x2 f2 - f1
 	] 
 	
 	;; only defined on discrete sets, so can fall back to +1 linear scanning
@@ -255,7 +262,7 @@ context [
 	[ 3.337434002681952e-27  0.0  3.337434002681952e-27  0.0] = search/mode x: -2.0 1.0 [sin x] 'interp	;-- converges in 6 iterations
 	[-1.1102230246251565e-16 0.0 -1.1102230246251565e-16 0.0] = search/mode x: -2.0 1.0 [sin x] 'binary	;-- converges in 54 iterations
 	
-	set [x1: _: x2: _:] search/mode/range x: 0.1 5.0 [(log-e x) - 1.0] 'binary 1e-5
+	set [x1: _: x2: _:] search/mode/range/for x: 0.1 5.0 [log-e x] 'binary 1e-5 1.0
 	x2 - x1 <= 1e-5
 ]]
  
