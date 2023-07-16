@@ -31,7 +31,6 @@ Red [
 
 context [
 	next-newline?: function [b [block!]] [
-		b: next b
 		forall b [if new-line? b [return b]]
 		tail b
 	]
