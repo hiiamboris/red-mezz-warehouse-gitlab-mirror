@@ -66,11 +66,10 @@ Red [
 		
 		Example: numeric computation of 'e' up to 1e-5 precision
 		(searching for a value 1.0 of an analytic function F(x)=log-e(x) within [0.1 .. 5.0]):
-			>> search/mode/range/for x: 0.1 5.0 [(log-e x) - 1.0] 'binary 1e-5
+			>> search/mode/range/for x: 0.1 5.0 [log-e x] 'binary 1e-5 1.0
 			== [2.7182748794555662 0.9999974436012159 2.718284225463867 1.0000008818084054]
 			>> 2.718284225463867 - 2.7182748794555662
 			== 9.346008300603614e-6											;-- <= 1e-5
-		Note that to look for nonzero value of F, you can just subtract this value from the result of F.
 		
 		Example: locating arbitrary point on a sorted array:
 			>> array-search probe sort loop 10 [append [] random 100] 20
@@ -257,7 +256,7 @@ context [
 	[ 6  7] = array-search [-10.3 -8.1 -7.9 -7.6 -2.2 0.0 0.01 0.1 3.2 7.1 9.8] 1e-6
 	[11 11] = array-search [-10.3 -8.1 -7.9 -7.6 -2.2 0.0 0.01 0.1 3.2 7.1 9.8] 1e6
 	[11 11] = array-search [-10.3 -8.1 -7.9 -7.6 -2.2 0.0 0.01 0.1 3.2 7.1 9.8] 1e15	;-- near the limit of precision because of subtraction
-	[1  1 ] = array-search [-10.3 -8.1 -7.9 -7.6 -2.2 0.0 0.01 0.1 3.2 7.1 9.8] -1e15	;-- near the limit of precision because of subtraction
+	[ 1  1] = array-search [-10.3 -8.1 -7.9 -7.6 -2.2 0.0 0.01 0.1 3.2 7.1 9.8] -1e15	;-- near the limit of precision because of subtraction
 	
 	[ 3.337434002681952e-27  0.0  3.337434002681952e-27  0.0] = search/mode x: -2.0 1.0 [sin x] 'interp	;-- converges in 6 iterations
 	[-1.1102230246251565e-16 0.0 -1.1102230246251565e-16 0.0] = search/mode x: -2.0 1.0 [sin x] 'binary	;-- converges in 54 iterations
