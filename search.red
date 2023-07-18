@@ -76,6 +76,11 @@ Red [
 			[3 4 13 48 51 53 67 71 81 92]
 			== [3 4]														;-- 20 is between 3rd(13) and 4th(48)
 		Likewise you can define the function on array of any layout and use SEARCH
+		
+		Example: using APPLY to improve readability of a SEARCH call:
+			apply 'search [HE: H- H+ HE2TWE /with on TW2 TW1 /for on TW /error on tolerance /mode on 'binary]
+		Compare to the basic call where you've no idea what argument corresponds to what refinement:
+			search/with/for/error/mode HE: H- H+ HE2TWE TW2 TW1 TW tolerance 'binary
 	}
 	notes: {
 		Since it's a Red-level implementation it makes most sense for:
