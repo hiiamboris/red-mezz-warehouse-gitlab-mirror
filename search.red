@@ -209,7 +209,7 @@ context [
 				return reduce [x1 f1 x2 f2]
 			][
 				fx: call-f x: guess x1 f1 x2 f2
-				print [to tag! i: 1 + any [i 0] x1 f1 ".." x2 f2 "->" x fx]
+				; print [to tag! i: 1 + any [i 0] x1 f1 ".." x2 f2 "->" x fx]
 				if any [x == x1 x == x2] [return reduce [x1 f1 x2 f2]]	;-- avoid deadlock on discrete sets with xrange=0
 				switch sign * sign? fx - offset [
 					 1 [x2: x f2: fx]					;-- F(x) has the sign of F2(x), replaces it
