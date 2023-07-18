@@ -209,7 +209,7 @@ context [
 				return reduce [x1 f1 x2 f2]
 			][
 				fx: call-f x: guess x1 f1 x2 f2
-				; print [to tag! i: 1 + any [i 0] x1 f1 ".." x2 f2 "->" x fx]
+				print [to tag! i: 1 + any [i 0] x1 f1 ".." x2 f2 "->" x fx]
 				if any [x == x1 x == x2] [return reduce [x1 f1 x2 f2]]	;-- avoid deadlock on discrete sets with xrange=0
 				switch sign * sign? fx - offset [
 					 1 [x2: x f2: fx]					;-- F(x) has the sign of F2(x), replaces it
@@ -228,8 +228,12 @@ context [
 	;; slope = (f2-f1)/(x2-x1) = f2/(x2-x) = f1/(x1-x), so x = x2 - f2/slope = x1 - f1/slope
 	;; x = x2 - f2*(x2-x1)/(f2-f1) = (x2f2-x2f1-x2f2+x1f2)/(f2-f1) = (x1f2-x2f1)/(f2-f1)
 	;; constant case f1=f2 is handled by frange check in the search body
-	interp: func [x1 f1 x2 f2] with :search [
-		to type divide subtract f2 - offset * x1 f1 - offset * x2 f2 - f1
+	interp: func [x1 f1 x2 f2 /local x] with :search [
+		either type =? integer! [
+			to type divide subtract f2 - offset * (x1 + 1) f1 - offset * x2 f2 - f1
+		][
+			divide subtract f2 - offset * x1 f1 - offset * x2 f2 - f1
+		]
 	] 
 	
 	;; only defined on discrete sets, so can fall back to +1 linear scanning
@@ -262,7 +266,9 @@ context [
 	[11 11] = array-search [-10.3 -8.1 -7.9 -7.6 -2.2 0.0 0.01 0.1 3.2 7.1 9.8] 1e6
 	[11 11] = array-search [-10.3 -8.1 -7.9 -7.6 -2.2 0.0 0.01 0.1 3.2 7.1 9.8] 1e15	;-- near the limit of precision because of subtraction
 	[ 1  1] = array-search [-10.3 -8.1 -7.9 -7.6 -2.2 0.0 0.01 0.1 3.2 7.1 9.8] -1e15	;-- near the limit of precision because of subtraction
-	
+	[ 2  3] = array-search/mode [1 2 3 4 5 6 7 8 9 10] 2.1 'interp		;-- should't be [2 10]
+	[ 2  3] = array-search/mode [1 2 3 4 5 6 7 8 9 10] 2.9 'interp
+
 	[ 3.337434002681952e-27  0.0  3.337434002681952e-27  0.0] = search/mode x: -2.0 1.0 [sin x] 'interp	;-- converges in 6 iterations
 	[-1.1102230246251565e-16 0.0 -1.1102230246251565e-16 0.0] = search/mode x: -2.0 1.0 [sin x] 'binary	;-- converges in 54 iterations
 	
