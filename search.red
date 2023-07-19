@@ -191,7 +191,7 @@ context [
 			]
 		]
 		
-		type: type? x1
+		discrete?: integer! = type: type? x1
 		sign: sign? f2 - f1
 		if word? :guess [
 			if guess = 'jump [
@@ -229,7 +229,7 @@ context [
 	;; x = x2 - f2*(x2-x1)/(f2-f1) = (x2f2-x2f1-x2f2+x1f2)/(f2-f1) = (x1f2-x2f1)/(f2-f1)
 	;; constant case f1=f2 is handled by frange check in the search body
 	interp: func [x1 f1 x2 f2 /local x] with :search [
-		either type =? integer! [
+		either discrete? [
 			to type divide subtract f2 - offset * (x1 + 1) f1 - offset * x2 f2 - f1
 		][
 			divide subtract f2 - offset * x1 f1 - offset * x2 f2 - f1
