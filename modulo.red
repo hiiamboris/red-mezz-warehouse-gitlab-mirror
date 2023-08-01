@@ -37,8 +37,8 @@ context [
 
 	set 'modulo function [
 		"Returns a modulo R of A divided by B. Defaults to Euclidean definition of modulo (R >= 0)"
-		a [number! char! pair! tuple! vector! time!]
-		b [number! char! pair! tuple! vector! time!]
+		a [number! char! pair! any-point! tuple! vector! time!]
+		b [number! char! pair! any-point! tuple! vector! time!]
 		/floor "Follow the Floored definition: sgn(R) = sgn(B)"
 		/trunc "Follow the Truncated definition: sgn(R) = sgn(A)"
 		/round "Round near-terminal results (e.g. near zero or near B) to zero"
@@ -81,9 +81,9 @@ context [
 
 	set '// make op! func [
 		"Returns a modulo R of A divided by B, following Euclidean definition of it (R >= 0)"
-		a [number! char! pair! tuple! vector! time!]
-		b [number! char! pair! tuple! vector! time!]
-		; return: [number! char! pair! tuple! vector! time!] "Same type as A"
+		a [number! char! pair! any-point! tuple! vector! time!]
+		b [number! char! pair! any-point! tuple! vector! time!]
+		; return: [number! char! pair! any-point! tuple! vector! time!] "Same type as A"
 	][
 		modulo a b
 	]
@@ -343,6 +343,23 @@ context [
 	 2x4  = modulo/trunc  12x34 -5x10 
 	-2x4  = modulo/trunc -12x34  5x10 
 	-2x4  = modulo/trunc -12x34 -5x10 
+
+
+	;; point tests
+	( 2, 4) = modulo       ( 12, 34) ( 5, 10) 
+	( 2, 4) = modulo       ( 12, 34) (-5, 10) 
+	( 3, 4) = modulo       (-12, 34) ( 5, 10) 
+	( 3, 4) = modulo       (-12, 34) (-5, 10) 
+
+	( 2, 4) = modulo/floor ( 12, 34) ( 5, 10) 
+	(-3, 4) = modulo/floor ( 12, 34) (-5, 10) 
+	( 3, 4) = modulo/floor (-12, 34) ( 5, 10) 
+	(-2, 4) = modulo/floor (-12, 34) (-5, 10) 
+
+	( 2, 4) = modulo/trunc ( 12, 34) ( 5, 10) 
+	( 2, 4) = modulo/trunc ( 12, 34) (-5, 10) 
+	(-2, 4) = modulo/trunc (-12, 34) ( 5, 10) 
+	(-2, 4) = modulo/trunc (-12, 34) (-5, 10) 
 
 
 	;; positives tests

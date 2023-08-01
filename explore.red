@@ -267,7 +267,8 @@ context [
 	]
 
 	fnt: make font! [name: system/view/fonts/fixed size: 7 style: 'bold]		;-- font for coordinates in `draw`
-	aim-at: function [panel [object!] fa [object!] "Lens or Overlay" ofs [pair!] "Pointer coordinate"] [
+	aim-at: function [panel [object!] fa [object!] "Lens or Overlay" ofs [pair! point2D!] "Pointer coordinate"] [
+		if point2D? ofs [ofs: to pair! ofs]
 		old: system/view/auto-sync?
 		system/view/auto-sync?: no
 		lens?:   fa =? panel/lens
@@ -319,8 +320,8 @@ context [
 		system/view/auto-sync?: old
 	]
 
-	move-frame: function [panel [object!] center [pair!]] [
-		panel/frame/offset: center - (panel/frame/size / 2)
+	move-frame: function [panel [object!] center [pair! point2D!]] [
+		panel/frame/offset: to pair! center - (panel/frame/size / 2)
 	]
 
 	aim: function [fa ev] [

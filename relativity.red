@@ -35,16 +35,19 @@ if object? :system/view [								;-- CLI programs skip this
 	context [
 		dpi: any [attempt [system/view/metrics/dpi] 96]			;@@ temporary workaround for #4740
 		ppd: dpi / 96.0	 						       			;-- pixels per (logical) dot = display scaling factor / 100%
-		u2p: func [x] [round/to x * ppd 1]						;-- units to pixels, one-dimensional
-		p2u: func [x] [round/to x / ppd 1]						;-- pixels to units, one-dimensional
+		u2p:  func [x] [round/to x * ppd 1]						;-- units to pixels, one-dimensional
+		u2p': func [x] [x * ppd]
+		p2u:  func [x] [round/to x / ppd 1]						;-- pixels to units, one-dimensional
+		p2u': func [x] [x / ppd]
 	
 		set 'units-to-pixels function [
 			"Convert amount in virtual pixels into screen pixels"
-			size [pair! integer!]
+			size [pair! point2D! integer!]
 		][
-			either pair? size [
-				as-pair u2p size/x u2p size/y
-			][  u2p size
+			switch type?/word size [
+				pair!    [as-pair u2p size/x u2p size/y]
+				point2D! [u2p' size]
+				integer! [u2p size]
 			]
 		]
 	
@@ -52,11 +55,12 @@ if object? :system/view [								;-- CLI programs skip this
 		;; does it make sense to clip the result at 1x1 (2D) and 1 (1D)?
 		set 'pixels-to-units function [
 			"Convert amount in screen pixels into virtual pixels"
-			size [pair! integer!]
+			size [pair! point2D! integer!]
 		][
-			either pair? size [
-				as-pair p2u size/x p2u size/y
-			][  p2u size
+			switch type?/word size [
+				pair!    [as-pair p2u size/x p2u size/y]
+				point2D! [p2u' size]
+				integer! [p2u size]
 			]
 		]
 	
@@ -95,21 +99,21 @@ if object? :system/view [								;-- CLI programs skip this
 	
 		set 'face-to-window func [
 			"Translate a point XY in FACE space into window space"
-			xy [pair!] face [object!]
+			xy [pair! point2D!] face [object!]
 		][
 			translate/limit xy face :+ 'window
 		]
 	
 		set 'window-to-face func [
 			"Translate a point XY in window space into FACE space"
-			xy [pair!] face [object!]
+			xy [pair! point2D!] face [object!]
 		][
 			translate/limit xy face :- 'window
 		]
 	
 		set 'face-to-screen func [
 			"Translate a point in face space into screen space"
-			xy [pair!] face [object!]
+			xy [pair! point2D!] face [object!]
 			/real "Translate to screen pixels (not scaled by DPI)"
 		][
 			xy: translate xy face :+
@@ -119,7 +123,7 @@ if object? :system/view [								;-- CLI programs skip this
 	
 		set 'screen-to-face func [
 			"Translate a point in screen space into face space"
-			xy [pair!] face [object!]
+			xy [pair! point2D!] face [object!]
 			/real "XY is in screen pixels (not scaled by DPI)"
 		][
 			if real [xy: pixels-to-units xy]
@@ -128,7 +132,7 @@ if object? :system/view [								;-- CLI programs skip this
 	
 		set 'face-to-face func [
 			"Translate a point XY from FACE1 space into FACE2 space"
-			xy [pair!] face1 [object!] face2 [object!]
+			xy [pair! point2D!] face1 [object!] face2 [object!]
 		][
 			screen-to-face face-to-screen xy face1 face2
 		]
