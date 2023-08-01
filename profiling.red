@@ -127,6 +127,7 @@ Red [
 	s
 ]
 
+;@@ need to use tracer's EXPR event for /each profiling to descend into scopes!
 once prof: context [									;-- don't reinclude or stats may be reset
 	;; data format: [marker [iteration-count total-time total-ram] ...] (can't use a map because marker is code (block))
 	data:         make hash! 20

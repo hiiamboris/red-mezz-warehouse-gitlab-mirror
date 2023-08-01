@@ -155,6 +155,7 @@ splitting: context [
 		;; /by /before /after /around /slices - different modes
 		;; /slices w/o /rule and any of /only /case /same - they have no meaning for slice lengths
 	][
+		;@@ check refinements compatibility
 		unless result   [result: make [] sqrt length? series]
 		if tail? series [return append/only result copy series]
 		mode: either slices ['slice][pick pick [[around before] [after by]] before after]
