@@ -9,13 +9,14 @@ Red [
 ; #assert off												;-- optionally uncomment this to disable assertions 
 #include %debug.red
 
-#include %with.red
+; #include %with.red										;-- included by split.red
 #include %without-gc.red
 #include %setters.red
 #include %catchers.red
 #include %step.red	
 #include %extrema.red
 #include %prettify.red
+#include %split.red
 #include %reshape.red
 ; #include %match.red										;-- included by glob.red
 #include %morph.red
