@@ -42,12 +42,12 @@ if object? :system/view [								;-- CLI programs skip this
 	
 		set 'units-to-pixels function [
 			"Convert amount in virtual pixels into screen pixels"
-			size [pair! point2D! integer!]
+			size [pair! point2D! integer! float!]
 		][
 			switch type?/word size [
-				pair!    [as-pair u2p size/x u2p size/y]
+				pair! [as-pair u2p size/x u2p size/y]
 				point2D! [u2p' size]
-				integer! [u2p size]
+				integer! float! [u2p size]
 			]
 		]
 	
@@ -83,7 +83,7 @@ if object? :system/view [								;-- CLI programs skip this
 	
 		translate: func [
 			"Translate coordinate XY between face FA and screen, using OP"
-			xy [pair!]
+			xy [pair! point2D!]
 			fa [object!]
 			op [op!] ":+ for face-to-screen; :- for screen-to-face"
 			/limit lim [word!] "Stop at this face type (default: 'screen)"
