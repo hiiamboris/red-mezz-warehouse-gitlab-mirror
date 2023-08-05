@@ -164,9 +164,7 @@ once prof: context [									;-- don't reinclude or stats may be reset
 		"Check if value1 comes before value2 in sort order"
 		value1 [any-type!] value2 [any-type!]
 	][
-		reduce/into [:value1 :value2] buf1: clear []
-		sort append buf2: clear [] buf1
-		:buf1/1 =? :buf2/1
+		value =? first sort reduce/into [:value1 :value2] clear []
 	]
 	
 	;@@ get stats as a table (block)
