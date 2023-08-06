@@ -9,7 +9,7 @@ Red [
 #include %stepwise-macro.red
 #include %format-number.red
 
-;@@ should it have a /utc refinement?
+;@@ should it have a /utc refinement? if so, how will it work with /from?
 timestamp: function [
 	"Get date & time in a sort-friendly YYYYMMDD-hhmmss-mmm format"
 	/from dt [date!] "Use provided date+time instead of the current"
@@ -17,7 +17,7 @@ timestamp: function [
 	dt: any [dt now/precise]
 	r: make string! 32									;-- 19 used chars + up to 13 trailing junk from dt/second
 	foreach field [year month day hour minute second] [
-		append r format-number x: dt/:field 2 -3
+		append r format-number dt/:field 2 -3
 	]
 	#stepwise [
 		skip r 8  insert . "-"
