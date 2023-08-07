@@ -24,7 +24,7 @@ Red [
 
 #include %count.red
 #include %collect-set-words.red
-; #include %keep-type.red								;-- included by typecheck.red
+#include %keep-type.red
 #include %typecheck.red
 
 ; #include %selective-catch.red							;-- included by forparse.red
