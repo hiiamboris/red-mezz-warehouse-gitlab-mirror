@@ -51,7 +51,8 @@ Red [
 			  tip: `==` is good for scalars and strings, `=?` for blocks
 			- :existing-func-name for on-change handler
 			  alias for #on-change :existing-func-name for declaration brevity
-		  #on-change [obj word value] [function body], or
+		  #on-change [obj word new-value] [function body], or
+		  #on-change [obj word new-value old-value] [function body], or
 		  #on-change :existing-func-name
 			which creates a `function` that reacts to word's changes
 		Specifiers apply to the first set-word that precedes them.
@@ -232,11 +233,22 @@ Red [
 			or  x [integer! pair! none!] (switch type?/word x [none! [yes] integer! [x >= 0] pair! [0x0 +<= x]])
 			and it only gets worse as the number of types grows.
 			    
-		Why on-change has `obj word value` arguments?
-			Since all the checks are already made, I don't see a use for `old` value there.
-			It may be supported later if this need is proven.
+		Is there a need to access the old value from on-change?
+			There is sometimes.
+			E.g. I may want `on-change` to internally convert multiple types into one: 1 or 1.0 or 1x1 -> (1,1).
+			In this case equality check will always fail e.g. if it's `new 1 = old (1,1)`, and on-change always gets called.
+			For on-change to be able to detect that no further change is needed,
+			it has to compare converted (1,1) with the old value.
+			This example is from Spaces, where it caused constant invalidation when style had a `margin: 1` assignment.
+			
+		Why on-change has `obj word new old` arguments list?
+			Ideally I wanted just `obj word new`, with the old value available as `obj/:word`.
+			However that would require me to add two `set-quiet word ...` calls into on-change-dispatch, slowing it down.
 			`obj` argument is required because on-change is a per-class function.
 			`word` is required to be able to share single on-change between different words.
+			`new` is not strictly required, but more convenient to have than `obj/:word`.
+			`old` is optional, if it exists in the spec it gets the old value. It is rarely used anyway.
+			When `old` follows `new`, support for specs of both arity 3 and 4 is cheap.  
 		
 		Why test for equality?
 			I've found riddling my code with `maybe word: expression` instead of simple assignments.
@@ -312,7 +324,7 @@ on-change-dispatch: function [
 					do make error! info/2 :new
 				]
 			]
-			info/3 obj word :new
+			info/3 obj word :new :old
 		]
 	]
 ]
@@ -366,7 +378,7 @@ context [
 			|	set name [get-word! | get-path!]
 			]] p: (new-line p on)
 		|	remove [p: #on-change (field?) [
-				set args block! if (3 = count args word!) set body block!
+				set args block! if (find [3 4] count args any-word!) set body block!
 			|	set name [get-word! | get-path!]
 			|	(ERROR "Invalid #on-change handler at (mold/flat/part p 50)")
 			]]
@@ -409,7 +421,7 @@ context [
 				classify-object self (to lit-word! class)
 			]
 		]
-		spec												;-- spec can be passed to `make` now
+		spec											;-- spec can be passed to `make` now
 	]
 ]
 
