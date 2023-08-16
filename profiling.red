@@ -152,9 +152,10 @@ once prof: context [									;-- don't reinclude or stats may be reset
 		"Number formatter used internally by PROF/EACH"
 		delta [number!] dot-index [integer!]
 	][
-		s: either percent? delta [
-			format-readable/size/clean   delta 0
-		][	format-readable/extend/clean delta
+		s: case [
+			nan?     delta ["NaN"]
+			percent? delta [format-readable/size/clean   delta 0]
+			'else          [format-readable/extend/clean delta]
 		]
 		dot: index? any [find s #"."  tail s]			;-- align the dot
 		pad/left s dot-index - dot + length? s
