@@ -22,6 +22,8 @@ Red [
 #include %match.red
 
 context [
+	~only: func [value [any-type!]] [any [:value []]]
+
 	set 'glob function [
 		"Recursively list all files"
 		/from "starting from a given path"
@@ -33,6 +35,7 @@ context [
 		/omit "exclude files matching the mask or block of masks"
 			xmask [string! block!] "* and ? wildcards are supported"
 		/files "list only files, not directories"
+		/dirs  "list only directories, not files"
 	][
 		;; ^ tip: by binding the func to a context I can use a set of helper funcs
 		;; without recreating them on each `glob` invocation
@@ -48,12 +51,14 @@ context [
 		;; requested file exclusion conditions:
 		;; tip: any [] = none, works even if no condition is provided
 		excl-conds: compose [
-			(either files [ [dir? f] ][ [] ])					;-- it's a dir but only files are requested?
-			(either only  [ [not match-any f imask] ][ [] ])		;-- doesn't match the provided imask?
-			(either omit  [ [match-any f xmask] ][ [] ])			;-- matches the provided xmask?
+			(~only if files [[dir? f]])						;-- it's a dir but only files are requested?
+			(~only if dirs  [[not dir? f]])					;-- it's a file but only dirs are requested?
+			(~only if only  [[not match-any f imask]])		;-- doesn't match the provided imask?
+			(~only if omit  [[match-any f xmask]])			;-- matches the provided xmask?
 		]
 
 		r: copy []
+		;@@ unsafe to use these static blocks in the face of IO errors
 		subdirs: append [] %"" 		;-- dirs to list right now
 		nextdirs: [] 					;-- will be filled with the next level dirs
 		until [
