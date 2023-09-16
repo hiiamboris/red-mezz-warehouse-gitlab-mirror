@@ -47,13 +47,10 @@ Red [
 	not object? :rebol									;-- do nothing when compiling
 	not block? :included-scripts						;-- do not reinclude itself
 ][
-	;-- since it's now running in Red, we don't need R2 compatibility
 	; #do [verbose-inclusion?: yes]						;-- comment this out to disable file names dump
 	
-	#macro [#include] func [
-		[manual] s e
-		/local file data old-path path _ verb? processing? finished? also?
-	][
+	;; since it's now running in Red, we don't need R2 compatibility
+	#macro [#include] function [[manual] s e] [
 		indent: ""
 		unless file? :s/2 [
 			do make error! rejoin [
@@ -61,7 +58,9 @@ Red [
 			]
 		]
 		
-		unless block? :included-scripts [included-scripts: copy []]
+		unless block? :included-scripts [
+			system/words/included-scripts: copy []		;@@ no /extern support - #5386
+		]
 		file: clean-path to-red-file :s/2				;-- use absolute paths to ensure uniqueness
 		if find included-scripts file [					;-- if already included, skip it
 			return remove/part s 2
@@ -76,7 +75,7 @@ Red [
 		]
 		
 		old-path: what-dir
-		set [path _] split-path file
+		set [path: _:] split-path file
 		if 'Red == :data/1 [data: skip data 2]			;-- skip the header in case Red word is defined to smth else
 		
 		prelude:  compose [change-dir (path)]			;-- evaluate inside script's path
@@ -92,6 +91,8 @@ Red [
 			]
 		]
 		
+		;@@ dilemma here is that we want to include file as is, exposing all set-words into the context
+		;@@ but on the other hand we want to be able to assign the result to a word, and can't have both :(
 		change/part s compose/deep [					;-- insert contents
 			(to issue! 'do) [change-dir (path)]			;-- preprocess inside script's path
 			(prelude)
