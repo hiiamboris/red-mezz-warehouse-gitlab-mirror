@@ -280,7 +280,7 @@ if native? :function [
 			ref?: no
 			parse spec: copy spec [any [				;-- copy so multiple functions can be created
 				[	set word spec-word!
-				|	not 'return change set word set-word! (to word! word)
+				|	not quote return: change set word set-word! (to word! word)
 					[	remove set default defaults!
 					|	pos: (ERROR "Invalid default value for '(word) at (mold/flat/part :pos 20)")
 					]
@@ -306,6 +306,9 @@ if native? :function [
 		]
 	]
 ]
+
+; #include %assert.red
+#assert [find/case spec-of function [abc return: [logic!]] [] quote return:]
 
 ; do [
 comment [
