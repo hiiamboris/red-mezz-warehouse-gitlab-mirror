@@ -70,5 +70,6 @@ Red [
 #include %classy-object.red
 ; #include %advanced-function.red							;-- included by search.red
 #include %search.red
+#include %quantize.red
 
 
