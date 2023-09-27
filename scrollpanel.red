@@ -217,7 +217,7 @@ context [
 	]
 
 	unless find/same system/view/handlers :on-focus-handler [
-		insert-event-func :on-focus-handler
+		insert-event-func 'on-focus-handler :on-focus-handler
 	]
 
 	wheel-handler: function [fa ev] [
@@ -243,7 +243,7 @@ context [
 	]
 
 	unless find/same system/view/handlers :wheel-handler [
-		insert-event-func :wheel-handler
+		insert-event-func 'wheel-handler :wheel-handler
 	]
 ]
 
