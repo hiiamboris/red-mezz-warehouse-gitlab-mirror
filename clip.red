@@ -32,6 +32,15 @@ Red [
 
 ; #include %assert.red
 
+#assert [												;-- check for arithmetic sanity
+	(2,3)      = max (1,3) 2x2 
+	(2,3)      = max 2x2 (1,3) 
+	(2,1.#inf) = max 2x2 (1,1.#inf) 
+	(2,1.#inf) = max (1,1.#inf) 2x2 
+	(1,2)      = min 2x2 (1,1.#inf) 
+	(1,2.5)    = min 2.5 (1,1.#inf) 
+]
+
 ;@@ remove it if PR #5194 gets merged
 clip: func [
 	"Return A if it's within [B,C] range, otherwise the range boundary nearest to A"
