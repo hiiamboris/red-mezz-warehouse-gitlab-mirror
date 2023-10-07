@@ -14,6 +14,7 @@ Red [
 #include %setters.red
 #include %catchers.red
 #include %step.red	
+#include %clip.red	
 #include %extrema.red
 #include %prettify.red
 #include %split.red

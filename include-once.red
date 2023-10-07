@@ -23,7 +23,8 @@ Red [
 		That's just enough.
 
 		This #include replacement attempts to keep it under control.
-		As a side effect it also prints the file name, so you always know where is the error.
+		It can also prints the included file names, so you would always know where is the error
+		(turned on by `verbose-inclusion?` flag below).
 
 		Implementation is tricky. #include has to:
 		- check if file is already included
