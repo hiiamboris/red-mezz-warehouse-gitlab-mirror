@@ -39,7 +39,7 @@ Notes:
 | [setters](setters.red)                 | Contains ONCE, DEFAULT, MAYBE, QUIETLY, ANONYMIZE value assignment wrappers, and IMPORT/EXPORT to expose some object's words globally |
 | [step](step.red)                       | Increment & decrement function useful for code readability |
 | [clip](clip.red)                       | Contain a value within given range |
-| [catchers](catchers.red)               | TRAP - enhanced TRY, FCATCH - Filtered catch, and PCATCH - Pattern-matched catch |
+| [catchers](catchers.red)               | TRAP - enhanced TRY, FCATCH - Filtered catch, PCATCH - Pattern-matched catch, FOLLOWING - guaranteed cleanup |
 | [#include macro](include-once.red)     | Smart replacement for #include directive that includes every file only once |
 | [with](with.red)                       | A convenient/readable BIND variant |
 | [#localize macro](localize-macro.red)  | Automatic set-word and loop counter hiding |

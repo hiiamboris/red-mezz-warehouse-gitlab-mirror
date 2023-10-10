@@ -81,6 +81,19 @@ Red [
 
 		ATTEMPT
 			Fixed of #3755 issue.
+			
+			
+		FOLLOWING - Analogue of `try .. finally ..` clause in C-like languages
+		
+			Ensures evaluation of finalization code while not disrupting non-local control flow.
+			Due to #4416 the only way to achieve this is by leveraging `do/trace`, so it may slow down the code a bit.
+			
+			Example:
+				following [
+					some code that can use break or throw exceptions 
+				][
+					do some resource cleanup
+				]
 
 
 		Notes
@@ -94,6 +107,7 @@ Red [
 	}
 ]
 
+#include %localize-macro.red
 #include %assert.red
 
 context [
@@ -155,10 +169,20 @@ context [
 			]
 		]
 	] :with-thrown
+	
+	;@@ of course this traps `return` because of #4416
+	set 'following function [
+		"Guarantee evaluation of CLEANUP after leaving CODE"
+		code    [block!] "Code that can use break, continue, throw"
+		cleanup [block!] "Finalization code"
+	][
+		do/trace code :cleaning-tracer
+	]
+	cleaning-tracer: func [[no-trace]] bind [[end] do cleanup] :following	;-- [end] filter minimizes interpreted slowdown
 ]
 
 
-#assert [
+#localize [#assert [
 	1 =    catch [fcatch         [            ] [1      ]  ]	;-- normal result
 	unset? catch [fcatch         [            ] [       ]  ]
 	unset? catch [fcatch         [true        ] [       ]  ]
@@ -193,7 +217,20 @@ context [
 	10      = trap/catch [1 + none] [10]				;-- /catch tests
 	'script = trap/catch [1 + none] [select thrown 'type]
 	6       = trap/all/catch [throw 3 1] [2 * select thrown 'arg1]
-]
+	
+	i: 0
+	1 = following [1] [2]
+	1 = following [i: i + 1] [2]
+	error? try/all [following [continue] [i: i + 1]]
+	2 = i
+	error? try/all [following [break] [i: i + 1]]
+	3 = i
+	0 =      catch [following [throw 0] [i: i + 1]]
+	4 = i
+	error? try     [following [0 / 0] [i: i + 1]]
+	5 = i
+	;@@ add return test if #4416 gets fixed
+]]
 
 {
 	;-- this version is simpler but requires explicit `true [throw thrown]` to rethrow values that fail all case tests
