@@ -86,7 +86,9 @@ Red [
 		FOLLOWING - Analogue of `try .. finally ..` clause in C-like languages
 		
 			Ensures evaluation of finalization code while not disrupting non-local control flow.
-			Due to #4416 the only way to achieve this is by leveraging `do/trace`, so it may slow down the code a bit.
+			Due to #4416 the only way to achieve this is by leveraging `do/trace`, so:
+			- it may slow down the code by 20-25%
+			- it traps `return` and `exit`, though `continue`, `break` and `throw` work as expected
 			
 			Example:
 				following [
