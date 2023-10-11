@@ -89,6 +89,7 @@ Red [
 			Due to #4416 the only way to achieve this is by leveraging `do/trace`, so:
 			- it may slow down the code by 20-25%
 			- it traps `return` and `exit`, though `continue`, `break` and `throw` work as expected
+			- it only works at the top level, i.e. `following` won't work from within other `following` 
 			
 			Example:
 				following [
