@@ -11,32 +11,32 @@ Red [
 		
 		>> ? search
 			USAGE:
-				 SEARCH 'word X1 X2 F
+			     SEARCH 'word X1 X2 F
 			
 			DESCRIPTION: 
-				 Iteratively narrow down segment X1..X2 while it contains F(x)=offset, return [X1 F(X1) X2 F(X2)] box. 
-				 SEARCH is a function! value.
+			     Iteratively narrow down segment X1..X2 while it contains F(x)=offset, return [X1 F(X1) X2 F(X2)] box. 
+			     SEARCH is a function! value.
 			
 			ARGUMENTS:
-				 'word        [word! set-word!] "X argument name for the F(x) function."
-				 X1           [number!] {When both X1 and X2 are integers, treats X as discrete variable.}
-				 X2           [number!] 
-				 F            [block!] "Monotonic function F(x)."
+			     'word        [word! set-word!] "X argument name for the F(x) function."
+			     X1           [number!] {When both X1 and X2 are integers, treats X as discrete variable.}
+			     X2           [number!] 
+			     F            [block!] "Monotonic function F(x)."
 			
 			REFINEMENTS:
-				 /for         => F(x) value to look for (default: 0).
-					offset       [number!] 
-				 /range       => Minimally acceptable X1..X2 interval to stop the search.
-					xrange       [number!] 
-				 /error       => Minimally acceptable F(X1)..F(X2) interval to stop the search.
-					frange       [number!] 
-				 /limit       => Max number of allowed iterations (throws an error if doesn't converge within it).
-					nmax         [integer!] 
-				 /mode        => Use predefined [binary interp jump] or custom func [x1 f1 x2 f2] guessing algorithm (default: binary).
-					guess        [word! function!] 
-				 /with        => Provide F(X1) and F(X2) if they are known.
-					F1           [number!] 
-					F2           [number!] 
+			     /for         => F(x) value to look for (default: 0).
+			        offset       [number!] 
+			     /range       => Minimally acceptable X1..X2 interval to stop the search (default: 0).
+			        xrange       [number!] 
+			     /error       => Minimally acceptable F(X1)..F(X2) interval to stop the search (default: 0).
+			        frange       [number!] 
+			     /limit       => Max number of allowed iterations (throws an error if doesn't converge within it, default: 100).
+			        nmax         [integer!] 
+			     /mode        => Use predefined [binary interp jump] or custom func [x1 f1 x2 f2] guessing algorithm (default: binary).
+			        guess        [word! function!] 
+			     /with        => Provide F(X1) and F(X2) if they are known.
+			        F1           [number!] 
+			        F2           [number!] 
 		
 		>> ? array-search
 			USAGE:
@@ -169,11 +169,11 @@ context [
 		F     [block!]  "Monotonic function F(x)"
 		/for   "F(x) value to look for (default: 0)"
 			offset: 0 [number!]
-		/range "Minimally acceptable X1..X2 interval to stop the search"
+		/range "Minimally acceptable X1..X2 interval to stop the search (default: 0)"
 			xrange: 0 [number!] (xrange >= 0)
-		/error "Minimally acceptable F(X1)..F(X2) interval to stop the search"
+		/error "Minimally acceptable F(X1)..F(X2) interval to stop the search (default: 0)"
 			frange: 0 [number!] (frange >= 0)
-		/limit "Max number of allowed iterations (throws an error if doesn't converge within it)"
+		/limit "Max number of allowed iterations (throws an error if doesn't converge within it, default: 100)"
 			nmax: 100 [integer!] (nmax > 0)
 		;; 'binary chosen for robustness, e.g. 'interp can't work with infinity at either side
 		/mode "Use predefined [binary interp jump] or custom func [x1 f1 x2 f2] guessing algorithm (default: binary)"
