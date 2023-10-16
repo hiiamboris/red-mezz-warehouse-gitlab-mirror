@@ -146,7 +146,7 @@ export: function [
 
 anonymize: function [
 	"Return WORD bound in an anonymous context and set to VALUE"
-	word [word!] value [any-type!]
+	word [any-word!] value [any-type!]
 ][
 	o: construct change [] to set-word! word
 	set/any/only o :value
