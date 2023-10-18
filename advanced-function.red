@@ -275,7 +275,7 @@ if native? :function [
 		set 'function native-function [
 			"Defines a function, making all set-words in the body local, and with default args and value checks support"
 			spec [block!] body [block!]
-			/local word types
+			/local word
 		][
 			ref?: no
 			parse spec: copy spec [any [				;-- copy so multiple functions can be created
@@ -297,7 +297,7 @@ if native? :function [
 					if any [types values default] [
 						insert-check body to get-word! word ref? default types options general-check
 					]
-					set [default: values: general-check:] none
+					set [default: values: options: general-check:] none
 				)
 			|	refinement! (ref?: yes)					;-- refinements args can be none even if it's not in the typeset
 			|	skip
@@ -309,6 +309,17 @@ if native? :function [
 
 ; #include %assert.red
 #assert [find/case spec-of function [abc return: [logic!]] [] quote return:]
+#assert [
+	equal? body-of function [z [block!] /x a: 1 b: 2] []
+	[
+	    switch type? :b [
+	        #[none!] [b: 2] 
+	    ] 
+	    switch type? :a [
+	        #[none!] [a: 1]
+	    ]
+	]
+]
 
 ; do [
 comment [
