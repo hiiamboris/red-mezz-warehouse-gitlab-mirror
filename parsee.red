@@ -37,9 +37,11 @@ context expand-directives [
 		#[true]
 	]
 
-	;@@ workaround for #5406
+	;@@ workaround for #5406 - unable to save global words and words within functions
 	;@@ unfortunately this has to modify parse rules in place right in the function
 	;@@ so next `parse` run may not work at all... how to work around this workaround? :/
+	unloadable?:  func [w [any-word!]] [any [function? w: context? w  w =? system/words]]
+	fallback:     func [x [any-type!] y [any-type!]] [any [:y :x]]
 	isolate-rule: function [
 		"Split parse rule from local function context for Redbin compatibility"
 		block [block!]
@@ -52,14 +54,13 @@ context expand-directives [
 		|	p: if (find/only/same unique-rules head p) to end
 		|	p: (append/only unique-rules head p)
 			any [
-				change [set w any-word! if (function? context? w)] (
-					any [
+				change [set w any-word! if (unloadable? w)] (
+					fallback							;-- 'w' will be overridden by recursive parse
+						w
 						attempt [						;-- defend from get/any errors
 							set/any 'v get/any w
-							anonymize w either block? :v [parse v rule v][:v]
+							anonymize w either block? :v [also v parse v rule][:v]
 						]
-						w
-					]
 				)
 			; |	ahead any-block! into rule				;@@ doesn't work
 			|	ahead block! into rule
