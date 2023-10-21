@@ -11,8 +11,8 @@ Red [
 
 ; #include %with.red										;-- included by split.red
 #include %without-gc.red
-#include %setters.red
-#include %catchers.red
+; #include %setters.red									;-- included by parsee.red
+; #include %catchers.red									;-- included by parsee.red
 #include %step.red	
 #include %clip.red	
 #include %extrema.red
@@ -37,7 +37,7 @@ Red [
 ; #include %for-each.red								;-- included by map-each.red
 ; #include %map-each.red								;-- included by sift-locate.red
 #include %sift-locate.red
-#include %xyloop.red									;-- included by explore.red
+; #include %xyloop.red									;-- included by explore.red
 ; #include %relativity.red								;-- included by explore.red and tabbing.red
 #include %tabbing.red
 #include %explore.red
@@ -55,7 +55,7 @@ Red [
 
 ; #include %format-number.red							;-- included by timestamp.red
 ; #include %stepwise-macro.red							;-- included by timestamp.red
-#include %timestamp.red
+; #include %timestamp.red									;-- included by parsee.red
 #include %tabs.red
 #include %modulo.red
 #include %print-macro.red
@@ -72,5 +72,6 @@ Red [
 ; #include %advanced-function.red							;-- included by search.red
 #include %search.red
 #include %quantize.red
+#include %parsee.red
 
 
