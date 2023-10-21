@@ -92,6 +92,7 @@ These functions mainly help one follow design-by-contract guidelines in one's co
 | [expect](expect.red)                   | Test a condition, showing full backtrace when it fails |
 | [show-trace](show-trace.red)           | Example TRACE wrapper that just prints the evaluation log to console |
 | [show-deep-trace](show-deep-trace.red) | Example TRACE-DEEP wrapper that just prints the evaluation log to console |
+| [parsee](parsee.red)                   | Parse visual debugger. [Read more](https://codeberg.org/hiiamboris/red-spaces/src/branch/master/programs/README.md#parsee-parsing-flow-visual-analysis-tool-parsee-tool-red) |
 
 ### Profiling
 | Source file                  | Description |
