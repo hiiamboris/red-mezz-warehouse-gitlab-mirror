@@ -4,10 +4,7 @@ Red [
 	author:  @hiiamboris
 	license: 'BSD-3
 	usage: {
-		;@@@@@@@
-	}
-	notes: {
-		;@@@@@@@
+		See https://codeberg.org/hiiamboris/red-spaces/src/branch/master/programs/README.md#parsee-parsing-flow-visual-analysis-tool-parsee-tool-red
 	}
 ]
 
