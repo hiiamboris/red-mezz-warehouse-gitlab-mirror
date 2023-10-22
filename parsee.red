@@ -1,5 +1,5 @@
 Red [
-	title:   "PARSE-DUMP dumper an PARSEE tool wrapper"
+	title:   "PARSE-DUMP dumper and PARSEE tool wrapper"
 	purpose: "Visualize parsing progress using PARSEE command-line tool"
 	author:  @hiiamboris
 	license: 'BSD-3
