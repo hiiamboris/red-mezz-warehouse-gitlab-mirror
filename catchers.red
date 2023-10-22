@@ -113,6 +113,7 @@ Red [
 #include %localize-macro.red
 #include %assert.red
 
+thrown: pcatch: fcatch: trap: following: none
 context [
 	with-thrown: func [code [block!] /thrown] [			;-- needed to be able to get thrown from both *catch funcs
 		do code

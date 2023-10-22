@@ -23,6 +23,8 @@ Red [
 #include %catchers.red
 #include %localize-macro.red
 
+
+typecheck: none
 typechecking: context [
 	;; another approach is to put 'do' directly into on-change-dispatch (and bind to it)
 	;; but then even unchecked words will pay the price of a function call

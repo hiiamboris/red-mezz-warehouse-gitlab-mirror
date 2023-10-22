@@ -66,8 +66,10 @@ Red [
 ]
 
 #include %assert.red
+#include %exponent-of.red
 ; #include %show-trace.red
 
+format-readable: none
 context [
 	digit:   charset [#"0" - #"9"]
 	; dig19:   charset [#"1" - #"9"]
@@ -117,14 +119,6 @@ context [
 		 "-$XX9'999.000"    = insert-separators"-$XX9999.000"   	;-- money-like
 		"12'345'678.9E-10"  = insert-separators"12345678.9E-10" 	;-- exp notation
 		        "12.3456E3" = insert-separators      "12.3456E3"	;-- but not after the dot
-	]
-
-	;-- returns none for: zero (undefined exponent), +/-inf (overflow), NaN (undefined)
-	set 'exponent-of function [
-		"Returns the exponent E of X = m * (10 ** e), 1 <= m < 10"
-		x [number!]
-	][
-		attempt [to 1 round/floor log-10 absolute to float! x]
 	]
 
 	set 'format-readable function [

@@ -26,11 +26,14 @@ Red [
 		`screen-to-face` and `face-to-screen` return wrong coordinates,
 		because window's client area coordinates cannot be known without R/S
 		In `face-to-face` these effects negate each other, so this one is correct.
-
-		Translations are lossy because we don't have floating point pairs.
 	}
 ]
 
+
+units-to-pixels: pixels-to-units: window-of: parent-of?:
+face-to-window: window-to-face: face-to-screen: screen-to-face: face-to-face:
+	does [do make error! "No View module!"]
+	
 if object? :system/view [								;-- CLI programs skip this
 	context [
 		dpi: any [attempt [system/view/metrics/dpi] 96]			;@@ temporary workaround for #4740

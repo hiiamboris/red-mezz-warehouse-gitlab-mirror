@@ -14,15 +14,8 @@ Red [
 ]
 
 ; #include %assert.red
+#include %exponent-of.red
 
-
-;-- returns none for: zero (undefined exponent), +/-inf (overflow), NaN (undefined)
-exponent-of: function [									;@@ also exported by format-readable
-	"Returns the exponent E of X = m * (10 ** e), 1 <= m < 10"
-	x [number!]
-][
-	attempt [to 1 round/floor log-10 absolute to float! x]
-]
 
 format-number: function [
 	"Format a number"

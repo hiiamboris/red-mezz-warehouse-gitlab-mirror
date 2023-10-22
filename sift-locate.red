@@ -40,7 +40,7 @@ Red [
 ; #include %new-apply.red									;-- need `apply` to dispatch refinements
 
 
-
+sift: locate: none
 context [
 	ref-or-block!: make typeset! [refinement! block!]
 	expand-paths: function [

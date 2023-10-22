@@ -22,6 +22,7 @@ Red [
 ; #include %show-trace.red
 
 
+lazy: reactive: none
 context [
 	catalog: make hash! []
 	

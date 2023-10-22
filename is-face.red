@@ -8,6 +8,7 @@ Red [
 
 ; #include %map-each.red
 
+is-face?: none
 if object? :face! [										;-- for non-view-enabled builds
 	context [
 	

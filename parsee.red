@@ -15,6 +15,7 @@ Red [
 #include %timestamp.red									;-- for dump file name
 #include %reactor92.red									;-- for changes tracking
 
+parsee: inspect-dump: parse-dump: none
 context expand-directives [
 	skip?: func [s [series!]] [-1 + index? s]
 	clone: function [									;@@ export it?

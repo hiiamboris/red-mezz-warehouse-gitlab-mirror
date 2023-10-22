@@ -23,6 +23,7 @@ minmax-of: function [
 	reduce [x- x+]
 ]
 
+minimum-of: maximum-of: none
 context [
 	;; these versions are usually 3-4 times slower
 	brute-minimum-of: func [

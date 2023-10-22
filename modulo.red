@@ -30,6 +30,7 @@ Red [
 #include %localize-macro.red
 #include %assert.red
 
+modulo: //:  none
 context [
 	abs: :absolute
 	positives!: make typeset! [char! tuple!]				;-- limited types (can't be negated)

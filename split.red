@@ -52,6 +52,7 @@ Red [
 #include %error-macro.red
 #include %with.red
 
+split: :system/words/split
 splitting: context [
 	skip?: func [series [series!]] [-1 + index? series]	;@@ split this out?
 	by: make op! :as-pair								;@@ split this out?

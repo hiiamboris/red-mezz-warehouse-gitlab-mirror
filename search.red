@@ -147,6 +147,7 @@ Red [
 #include %assert.red	
 #include %advanced-function.red	
 	
+array-search: search: none
 context [
 	abs: :absolute
 	

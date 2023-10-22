@@ -61,6 +61,7 @@ Red [
 	}
 ]
 
+deep-reactor-92!: none
 context [
 	reduce-deep-change-92: function [owner word target action new index part] [
 		f: :owner/on-deep-change-92*

@@ -33,7 +33,7 @@ Red [
 #include %assert.red
 ; #include %show-trace.red
 
-
+formula: lazy: none
 context [
 	;-- same? is better for words, == is better for strings that are result of evaluation - what to choose?
 	fetch: function [cache] [

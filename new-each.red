@@ -19,6 +19,7 @@ Red [
 
 ; #include %show-trace.red
 
+for-each: map-each: remove-each: none
 context [
 	;-- this should be straightforward and fast in R/S
 	;-- one particular side effect of type checking is we can avoid/accept `none` we get when outside series limits

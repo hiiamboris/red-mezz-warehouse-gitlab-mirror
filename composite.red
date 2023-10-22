@@ -36,6 +36,7 @@ Red [
 #include %catchers.red		;-- used by composite func to trap errors
 
 
+composite: none
 context [
 	non-paren: charset [not #"("]
 

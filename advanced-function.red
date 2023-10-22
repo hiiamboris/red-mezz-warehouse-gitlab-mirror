@@ -186,6 +186,7 @@ Red [
 ; #debug off
 
 
+function: :system/words/function
 if native? :function [
 	context [
 		make-check: function [check [paren!] word [get-word!]] [

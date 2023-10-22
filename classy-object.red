@@ -353,6 +353,8 @@ class?: function [										;-- class-of is taken already
 
 classes: make map! 20
 
+modify-class: declare-class: none 
+
 context [
 	;; used as default equality test, which always fails and allows to trigger on-change even if value is the same
 	falsey-compare: func [x [any-type!] y [any-type!]] [no]

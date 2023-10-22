@@ -21,6 +21,7 @@ Red [
 
 #include %match.red
 
+glob: none
 context [
 	~only: func [value [any-type!]] [any [:value []]]
 

@@ -38,6 +38,7 @@ Red [
 	}
 ]
 
+do-atomic: none
 make reactor! [
     react/later job: [do self/job]						;-- `do`es itself when changed
 

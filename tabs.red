@@ -10,6 +10,7 @@ Red [
 ; #include %assert.red
 
 
+detab: entab: none
 context [
 	spaces: insert/dup "" #"^(20)" 32					;-- 32 spaces max are supported per tab
 	set 'detab function [

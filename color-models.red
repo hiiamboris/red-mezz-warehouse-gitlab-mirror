@@ -166,6 +166,7 @@ HSL2RGB: function [
 ]
 
 
+brightness?: none
 context [
 	;; gamma (transfer function) comes from https://en.wikipedia.org/wiki/SRGB#Transformation
 	gamma-inverse: func [c] [

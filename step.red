@@ -24,6 +24,7 @@ Red [
 
 #include %localize-macro.red
 
+step: none
 context [
 	ref-type!: union any-word! any-path!
 	

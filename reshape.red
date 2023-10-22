@@ -24,6 +24,7 @@ Red [
 #include %assert.red
 
 ;@@ TODO: implement it in R/S to be more useful
+reshape: reshape-light: none
 context [
 	group!:  make typeset! [paren! block!]
 	; line-junk!: complement make typeset! [group! ref! refinement!] 

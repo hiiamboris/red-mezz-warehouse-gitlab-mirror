@@ -26,6 +26,7 @@ Red [
 ]
 
 
+trace-deep: none
 context [
 	eval-types: make typeset! reduce [		;-- value types that should be traced
 		paren!		;-- recurse into it

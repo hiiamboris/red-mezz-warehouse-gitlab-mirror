@@ -29,6 +29,7 @@ Red [
 	new-line s nl
 ]
 
+assert: none
 context [
 	next-newline?: function [b [block!]] [
 		forall b [if new-line? b [return b]]

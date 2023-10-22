@@ -19,7 +19,7 @@ Red [
 #include %color-models.red
 
 ;@@ need 3-point constrast too, but it's trickier
-set 'contrast-with function [
+contrast-with: function [
 	"Pick a color that would contrast with the given one"
 	color [tuple!]
 ][
