@@ -1,12 +1,8 @@
-Red [
-	title:   "PARSE-DUMP dumper an PARSEE tool wrapper"
-	purpose: "Visualize parsing progress using PARSEE command-line tool"
-	author:  @hiiamboris
-	license: 'BSD-3
-	usage: {
-		See https://codeberg.org/hiiamboris/red-spaces/src/branch/master/programs/README.md#parsee-parsing-flow-visual-analysis-tool-parsee-tool-red
-	}
-]
+Red [title: "Standalone version of the ParSEE backend"]
+
+;; keep macros and includes from spilling out
+#local [context [
+	
 
 
 
@@ -1029,3 +1025,5 @@ context expand-directives [
 	]
 ]
 
+
+]]
