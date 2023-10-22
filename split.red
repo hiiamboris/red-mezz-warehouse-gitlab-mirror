@@ -43,7 +43,7 @@ Red [
 		6. Into length as specified in a list - use /slices with a block, e.g.:
 			>> split/slices "123456" [1 2 3]
 			== ["1" "23" "456"]
-			>> split/slices "123456" [1 1x2 2x3]
+			>> split/slices "123456" [1 1x2 2x3]	;) integer = length, pair = skip x length
 			== ["1" "3" "6"]
 	}
 ]
