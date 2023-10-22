@@ -437,7 +437,7 @@ classy-object!: object declare-class/manual 'classy-object! [
 ]
 
 
-#debug [#localize [#assert [							;-- checks are disabled without #debug, will fail tests
+#debug [#hide [#assert [								;-- checks are disabled without #debug, will fail tests
 	msg?: func [error] [
 		parse error: form error [
 			remove thru ["Error: " opt [{"} | "{"]] to [opt ["}" | {"}] "^/"] remove to end
@@ -566,5 +566,5 @@ classy-object!: object declare-class/manual 'classy-object! [
 	remove/key classes 'test-class-1					;-- cleanup
 	remove/key classes 'test-class-2
 	remove/key classes 'test-class-3
-]]];; #debug [#localize [#assert []]]
+]]];; #debug [#hide [#assert []]]
 

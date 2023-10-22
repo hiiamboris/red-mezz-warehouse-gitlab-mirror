@@ -42,7 +42,7 @@ Notes:
 | [catchers](catchers.red)               | TRAP - enhanced TRY, FCATCH - Filtered catch, PCATCH - Pattern-matched catch, FOLLOWING - guaranteed cleanup |
 | [#include macro](include-once.red)     | Smart replacement for #include directive that includes every file only once |
 | [with](with.red)                       | A convenient/readable BIND variant |
-| [#localize macro](localize-macro.red)  | Automatic set-word and loop counter hiding |
+| [#hide macro](hide-macro.red)          | Automatic set-word and loop counter hiding |
 | [bind-only](bind-only.red)             | Selectively bind a word or a few only |
 | [apply](apply.red)                     | Call a function with arguments specified as key-value pairs |
 | [timestamp](timestamp.red)             | Ready-to-use and simple timestamp formatter for naming files |

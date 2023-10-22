@@ -8,7 +8,7 @@ Red [
 
 
 ; #include %assert.red
-; #include %localize-macro.red
+; #include %hide-macro.red
 
 ;@@ consider moving these out into another module
 ;; these are designed to be statistically neutral:
@@ -33,7 +33,7 @@ from-byte: function [
 	value / 255
 ]
 
-#localize [
+#hide [
 	#assert [
 		do [
 			#include %map-each.red
@@ -104,7 +104,7 @@ HSL2RGB: function [
 ]
 
 
-#localize [#assert [
+#hide [#assert [
 	~=: make op! func [a b] [							;-- account for byte rounding error
 		all [
 			0.3% >= absolute a/1 - b/1

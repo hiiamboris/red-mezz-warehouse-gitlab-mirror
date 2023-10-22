@@ -20,7 +20,7 @@ Red [
 	}
 ]
 
-#include %localize-macro.red
+#include %hide-macro.red
 #include %assert.red
 
 ;@@ TODO: implement it in R/S to be more useful
@@ -153,7 +153,7 @@ context [
 	]
 ]
 
-#localize [#assert [
+#hide [#assert [
 	[             ] = reshape []
 	( quote ()    ) = reshape quote ()
 	[ 1           ] = reshape [!(1)]

@@ -143,7 +143,7 @@ Red [
 ]
 
 
-#include %localize-macro.red	
+#include %hide-macro.red	
 #include %assert.red	
 #include %advanced-function.red	
 	
@@ -243,7 +243,7 @@ context [
 	]
 ]
 
-#localize [#assert [
+#hide [#assert [
 	[ 2  2] = array-search [-5 0 5] 0
 	[ 1  2] = array-search [-5 1 5] 0
 	[ 2  2] = array-search [-5 1 5] 1

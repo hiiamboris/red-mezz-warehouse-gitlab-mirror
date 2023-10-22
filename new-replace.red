@@ -8,7 +8,7 @@ Red [
 
 
 ; #include %assert.red
-#include %localize-macro.red
+#include %hide-macro.red
 
 
 context [
@@ -165,7 +165,7 @@ context [
 	]
 ]
 
-#localize [
+#hide [
 	;@@ move these into new-replace-tests
 	#assert [
 		replace: :replace2
@@ -201,7 +201,7 @@ context [
 	]
 ]
 
-#localize [
+#hide [
 	benchmarks: [
 		print "^/in place, big buffer"
 		block: append/dup make [] n: 100'000 0 n

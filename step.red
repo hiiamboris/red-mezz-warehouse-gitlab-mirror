@@ -22,7 +22,7 @@ Red [
 	}
 ]
 
-#include %localize-macro.red
+#include %hide-macro.red
 
 step: none
 context [
@@ -49,7 +49,7 @@ context [
 ]
 
 
-#localize [#assert [
+#hide [#assert [
 	x: 0
 	1 = step 'x
 	1 = x

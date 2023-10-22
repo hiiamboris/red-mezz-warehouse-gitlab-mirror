@@ -9,7 +9,7 @@ Red [
 ]
 
 
-#include %localize-macro.red
+#include %hide-macro.red
 #include %assert.red
 #include %error-macro.red
 #include %new-each.red									;-- we want map-each
@@ -47,7 +47,7 @@ bulk: function [
 	]
 ]
 
-#localize [#assert [
+#hide [#assert [
 	(ss: ["ab-c" "-def"] a: [1 2 3] b: [2 3 4])			;-- init test vars
 	ms: [#(a: 1 b: 2) #(a: 2 b: 3) #(b: 4)]
 	[2 3 4 ] = bulk/all [b/*           ]

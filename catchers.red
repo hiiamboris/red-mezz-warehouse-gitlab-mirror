@@ -110,7 +110,7 @@ Red [
 	}
 ]
 
-#include %localize-macro.red
+#include %hide-macro.red
 #include %assert.red
 
 thrown: pcatch: fcatch: trap: following: none
@@ -186,7 +186,7 @@ context [
 ]
 
 
-#localize [#assert [
+#hide [#assert [
 	1 =    catch [fcatch         [            ] [1      ]  ]	;-- normal result
 	unset? catch [fcatch         [            ] [       ]  ]
 	unset? catch [fcatch         [true        ] [       ]  ]

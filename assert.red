@@ -85,8 +85,8 @@ context [
 	]
 ]
 
-; #include %localize-macro.red
-; #localize [#assert [
+; #include %hide-macro.red
+; #hide [#assert [
 	; a: 123
 	; not none? find/only [1 [1] 1] [1]
 	; 1 = 1

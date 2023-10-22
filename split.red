@@ -84,7 +84,7 @@ splitting: context [
 		result
 	]
 	
-	#localize [#assert [
+	#hide [#assert [
 		finder: function [s b] [all [p: find s ","  0x1 + offset? s p]]
 		["abcdef"]                                    = split-by-finder   "abcdef"    'by     :finder []
 		["a" "bc" "def"]                              = split-by-finder   "a,bc,def"  'by     :finder []
@@ -253,7 +253,7 @@ splitting: context [
 	]
 ]
 
-#localize [#assert [
+#hide [#assert [
 	upper!: charset [#"A" - #"Z"]
 	
 	;; split by fixed lengths

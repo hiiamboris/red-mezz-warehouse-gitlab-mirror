@@ -21,7 +21,7 @@ Red [
 #include %assert.red
 #include %setters.red									;-- uses 'anonymize'
 #include %catchers.red
-#include %localize-macro.red
+#include %hide-macro.red
 
 
 typecheck: none
@@ -47,7 +47,7 @@ typechecking: context [
 	
 	;; must return 'none' when check succeeded!
 	skeleton: copy []									;@@ use map-each (not using to avoid dependency)
-	#localize [
+	#hide [
 		foreach type to [] any-type! [repend skeleton [type none]]
 	]
 	skeleton: make map! skeleton
@@ -129,7 +129,7 @@ typechecking: context [
 ]
 
 
-#localize [#assert [
+#hide [#assert [
 	(x: 1 y: 'y)
 	typecheck [x [integer!] y [word!]]
 	typecheck [x [none! integer!] y [any-word!]]

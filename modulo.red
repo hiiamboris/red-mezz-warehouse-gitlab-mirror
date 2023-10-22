@@ -27,7 +27,7 @@ Red [
 ]
 
 
-#include %localize-macro.red
+#include %hide-macro.red
 #include %assert.red
 
 modulo: //:  none
@@ -92,7 +92,7 @@ context [
 
 ;@@ TODO: Linux and esp. ARM may produce different results for floats, and may need tests update
 
-#localize [#assert [
+#hide [#assert [
 	;; need a few values defined
 	-1.3877787807814457e-17 =? -x: 0.15 - 0.05 - 0.1	;-- comes from some test on the internet IIRC
 	 1.3877787807814457e-17 =? +x: 0 - -x

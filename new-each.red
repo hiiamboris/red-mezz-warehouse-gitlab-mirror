@@ -9,7 +9,7 @@ Red [
 ]
 
 ; recycle/off
-#include %localize-macro.red
+#include %hide-macro.red
 #include %assert.red
 #include %error-macro.red
 ; #include %bind-only.red
@@ -576,7 +576,7 @@ context [
 ]
 
 
-#localize [#assert [
+#hide [#assert [
 
 	;---------------------------- FOR-EACH -----------------------------
 

@@ -32,7 +32,7 @@ Red [
 ]
 
 #include %include-once.red
-#include %localize-macro.red
+#include %hide-macro.red
 #include %assert.red
 
 #include %setters.red									;-- we need `anonymize`
@@ -185,7 +185,7 @@ context [
 ]
 
 
-#localize [#assert [
+#hide [#assert [
 	;-- basic tests
 	[a b c      ] = sift [a 1 b 2 c] [.. word!]                           
 	[1 2        ] = sift [a 1 b 2 c] [.. integer!]                        

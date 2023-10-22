@@ -64,7 +64,7 @@ Red [
 
 #include %assert.red
 #include %error-macro.red
-#include %localize-macro.red
+#include %hide-macro.red
 
 ;@@ NOTE: this impelementation is intentionally not optimized as Red code, but written in R/S style for easier transition!
 ;@@ TODO: automatically set refinement to true if any of it's arguments are provided?
@@ -145,7 +145,7 @@ mezz-apply: function [									;@@ name to be used during transition; to be excl
 	do call
 ]
 
-#localize [#assert [
+#hide [#assert [
 	-1  = mezz-apply negate [number: 1]
 	-2  = mezz-apply negate [number: 1 + 1]					;-- evaluation of arguments
 	 5  = mezz-apply add [value1: 2  value2: 3]

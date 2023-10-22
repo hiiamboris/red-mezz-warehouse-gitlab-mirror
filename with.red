@@ -134,7 +134,7 @@ Red [
 ]
 
 
-#include %localize-macro.red
+#include %hide-macro.red
 #include %assert.red
 
 
@@ -153,7 +153,7 @@ with: func [
 	]
 ]
 
-#localize [#assert [
+#hide [#assert [
 	(c: context [x: 4 y: 5]
 	20 == do with [c] [x * y])
 

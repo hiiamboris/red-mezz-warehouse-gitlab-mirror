@@ -200,7 +200,7 @@ context [
 ; #assert [20 = trace-deep :inspect [f: func [x] [does [10]] (g: f (1)) ((g) * 2)]]
 
 
-#localize [#assert [									;-- prevent leakage of all these x y f words
+#hide [#assert [										;-- prevent leakage of all these x y f words
 	() = trace-deep func [x y [any-type!]][:y] []
 	() = trace-deep func [x y [any-type!]][:y] [()]
 	() = trace-deep func [x y [any-type!]][:y] [1 ()]
