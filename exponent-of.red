@@ -6,7 +6,7 @@ Red [
 ]
 
 ;; returns none for: zero (undefined exponent), +/-inf (overflow), NaN (undefined)
-set 'exponent-of function [
+exponent-of: function [
 	"Returns the exponent E of number X = m * (10 ** e), 1 <= m < 10"
 	x [number!]
 ][
