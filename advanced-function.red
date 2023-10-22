@@ -186,7 +186,7 @@ Red [
 ; #debug off
 
 
-function: :system/words/function
+; function: :system/words/function						;@@ unset inside context, unless this file is the first included
 if native? :function [
 	context [
 		make-check: function [check [paren!] word [get-word!]] [
