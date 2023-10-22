@@ -1,6 +1,7 @@
 Red [title: "Standalone version of the ParSEE backend"]
 
-;; keep macros and includes from spilling out
-#local [context [
-	#include %parsee.red
-]]
+;; keep includes from spilling out
+set [parsee: parse-dump: inspect-dump:]
+	reduce bind [:parsee :parse-dump :inspect-dump]
+	context [#include %parsee.red]
+	
