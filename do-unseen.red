@@ -16,16 +16,18 @@ Red [
 ]
 
 if object? :system/view [								;-- CLI programs skip this
-	do-unseen: func [
+
+	#include %catchers.red
+	
+	do-unseen: function [
 		"Evaluate CODE with view/auto-sync?: off"
 		code [block!]
-		/local r e old
 	][
-	    old: system/view/auto-sync?
-	    system/view/auto-sync?: no
-		e: try/all [set/any 'r do code  'ok]
-	    system/view/auto-sync?: old
-	    if error? e [do :e]								;-- rethrow the error AFTER restoring auto-sync
-		:r
+		old: get sync: 'system/view/auto-sync?
+		set sync off
+		also trap/catch code [error: thrown] (
+			set sync old
+			if error [do error]							;-- rethrow the error AFTER restoring auto-sync
+		)
 	]
 ]
