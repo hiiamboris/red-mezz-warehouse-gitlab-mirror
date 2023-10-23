@@ -156,10 +156,16 @@ context [
 		"Look for a smallest segment in a sorted array that contains value, return [X1 X2]"
 		array [block! hash! vector!]
 		value [number!]
+		/skip period: 1 [integer!] (period > 0) "Data record size (searches in 1st column)"
 		/mode "Use predefined [binary interp jump] or custom func [x1 f1 x2 f2] guessing algorithm (default: binary)"
 			guess [word! function!]
 	][
-		head remove next remove next search/for/:mode i: 1 length? array [array/:i] value :guess
+		f:     pick [[array/:i] [array/(i - 1 * period + 1)]] period = 1
+		n:     round/floor/to (length? array) / period 1
+		found: search/for/:mode i: 1 n f value :guess
+		i1:    found/1 - 1 * period + 1
+		i2:    found/3 - 1 * period + 1
+		head clear change change found i1 i2
 	]
 	
 	set 'search function [
@@ -269,6 +275,11 @@ context [
 	[ 1  1] = array-search [-10.3 -8.1 -7.9 -7.6 -2.2 0.0 0.01 0.1 3.2 7.1 9.8] -1e15	;-- near the limit of precision because of subtraction
 	[ 2  3] = array-search/mode [1 2 3 4 5 6 7 8 9 10] 2.1 'interp		;-- should't be [2 10]
 	[ 2  3] = array-search/mode [1 2 3 4 5 6 7 8 9 10] 2.9 'interp
+	[ 3  3] = array-search/skip [5 a 1 b -2 c -5 d] 1 2
+	[ 3  5] = array-search/skip [5 a 1 b -2 c -5 d] 0 2
+	[ 5  5] = array-search/skip [5 a 1 b -2 c -5 d] -2 2
+	[ 1  1] = array-search/skip [5 a 1 b -2 c -5 d] 6 2
+	[ 7  7] = array-search/skip [5 a 1 b -2 c -5 d] -6 2
 
 	[ 3.337434002681952e-27  0.0  3.337434002681952e-27  0.0] = search/mode x: -2.0 1.0 [sin x] 'interp	;-- converges in 6 iterations
 	[-1.1102230246251565e-16 0.0 -1.1102230246251565e-16 0.0] = search/mode x: -2.0 1.0 [sin x] 'binary	;-- converges in 54 iterations
