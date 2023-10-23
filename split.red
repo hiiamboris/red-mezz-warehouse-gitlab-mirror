@@ -43,7 +43,7 @@ Red [
 		6. Into length as specified in a list - use /slices with a block, e.g.:
 			>> split/slices "123456" [1 2 3]
 			== ["1" "23" "456"]
-			>> split/slices "123456" [1 1x2 2x3]	;) integer = length, pair = skip x end
+			>> split/slices "123456" [1 1x1 2x1]	;) integer = length, pair = skip x length
 			== ["1" "3" "6"]
 	}
 ]
@@ -243,7 +243,7 @@ splitting: context [
 	list-slicer: function [pos [series!] state [block!] "unused" /extern delimiter] with :split [
 		switch/default type?/word also range: :delimiter/1 delimiter: next delimiter [
 			integer! [0 by range]						;-- just slice length
-			pair!    [range]							;-- slice begin and end
+			pair!    [range/1 * 0x1 + range]			;-- slice begin and end
 			none!    [none]								;-- range = none at list tail, terminating the search
 		][												;-- single delimiter
 			bgn: find/:only/:case/:same pos :delimiter
@@ -303,8 +303,8 @@ splitting: context [
 	[[a] [c] [e]        ] = split/only [a [- -] c [- -] e] [- -]
 	
 	;; split by list; length of output = length of list
-	["YYYY" "MM" "DD" "HH" "MM" "SS"] = split/slices "YYYYMMDD/HHMMSS"  [4 2 2 1x3 2 2]	
-	["Mon" "24" "Nov" "1997"        ] = split/slices "Mon, 24 Nov 1997" [3 2x4 1x4 1x5]	
+	["YYYY" "MM" "DD" "HH" "MM" "SS"] = split/slices "YYYYMMDD/HHMMSS"  [4 2 2 1x2 2 2]	
+	["Mon" "24" "Nov" "1997"        ] = split/slices "Mon, 24 Nov 1997" [3 2x2 1x3 1x4]	
 	
 	;; split by rule; /slices makes it match instead of delimiting
 	[[a] [c] [e]                  ] = split/rule              [a 1 2 c 3 4 e] [2 integer!]
