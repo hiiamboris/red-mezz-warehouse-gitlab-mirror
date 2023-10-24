@@ -139,8 +139,6 @@ Red [
 ]
 
 
-if object? :system/view [								;-- CLI programs skip this
-
 #include %assert.red
 #include %setters.red
 #include %with.red
@@ -154,6 +152,8 @@ if object? :system/view [								;-- CLI programs skip this
 ; do https://gitlab.com/hiiamboris/red-elastic-ui/-/raw/master/elasticity.red
 ; #include %..\red-elasticity\elasticity.red
 ; recycle/off
+
+if object? :system/view [								;-- CLI programs skip this
 
 ;@@ TODO: make a routine out of this, or wait for `draw` to get nearest-neighbor scale method (will need a grid though)
 ;@@ should this be globally exported?

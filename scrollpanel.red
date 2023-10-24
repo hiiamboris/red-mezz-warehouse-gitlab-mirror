@@ -11,13 +11,13 @@ Red [
 ]
 
 
-if object? :system/view [								;-- CLI programs skip this
-
 #include %setters.red
 #include %do-atomic.red
 #include %do-unseen.red
 #include %relativity.red
 ; #include %show-trace.red
+
+if object? :system/view [								;-- CLI programs skip this
 
 context [
 	by: make op! :as-pair

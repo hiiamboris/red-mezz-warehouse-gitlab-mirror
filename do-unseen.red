@@ -15,10 +15,9 @@ Red [
 	}
 ]
 
-if object? :system/view [								;-- CLI programs skip this
+#include %catchers.red
 
-	#include %catchers.red
-	
+if object? :system/view [								;-- CLI programs skip this
 	do-unseen: function [
 		"Evaluate CODE with view/auto-sync?: off"
 		code [block!]
