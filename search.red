@@ -161,7 +161,7 @@ context [
 			guess [word! function!]
 	][
 		f:     pick [[array/:i] [array/(i - 1 * period + 1)]] period = 1
-		n:     round/floor/to (length? array) / period 1
+		n:     round/ceiling/to (length? array) / period 1		;-- round up because it may be not at 1st column
 		found: search/for/:mode i: 1 n f value :guess
 		i1:    found/1 - 1 * period + 1
 		i2:    found/3 - 1 * period + 1
@@ -280,6 +280,7 @@ context [
 	[ 5  5] = array-search/skip [5 a 1 b -2 c -5 d] -2 2
 	[ 1  1] = array-search/skip [5 a 1 b -2 c -5 d] 6 2
 	[ 7  7] = array-search/skip [5 a 1 b -2 c -5 d] -6 2
+	[ 7  7] = array-search/skip [5 a 1 b -2 c -5  ] -6 2
 
 	[ 3.337434002681952e-27  0.0  3.337434002681952e-27  0.0] = search/mode x: -2.0 1.0 [sin x] 'interp	;-- converges in 6 iterations
 	[-1.1102230246251565e-16 0.0 -1.1102230246251565e-16 0.0] = search/mode x: -2.0 1.0 [sin x] 'binary	;-- converges in 54 iterations
