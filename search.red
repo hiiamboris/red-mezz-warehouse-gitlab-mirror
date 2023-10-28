@@ -37,7 +37,7 @@ Red [
 			     /with        => Provide F(X1) and F(X2) if they are known.
 			        F1           [number!] 
 			        F2           [number!] 
-		
+			        
 		>> ? array-search
 			USAGE:
 			     ARRAY-SEARCH array value
@@ -51,6 +51,8 @@ Red [
 			     value        [number!] 
 			
 			REFINEMENTS:
+			     /skip        => 
+			        period       [integer!] "Data record size (searches in 1st column)."
 			     /mode        => Use predefined [binary interp jump] or custom func [x1 f1 x2 f2] guessing algorithm (default: binary).
 			        guess        [word! function!] 
         
