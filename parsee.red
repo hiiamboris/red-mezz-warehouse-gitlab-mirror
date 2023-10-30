@@ -78,7 +78,7 @@ context expand-directives [
 	set 'parsee function [
 		"Process a series using dialected grammar rules, visualizing progress afterwards"
 		; input [binary! any-block! any-string!] 
-		input [any-string!]								;@@ other types TBD
+		input [any-block! any-string!]
 		rules [block!] 
 		/case "Uses case-sensitive comparison" 
 		/part "Limit to a length or position" 
@@ -141,7 +141,7 @@ context expand-directives [
 	
 	set 'parse-dump function [
 		"Process a series using dialected grammar rules, dumping the progress into a file"
-		input [binary! any-block! any-string!] 
+		input [any-block! any-string!] 
 		rules [block!] 
 		/case "Uses case-sensitive comparison" 
 		/part "Limit to a length or position" 
@@ -166,15 +166,16 @@ context expand-directives [
 		following [parse/:case/:part/trace input rules length :tracer] [
 			data: reduce [
 				cloned
-				new-line/all/skip events on 5
+				new-line/all/skip events on 6
 				changes
 			]
+			reactor/tracked: none						;-- don't record changes coming from isolate-rule
 			save/as filename isolate-rule data 'redbin
 		]
 	]
 	
 	tracer: function [event [word!] match? [logic!] rule [block!] input [series!] stack [block!] /extern age] with :parse-dump [
-		reduce/into [age: age + 1 input event match? rule] tail events
+		reduce/into [age: age + 1 input event match? rule last stack] tail events
 		not all [age % 20 = 0  now/utc/precise > limit]			;-- % to reduce load from querying time
 	]
 	
