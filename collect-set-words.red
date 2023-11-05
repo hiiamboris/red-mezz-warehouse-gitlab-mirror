@@ -13,6 +13,7 @@ Red [
 collect-set-words: function [
 	"Deeply collect set-words from a block of code"
 	code [block!]
+	/local w
 ][
 	spec: spec-of function [] code
 	parse spec [remove /local any change set w word! (to set-word! w)]
