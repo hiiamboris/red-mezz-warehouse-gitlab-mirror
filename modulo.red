@@ -30,7 +30,7 @@ Red [
 #include %hide-macro.red
 #include %assert.red
 
-modulo: //:  none
+modulo: //: mod: none
 context [
 	abs: :absolute
 	positives!: make typeset! [char! tuple!]				;-- limited types (can't be negated)
@@ -80,7 +80,7 @@ context [
 		r
 	]
 
-	set '// make op! func [
+	set '// make op! set 'mod func [
 		"Returns a modulo R of A divided by B, following Euclidean definition of it (R >= 0)"
 		a [number! char! pair! any-point! tuple! vector! time!]
 		b [number! char! pair! any-point! tuple! vector! time!]
