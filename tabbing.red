@@ -8,37 +8,79 @@ Red [
 if object? :system/view [								;-- CLI programs skip this
 unless object? get/any 'tabbing [						;-- avoid multiple inclusion and multiple handler functions
 
-	#include %relativity.red							;-- needs 'window-of'
+	#include %tree-hopping.red
 	
 	tabbing: context [
-		;; what can be focused by tab key:
-		focusables: make hash! [field area button toggle check radio slider text-list drop-list drop-down calendar tab-panel]
 		
-		list: make hash! 50
+		window-walker: make batched-walker! [
+			next-face: function [face [object!]] [
+				any [
+					select face/options 'next
+					if face/pane [face/pane/1]
+					also no while [all [parent: face/parent face/type <> 'window]] [
+						if sibling: select/same parent/pane face [return sibling]
+						face: parent
+					]
+					if face/type = 'window [face/pane/1]
+				]
+			]
+			bottom: function [face [object!]] [
+				while [not empty? face/pane] [face: last face/pane]
+				face
+			]
+			prev-face: function [face [object!]] [
+				parent: face/parent
+				pane: find/same parent/pane face
+				any [
+					select face/options 'prev
+					if pane/-1 [bottom pane/-1]
+					if parent/type <> 'window [parent]
+					bottom parent
+				]
+			]
 		
-		list-faces: function [window [object!]] [
-			also clear list
-			foreach-face/with window [
-				if find focusables face/type [append list face]
-			] [any [all [face/enabled? face/visible?] continue]]	;-- filters out invisible/disabled tab-panel pages
+			forward?: yes
+			
+			;; iterates over all other faces within the window
+			branch: function [face [object!]] [
+				fetch: either forward? [:next-face][:prev-face]
+				start: face
+				while [all [
+					face: fetch face
+					not same? face start
+				]] [repend/only plan ['visit face/parent face]]
+			]
 		]
-		
-		key-events:  make hash! [key key-down key-up #[true]]
-		avoid-faces: make hash! [rich-text base #[true]]		;-- rich-text is GUI console face (completion), base is used as spaces host
+
+		enabled?: func [face] [
+			while [face] [
+				unless all [face/enabled? face/visible?] [return no]
+				face: face/parent
+			]
+			yes
+		]
+		focusable?: func [face] [
+			any [
+				face/flags = 'focusable
+				find face/flags 'focusable
+			]
+		]
 		
 		tab-handler: function [face event] [
 			all [
 				event/key = #"^-"
-				key-events/(event/type)					;-- consume all tab key events
-				not avoid-faces/(face/type)
 				not event/ctrl?							;-- let area and tab-panel handle ctrl-tab
 				result: 'stop							;-- stop to avoid area inserting Tab char
 				event/type = 'key-down					;-- only react to one event type (should be repeatable - key or key-down)
-				not empty? list: list-faces window-of face
-				found:  any [find/same list face  list]
-				offset: pick [-1 1] event/shift?
-				index:  (index? found) + offset - 1 // (max 1 length? list) + 1
-				set-focus list/:index
+				(
+					window-walker/forward?: not event/shift?
+					foreach-node face window-walker [
+						if all [focusable? key enabled? key] [ 
+							set-focus key
+							break
+						]
+					]
+				) 
 			]
 			result
 		]
