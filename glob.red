@@ -74,7 +74,7 @@ context [
 		/dirs  "List only directories, not files"
 		/into buffer [any-list!] "Put files into an existing list"
 	][
-		root: either from [clean-path dirize to-red-file root][copy %./]
+		root: either from [dirize clean-path to-red-file root][copy %./]
 		if string? imask [imask: reduce [imask]]
 		if string? xmask [xmask: reduce [xmask]]
 		result: any [buffer make [] 128]
