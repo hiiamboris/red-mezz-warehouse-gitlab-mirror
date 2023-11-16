@@ -62,22 +62,22 @@ context [
 	
 	set 'glob function [
 		"Recursively list all files"
-		/from "starting from a given path"
+		/from "Starting from a given path"
 			root [file!] "CWD by default"
-		/limit "recursion depth (otherwise limited by the maximum path size)"
+		/limit "Recursion depth (otherwise limited by the maximum path size)"
 			sublevels [integer!] "0 = root directory only"
-		/only "include only files matching the mask or block of masks"
+		/only "Include only files matching the mask or block of masks"
 			imask [string! block!] "* and ? wildcards are supported"
-		/omit "exclude files matching the mask or block of masks"
+		/omit "Exclude files matching the mask or block of masks"
 			xmask [string! block!] "* and ? wildcards are supported"
-		/files "list only files, not directories"
-		/dirs  "list only directories, not files"
-		;@@ /into
+		/files "List only files, not directories"
+		/dirs  "List only directories, not files"
+		/into buffer [any-list!] "Put files into an existing list"
 	][
 		root: either from [clean-path dirize to-red-file root][copy %./]
 		if string? imask [imask: reduce [imask]]
 		if string? xmask [xmask: reduce [xmask]]
-		result: make [] 128
+		result: any [buffer make [] 128]
 		offset: length? root
 		foreach-file/:limit root compose/deep [
 			any [
