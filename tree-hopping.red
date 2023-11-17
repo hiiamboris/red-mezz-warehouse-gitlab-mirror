@@ -34,6 +34,9 @@ Red [
 		     
 		2. Call `foreach-node` with given walker as argument and with a visit function or block
 		
+		   `foreach-node` simply calls `branch` with the root and then walks over `plan` and evaluates it block by block,
+		   expecting `branch` to fill it with new calls.
+		   
 		   See the source of `foreach-node`, it's really simple to understand.
 		   
 		   
