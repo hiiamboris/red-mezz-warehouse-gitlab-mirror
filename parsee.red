@@ -63,7 +63,7 @@ context expand-directives [
 		as path! unbind-block reduce [type rest]
 	]
 	
-	word-walker: make batched-walker! [							;-- visits words of all unique blocks
+	word-walker: make walker! [									;-- visits words of all unique blocks
 		history: make hash! 128
 		filter: func [value [any-type!]] [
 			all [
@@ -79,20 +79,17 @@ context expand-directives [
 		stop: does [
 			plan:    make block! 256
 			history: make hash!  128
-			batch:   make block! 128
 		]
 		
 		types: make typeset! [any-block! any-word!]
 		branch: function [:node [any-block!]] compose/deep [	;-- paren requires get-arg
-			clear batch
 			while [node: find/tail node types] [
 				either any-block? value: node/-1 [
-					if filter value [repend/only batch ['branch value]]
+					if filter value [repend/only plan ['branch value]]
 				][
-					repend/only batch ['visit head node value]
+					repend/only plan ['visit head node value]
 				]
 			]
-			append plan batch
 		]
 	]
 
@@ -111,14 +108,12 @@ context expand-directives [
 	replicating-walker: make word-walker [						;-- copies the blocks before branching, visits every item
 		branch: function [:node [any-block!]] [branch' :node]	;-- get-arg ver in case root is a paren
 		branch': function [node [any-block!]] compose/deep [
-			clear batch
 			repeat key length? node [
-				repend/only batch
+				repend/only plan
 					either all [any-block? :node/:key filter node/:key]
 						[['branch' 'visit node key]]
 						[['visit node key]]
 			]
-			append plan batch
 		]
 	]
 

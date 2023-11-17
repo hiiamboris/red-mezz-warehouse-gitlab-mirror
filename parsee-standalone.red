@@ -450,7 +450,7 @@ context [
             ] 
             as path! unbind-block reduce [type rest]
         ] 
-        word-walker: make batched-walker! [
+        word-walker: make walker! [
             history: make hash! 128 
             filter: func [value [any-type!]] [
                 all [
@@ -464,20 +464,17 @@ context [
             ] 
             stop: does [
                 plan: make block! 256 
-                history: make hash! 128 
-                batch: make block! 128
+                history: make hash! 128
             ] 
             types: make typeset! [any-block! any-word!] 
             branch: function [:node [any-block!]] compose/deep [
-                clear batch 
                 while [node: find/tail node types] [
                     either any-block? value: node/-1 [
-                        if filter value [repend/only batch ['branch value]]
+                        if filter value [repend/only plan ['branch value]]
                     ] [
-                        repend/only batch ['visit head node value]
+                        repend/only plan ['visit head node value]
                     ]
-                ] 
-                append plan batch
+                ]
             ]
         ] 
         collect-rule-names: function [rules [hash!]] [
@@ -494,14 +491,12 @@ context [
         replicating-walker: make word-walker [
             branch: function [:node [any-block!]] [branch' :node] 
             branch': function [node [any-block!]] compose/deep [
-                clear batch 
                 repeat key length? node [
-                    repend/only batch 
+                    repend/only plan 
                     either all [any-block? :node/:key filter node/:key] 
                     [['branch' 'visit node key]] 
                     [['visit node key]]
-                ] 
-                append plan batch
+                ]
             ]
         ] 
         store: function [
