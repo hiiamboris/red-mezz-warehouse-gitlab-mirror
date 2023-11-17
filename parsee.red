@@ -8,66 +8,158 @@ Red [
 	}
 ]
 
-#include %setters.red									;-- `anonymize`
+#include %assert.red
+; #include %setters.red									;-- `anonymize`
 #include %advanced-function.red							;-- `function` (defaults)
 #include %composite.red									;-- interpolation in print/call
 #include %catchers.red									;-- `following`
 #include %timestamp.red									;-- for dump file name
 #include %reactor92.red									;-- for changes tracking
+#include %tree-hopping.red								;-- for cloning data
 
 parsee: inspect-dump: parse-dump: none
 context expand-directives [
 	skip?: func [s [series!]] [-1 + index? s]
-	clone: function [									;@@ export it?
-		"Obtain a complete deep copy of the data"
-		data [any-object! map! series!]
-	] with system/codecs/redbin [
-		decode encode data none
-	]
-
-	keywords: make hash! [								;@@ duplicate! also in parsee.red
-		| skip quote none end
-		opt not ahead
-		to thru any some while
-		if into fail break reject
-		set copy keep collect case						;-- collect set/into/after? keep pick?
-		remove insert change							;-- insert/change only?
-		#[true]
-	]
-
-	;@@ workaround for #5406 - unable to save global words and words within functions
-	;@@ unfortunately this has to modify parse rules in place right in the function
-	;@@ so next `parse` run may not work at all... how to work around this workaround? :/
-	unloadable?:  func [w [any-word!]] [any [function? w: context? w  w =? system/words]]
-	fallback:     func [x [any-type!] y [any-type!]] [any [:y :x]]
-	isolate-rule: function [
-		"Split parse rule from local function context for Redbin compatibility"
-		block [block!]
-		/local w v
-	][
-		unique-rules: make hash! 32						;-- avoid recursing and repeating same rules processing
-		;@@ this same code may also collect rule names (dedup)
-		parse block rule: [
-			end
-		|	p: if (find/only/same unique-rules head p) to end
-		|	p: (append/only unique-rules head p)
-			any [
-				change [set w any-word! if (unloadable? w)] (
-					fallback							;-- 'w' will be overridden by recursive parse
-						w
-						attempt [						;-- defend from get/any errors
-							set/any 'v get/any w
-							anonymize w either block? :v [also v parse v rule][:v]
-						]
-				)
-			; |	ahead any-block! into rule				;@@ doesn't work
-			|	ahead block! into rule
-			|	skip
+	
+	;; what Redbin can't save
+	unsupported!: make typeset! [native! action! routine! handle! op!]
+	if datatype? :event! [unsupported!: union unsupported! make typeset! [event!]]	;-- only exists in View module
+	
+	complex!: make typeset! [function! object! error! map! vector! image!]
+	
+	;; this relies on the property of Redbin: it ignores values from system/words
+	unbind: function [word [any-word!]] [bind word system/words]
+	; unbind: function [word [any-word!]] [anonymize word none]
+	
+	unbind-block: function [block [block!]] compose/deep [
+		forall block [
+			switch type?/word :block/1 [
+				(to [] any-word!)  [block/1: unbind block/1]
+				(to [] any-block!) [block/1: unbind-block block/1]
 			]
 		]
 		block
 	]
+	
+	abbreviate: function [
+		"Convert value of a complex datatype into a short readable form"
+		value [complex! unsupported!]
+	][
+		rest: switch/default type: type?/word :value [
+			op! native! action! routine! function!
+					[copy/deep spec-of :value]
+			object!	[
+				either :value =? system/words
+					[type: 'system 'words]
+					[words-of value]
+			]
+			map!	[words-of value]
+			error!	[form value]
+			event!	[value/type]
+			vector!	[length? value]
+			image!	[value/size]
+			handle!	[return unbind type]
+		]
+		as path! unbind-block reduce [type rest]
+	]
+	
+	word-walker: make batched-walker! [							;-- visits words of all unique blocks
+		history: make hash! 128
+		filter: func [value [any-type!]] [
+			all [
+				not find/only/same history :value
+				append/only history :value
+			]
+		]
+		
+		init: does [
+			clear plan
+			clear history
+		]
+		stop: does [
+			plan:    make block! 256
+			history: make hash!  128
+			batch:   make block! 128
+		]
+		
+		types: make typeset! [any-block! any-word!]
+		branch: function [:node [any-block!]] compose/deep [	;-- paren requires get-arg
+			clear batch
+			while [node: find/tail node types] [
+				either any-block? value: node/-1 [
+					if filter value [repend/only batch ['branch value]]
+				][
+					repend/only batch ['visit head node value]
+				]
+			]
+			append plan batch
+		]
+	]
 
+	collect-rule-names: function [rules [hash!]] [
+		result: make map! 32
+		foreach-node rules word-walker func [:block :word] [
+			all [
+				any-block? attempt [value: get word]
+				find/only/same rules value
+				result/:word: value 
+			]
+		]
+		result
+	]
+	
+	replicating-walker: make word-walker [						;-- copies the blocks before branching, visits every item
+		branch: function [:node [any-block!]] [branch' :node]	;-- get-arg ver in case root is a paren
+		branch': function [node [any-block!]] compose/deep [
+			clear batch
+			repeat key length? node [
+				repend/only batch
+					either all [any-block? :node/:key filter node/:key]
+						[['branch' 'visit node key]]
+						[['visit node key]]
+			]
+			append plan batch
+		]
+	]
+
+	store: function [
+		"Get stored unique copy of original series"
+		dict   [hash!]   "Where to store the original->copy mapping"
+		series [series!] "If one of copies is given, passed through"
+	][
+		any [
+			new: select/same/only/skip dict old: head series 2	;-- original -> already have copy
+			find/same/only/skip next dict new: old 2			;-- copy -> itself
+			repend dict [old new: copy old]
+		]
+		at new index? series
+	]
+	
+	sanitize: function [
+		"Prepare series for Redbin compression (for Parsee uses only)"
+		series [series!]
+		dict   [hash!]
+	] compose/deep [
+		unless any-block? series [return series]
+		series: store dict series
+		foreach-node series replicating-walker func [:block i] [
+			switch type?/word :block/:i [
+				(to [] any-block!) [							;-- blocks must be copied so they can be modified
+					return block/:i: store dict block/:i		;-- will branch into this new block
+				]
+				(to [] any-word!) [								;-- any-words must be unbound from their contexts
+					block/:i: unbind block/:i
+				]
+				function! map! object! error! vector! image!	;-- complex types are abbreviated to avoid scanning them
+				(to [] unsupported!) [							;-- unsupported types are abbreviated as it's the only way to save them
+					block/:i: abbreviate :block/:i
+				]
+			]
+		]
+		series
+	]
+	
+	
 	make-dump-name: function [] [
 		if exists? filename: rejoin [%"" timestamp %.pdump] [
 			append filename enbase/base to #{} random 7FFFFFFFh 16	;-- ensure uniqueness
@@ -153,28 +245,28 @@ context expand-directives [
 		/into filename: (make-dump-name) [file!] "Override automatic filename generation"
 		; return: [logic! block!]
 	][
-		;@@ cloning will pose quite a problem in block parsing! #5406
-		cloned:  clone input
-		changes: make [] 64
-		events:  make [] 512
-		limit:   now/utc/precise + to time! maxtime
-		age:     0										;-- required to sync changes to events
-		reactor: make deep-reactor-92! [
+		dict:          make hash! 128
+		cloned:        sanitize input dict						;-- preserve the original input before it's modified
+		changes:       make [] 64
+		events:        make [] 512
+		limit:         now/utc/precise + to time! maxtime
+		age:           0										;-- required to sync changes to events
+		visited-rules: make hash! 64							;-- unique, at head; collected for name extraction
+		reactor: make deep-reactor-92! [						;-- track all input edits
 			tracked: input
 			on-deep-change-92*: :logger
 		]
 		following [parse/:case/:part/trace input rules length :tracer] [
-			data: reduce [
-				cloned
-				new-line/all/skip events on 6
-				changes
-			]
-			reactor/tracked: none						;-- don't record changes coming from isolate-rule
-			save/as filename isolate-rule data 'redbin
+			events: new-line/all/skip events on 6
+			names: to hash! collect-rule-names visited-rules
+			data: reduce [cloned]
+			append data sanitize reduce [events changes names] dict
+			save/as filename data 'redbin
 		]
 	]
 	
 	tracer: function [event [word!] match? [logic!] rule [block!] input [series!] stack [block!] /extern age] with :parse-dump [
+		any [find/only/same visited-rules head rule  append/only visited-rules head rule] 
 		reduce/into [age: age + 1 input event match? rule last stack] tail events
 		not all [age % 20 = 0  now/utc/precise > limit]			;-- % to reduce load from querying time
 	]

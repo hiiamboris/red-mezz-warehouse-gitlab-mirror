@@ -2,56 +2,6 @@ Red [title: "Standalone version of the ParSEE backend"]
 set [parsee: parse-dump: inspect-dump:] 
 reduce bind [:parsee :parse-dump :inspect-dump] 
 context [
-    once: func [
-        "Set value of WORD to VAL only if it's unset" 
-        'word [set-word!] 
-        val [default!] "New value"
-    ] [
-        if unset? get/any word [set word :val] 
-        :val
-    ] 
-    default: func [
-        "If SUBJ's value is none, set it to VAL" 
-        'subj [set-word! set-path!] 
-        val [default!] "New value"
-    ] [
-        if none =? get/any subj [set subj :val] 
-        :val
-    ] 
-    maybe: func [
-        {If SUBJ's value is not strictly equal to VAL, set it to VAL (for use in reactivity)} 
-        'subj [set-word! set-path!] 
-        val [default!] "New value" 
-        /same "Use =? as comparator"
-    ] [
-        if either same [:val =? get/any subj] [:val == get/any subj] [return :val] 
-        set subj :val
-    ] 
-    import: function [
-        {Import words from context CTX into the global namespace} 
-        ctx [object!] 
-        /only words [block!] "Not all, just chosen words"
-    ] [
-        either only [
-            foreach word words [set/any 'system/words/:word :ctx/:word]
-        ] [
-            set/any bind words-of ctx system/words values-of ctx
-        ]
-    ] 
-    export: function [
-        {Export a set of bound words into the global namespace} 
-        words [block!]
-    ] [
-        foreach w words [set/any 'system/words/:w get/any :w]
-    ] 
-    anonymize: function [
-        {Return WORD bound in an anonymous context and set to VALUE} 
-        word [any-word!] value [any-type!]
-    ] [
-        o: construct change [] to set-word! word 
-        set/any/only o :value 
-        bind word o
-    ] 
     assert: none 
     context [
         next-newline?: function [b [block!]] [
@@ -436,50 +386,158 @@ context [
     ] 
     comment 
     {^/^-; test code^/^-r: make deep-reactor-92! [^/^-^-x: "abcd"^/^-^-^/^-^-on-deep-change-92*: func [^/^-^-^-word        [word!]    "name of the field value of which is being changed"^/^-^-^-target      [series!]  "series at removal or insertion point"^/^-^-^-part        [integer!] "length of removal or insertion"^/^-^-^-insert?     [logic!]   "true = just inserted, false = about to remove"^/^-^-^-reordering? [logic!]   "removed items won't leave the series, inserted items came from the same series"^/^-^-^-; done?       [logic!]   "signifies that series is in it's final state (after removal/insertion)"^/^-^-][^/^-^-^-; ...your code to handle changes... e.g.:^/^-^-^-print [^/^-^-^-^-word ":"^/^-^-^-^-either insert? ["inserted"]["removing"]^/^-^-^-^-"at" mold/flat target^/^-^-^-^-part "items"^/^-^-^-^-either reordering? ["(reordering)"][""]^/^-^-^-^-either part = 0 ["(done)"][""]^/^-^-^-^-; either done? ["(done)"][""]^/^-^-^-]^/^-^-]^/^-]^/^-^/^-?? r/x^/^-insert/part next r/x [1 0 1] 2^/^-reverse/part next r/x 2^/^-remove/part next next next r/x 3^/^-?? r/x^/} 
+    walker!: object [
+        plan: [] 
+        init: does [clear plan] 
+        stop: does [plan: make [] 128] 
+        branch: func [:node] [] 
+        visit: func [:node :key] []
+    ] 
+    batched-walker!: make walker! [
+        batch: [] 
+        stop: does [
+            plan: make [] 128 
+            batch: make [] 128
+        ]
+    ] 
+    foreach-node: function [
+        "Iterate over the tree starting at root" 
+        root [any-type!] "Starting node" 
+        walker [object!] {A walker! object specifying the manner of iteration} 
+        visitor [function! block!] {A visitor function [node key] that may read or modify data} 
+        /extern plan
+    ] [
+        walker/visit: either block? :visitor [func [:node :key] visitor] [:visitor] 
+        walker/init 
+        repend/only walker/plan [in walker 'branch :root] 
+        also do bind/copy [forall plan [do plan/1]] walker 
+        walker/stop
+    ] 
     parsee: inspect-dump: parse-dump: none 
     context expand-directives [
         skip?: func [s [series!]] [-1 + index? s] 
-        clone: function [
-            "Obtain a complete deep copy of the data" 
-            data [any-object! map! series!]
-        ] with system/codecs/redbin [
-            decode encode data none
-        ] 
-        keywords: make hash! [
-            | skip quote none end 
-            opt not ahead 
-            to thru any some while 
-            if into fail break reject 
-            set copy keep collect case 
-            remove insert change 
-            #[true]
-        ] 
-        unloadable?: func [w [any-word!]] [any [function? w: context? w w =? system/words]] 
-        fallback: func [x [any-type!] y [any-type!]] [any [:y :x]] 
-        isolate-rule: function [
-            {Split parse rule from local function context for Redbin compatibility} 
-            block [block!] 
-            /local w v
-        ] [
-            unique-rules: make hash! 32 
-            parse block rule: [
-                end 
-                | p: if (find/only/same unique-rules head p) to end 
-                | p: (append/only unique-rules head p) 
-                any [
-                    change [set w any-word! if (unloadable? w)] (
-                        fallback 
-                        w 
-                        attempt [
-                            set/any 'v get/any w 
-                            anonymize w either block? :v [also v parse v rule] [:v]
-                        ]
-                    ) 
-                    | ahead block! into rule 
-                    | skip
+        unsupported!: make typeset! [native! action! routine! handle! op!] 
+        if datatype? :event! [unsupported!: union unsupported! make typeset! [event!]] 
+        complex!: make typeset! [function! object! error! map! vector! image!] 
+        unbind: function [word [any-word!]] [bind word system/words] 
+        unbind-block: function [block [block!]] compose/deep [
+            forall block [
+                switch type?/word :block/1 [
+                    (to [] any-word!) [block/1: unbind block/1] 
+                    (to [] any-block!) [block/1: unbind-block block/1]
                 ]
             ] 
             block
+        ] 
+        abbreviate: function [
+            {Convert value of a complex datatype into a short readable form} 
+            value [complex! unsupported!]
+        ] [
+            rest: switch/default type: type?/word :value [
+                op! native! action! routine! function! 
+                [copy/deep spec-of :value] 
+                object! [
+                    either :value =? system/words 
+                    [type: 'system 'words] 
+                    [words-of value]
+                ] 
+                map! [words-of value] 
+                error! [form value] 
+                event! [value/type] 
+                vector! [length? value] 
+                image! [value/size] 
+                handle! [return unbind type]
+            ] 
+            as path! unbind-block reduce [type rest]
+        ] 
+        word-walker: make batched-walker! [
+            history: make hash! 128 
+            filter: func [value [any-type!]] [
+                all [
+                    not find/only/same history :value 
+                    append/only history :value
+                ]
+            ] 
+            init: does [
+                clear plan 
+                clear history
+            ] 
+            stop: does [
+                plan: make block! 256 
+                history: make hash! 128 
+                batch: make block! 128
+            ] 
+            types: make typeset! [any-block! any-word!] 
+            branch: function [:node [any-block!]] compose/deep [
+                clear batch 
+                while [node: find/tail node types] [
+                    either any-block? value: node/-1 [
+                        if filter value [repend/only batch ['branch value]]
+                    ] [
+                        repend/only batch ['visit head node value]
+                    ]
+                ] 
+                append plan batch
+            ]
+        ] 
+        collect-rule-names: function [rules [hash!]] [
+            result: make map! 32 
+            foreach-node rules word-walker func [:block :word] [
+                all [
+                    any-block? attempt [value: get word] 
+                    find/only/same rules value 
+                    result/:word: value
+                ]
+            ] 
+            result
+        ] 
+        replicating-walker: make word-walker [
+            branch: function [:node [any-block!]] [branch' :node] 
+            branch': function [node [any-block!]] compose/deep [
+                clear batch 
+                repeat key length? node [
+                    repend/only batch 
+                    either all [any-block? :node/:key filter node/:key] 
+                    [['branch' 'visit node key]] 
+                    [['visit node key]]
+                ] 
+                append plan batch
+            ]
+        ] 
+        store: function [
+            "Get stored unique copy of original series" 
+            dict [hash!] "Where to store the original->copy mapping" 
+            series [series!] "If one of copies is given, passed through"
+        ] [
+            any [
+                new: select/same/only/skip dict old: head series 2 
+                find/same/only/skip next dict new: old 2 
+                repend dict [old new: copy old]
+            ] 
+            at new index? series
+        ] 
+        sanitize: function [
+            {Prepare series for Redbin compression (for Parsee uses only)} 
+            series [series!] 
+            dict [hash!]
+        ] compose/deep [
+            unless any-block? series [return series] 
+            series: store dict series 
+            foreach-node series replicating-walker func [:block i] [
+                switch type?/word :block/:i [
+                    (to [] any-block!) [
+                        return block/:i: store dict block/:i
+                    ] 
+                    (to [] any-word!) [
+                        block/:i: unbind block/:i
+                    ] 
+                    function! map! object! error! vector! image! 
+                    (to [] unsupported!) [
+                        block/:i: abbreviate :block/:i
+                    ]
+                ]
+            ] 
+            series
         ] 
         make-dump-name: function [] [
             if exists? filename: rejoin [%"" timestamp %.pdump] [
@@ -558,26 +616,27 @@ context [
             maxtime: 0:00:01 [time! integer! float!] "Time or number of seconds (defaults to 1 second)" 
             /into filename: (make-dump-name) [file!] "Override automatic filename generation"
         ] [
-            cloned: clone input 
+            dict: make hash! 128 
+            cloned: sanitize input dict 
             changes: make [] 64 
             events: make [] 512 
             limit: now/utc/precise + to time! maxtime 
             age: 0 
+            visited-rules: make hash! 64 
             reactor: make deep-reactor-92! [
                 tracked: input 
                 on-deep-change-92*: :logger
             ] 
             following [parse/:case/:part/trace input rules length :tracer] [
-                data: reduce [
-                    cloned 
-                    new-line/all/skip events on 6 
-                    changes
-                ] 
-                reactor/tracked: none 
-                save/as filename isolate-rule data 'redbin
+                events: new-line/all/skip events on 6 
+                names: to hash! collect-rule-names visited-rules 
+                data: reduce [cloned] 
+                append data sanitize reduce [events changes names] dict 
+                save/as filename data 'redbin
             ]
         ] 
         tracer: function [event [word!] match? [logic!] rule [block!] input [series!] stack [block!] /extern age] with :parse-dump [
+            any [find/only/same visited-rules head rule append/only visited-rules head rule] 
             reduce/into [age: age + 1 input event match? rule last stack] tail events 
             not all [age % 20 = 0 now/utc/precise > limit]
         ] 
