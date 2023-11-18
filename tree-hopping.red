@@ -121,20 +121,20 @@ Red [
 		   First limitation is quite inelegant and cannot be overcome.
 		   Even to support recursion depth control useful in `glob` requires certain hacks.
 		4. A model where every expression is a block to `do`.
-		   Slower than 2-3 by 15% on `append`, has bigger GC pressure.
-		   Faster when using `insert` however due to shorter plan, scaling ordered iteration further without linked lists.
-		   Generality and simplicity makes it a better choice than (3), despite some shortcomings.
+		   With GC - slower than 2-3 by 15% on `append`, without - can be even faster by 5%. But has bigger GC pressure.
+		   Faster when using `insert` due to shorter plan, scaling ordered iteration further without linked lists.
+		   Generality and simplicity makes it a better choice than (3), despite additional GC load.
 		   
 		   
 		On performance:
 		
-		My study shows that a lightweight ad-hoc recursion takes about:
-		- 55% of time of unordered iteration in models (2)-(3)
-		- 50% of time of iteration in models (2)-(3) ordered using ad-hoc linked lists
+		My study shows that a lightweight ad-hoc recursion takes about 70% of the time unordered `foreach-node` takes.
 		So `foreach-node` should be good for most use cases.
 	}
 ]
 
+
+#include %without-gc.red
 
 walker!: object [										;-- minimal tree walker template
 	plan:   []
@@ -162,7 +162,7 @@ foreach-node: function [
 	walker/visit: either block? :visitor [func [:node :key] visitor][:visitor]
 	walker/init
 	repend/only walker/plan [in walker 'branch :root]	;@@ to visit root will need its address somehow
-	also do bind/copy [forall plan [do plan/1]] walker	;-- without copy can't be reentrant
+	also without-gc bind/copy [forall plan [do plan/1]] walker	;-- without copy can't be reentrant
 		walker/stop
 ]
 	
