@@ -33,6 +33,7 @@ unless object? get/any 'tabbing [						;-- avoid multiple inclusion and multiple
 				pane: find/same parent/pane face
 				any [
 					select face/options 'prev
+					if face/type = 'window [return last face/pane]
 					if pane/-1 [bottom pane/-1]
 					if parent/type <> 'window [parent]
 					bottom parent
@@ -44,10 +45,11 @@ unless object? get/any 'tabbing [						;-- avoid multiple inclusion and multiple
 			;; iterates over all other faces within the window
 			branch: function [face [object!]] [
 				fetch: either forward? [:next-face][:prev-face]
-				start: face
+				start: if face/type <> 'window [face]
 				while [all [
 					face: fetch face
 					not same? face start
+					any [start start: face]
 				]] [repend/only plan ['visit face/parent face]]
 			]
 		]
