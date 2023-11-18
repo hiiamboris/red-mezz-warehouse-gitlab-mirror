@@ -195,6 +195,7 @@ series-walker!: make batched-walker! [					;-- template that visits all values i
 			;; also maps are case-sensitive, so without iteration select/case has to be used
 			map!	[foreach key keys-of node [push select/case node :key]]
 			image!	[xyloop key node [push node/:key]]			;@@ use for-each
+			event!	[foreach key system/catalog/accessors/event! [push node/:key]]
 		]
 		schedule next plan batch
 	]
