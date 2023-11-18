@@ -386,6 +386,24 @@ context [
     ] 
     comment 
     {^/^-; test code^/^-r: make deep-reactor-92! [^/^-^-x: "abcd"^/^-^-^/^-^-on-deep-change-92*: func [^/^-^-^-word        [word!]    "name of the field value of which is being changed"^/^-^-^-target      [series!]  "series at removal or insertion point"^/^-^-^-part        [integer!] "length of removal or insertion"^/^-^-^-insert?     [logic!]   "true = just inserted, false = about to remove"^/^-^-^-reordering? [logic!]   "removed items won't leave the series, inserted items came from the same series"^/^-^-^-; done?       [logic!]   "signifies that series is in it's final state (after removal/insertion)"^/^-^-][^/^-^-^-; ...your code to handle changes... e.g.:^/^-^-^-print [^/^-^-^-^-word ":"^/^-^-^-^-either insert? ["inserted"]["removing"]^/^-^-^-^-"at" mold/flat target^/^-^-^-^-part "items"^/^-^-^-^-either reordering? ["(reordering)"][""]^/^-^-^-^-either part = 0 ["(done)"][""]^/^-^-^-^-; either done? ["(done)"][""]^/^-^-^-]^/^-^-]^/^-]^/^-^/^-?? r/x^/^-insert/part next r/x [1 0 1] 2^/^-reverse/part next r/x 2^/^-remove/part next next next r/x 3^/^-?? r/x^/} 
+    without-GC: function [
+        "Evaluate CODE with GC temporarily turned off" 
+        code [block!]
+    ] [
+        sort/compare [1 1] func [a b] code
+    ] 
+    xyloop: function [
+        "Iterate over 2D series or size" 
+        'word [word! set-word!] 
+        srs [pair! image!] 
+        code [block!]
+    ] [
+        any [pair? srs srs: srs/size] 
+        repeat i srs/y * w: srs/x compose [
+            set word as-pair i - 1 % w + 1 i - 1 / w + 1 
+            (code)
+        ]
+    ] 
     walker!: object [
         plan: [] 
         init: does [clear plan] 
@@ -400,6 +418,53 @@ context [
             batch: make [] 128
         ]
     ] 
+    series-walker!: make batched-walker! [
+        container!: make typeset! [any-block! map! object!] 
+        container?: func [value [any-type!]] [find container! type? :value] 
+        history: make hash! 128 
+        filter: unique-filter: func [value [any-type!]] [
+            all [
+                not find/only/same history :value 
+                append/only history :value
+            ]
+        ] 
+        init: does [
+            clear plan 
+            clear history
+        ] 
+        stop: does [
+            plan: make block! 128 
+            history: make hash! 128 
+            batch: make block! 128
+        ] 
+        schedule: :insert 
+        branch: function [:node [any-type!]] [branch' :node] 
+        branch': function [node [any-type!]] compose/deep [
+            clear batch 
+            switch type?/word :node [
+                (to [] any-block!) (to [] any-string!) vector! binary! 
+                [repeat key length? node [push :node/:key]] 
+                (to [] any-object!) 
+                [foreach key keys-of node [push :node/:key]] 
+                map! [foreach key keys-of node [push select/case node :key]] 
+                image! [xyloop key node [push node/:key]]
+            ] 
+            schedule next plan batch
+        ] 
+        push: func [value [any-type!]] with :branch' [
+            repend/only batch 
+            either all [container? :value filter :value] 
+            [['branch' 'visit node key]] 
+            [['visit node key]]
+        ]
+    ] 
+    make-series-walker: function [types [block! typeset!] /unordered] [
+        make series-walker! [
+            container!: make typeset! types 
+            if unordered [schedule: :append] 
+            bind body-of :push :branch'
+        ]
+    ] 
     foreach-node: function [
         "Iterate over the tree starting at root" 
         root [any-type!] "Starting node" 
@@ -410,7 +475,7 @@ context [
         walker/visit: either block? :visitor [func [:node :key] visitor] [:visitor] 
         walker/init 
         repend/only walker/plan [in walker 'branch :root] 
-        also do bind/copy [forall plan [do plan/1]] walker 
+        also without-gc bind/copy [forall plan [do plan/1]] walker 
         walker/stop
     ] 
     parsee: inspect-dump: parse-dump: none 
@@ -450,24 +515,9 @@ context [
             ] 
             as path! unbind-block reduce [type rest]
         ] 
-        word-walker: make walker! [
-            history: make hash! 128 
-            filter: func [value [any-type!]] [
-                all [
-                    not find/only/same history :value 
-                    append/only history :value
-                ]
-            ] 
-            init: does [
-                clear plan 
-                clear history
-            ] 
-            stop: does [
-                plan: make block! 256 
-                history: make hash! 128
-            ] 
+        word-walker: make series-walker! [
             types: make typeset! [any-block! any-word!] 
-            branch: function [:node [any-block!]] compose/deep [
+            branch: function [:node [any-block!]] [
                 while [node: find/tail node types] [
                     either any-block? value: node/-1 [
                         if filter value [repend/only plan ['branch value]]
@@ -488,17 +538,7 @@ context [
             ] 
             result
         ] 
-        replicating-walker: make word-walker [
-            branch: function [:node [any-block!]] [branch' :node] 
-            branch': function [node [any-block!]] compose/deep [
-                repeat key length? node [
-                    repend/only plan 
-                    either all [any-block? :node/:key filter node/:key] 
-                    [['branch' 'visit node key]] 
-                    [['visit node key]]
-                ]
-            ]
-        ] 
+        replicating-walker: make-series-walker/unordered any-block! 
         store: function [
             "Get stored unique copy of original series" 
             dict [hash!] "Where to store the original->copy mapping" 

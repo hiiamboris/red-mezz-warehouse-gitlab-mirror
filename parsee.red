@@ -63,27 +63,10 @@ context expand-directives [
 		as path! unbind-block reduce [type rest]
 	]
 	
-	word-walker: make walker! [									;-- visits words of all unique blocks
-		history: make hash! 128
-		filter: func [value [any-type!]] [
-			all [
-				not find/only/same history :value
-				append/only history :value
-			]
-		]
-		
-		init: does [
-			clear plan
-			clear history
-		]
-		stop: does [
-			plan:    make block! 256
-			history: make hash!  128
-		]
-		
+	word-walker: make series-walker! [							;-- visits words of all unique blocks
 		types: make typeset! [any-block! any-word!]
-		branch: function [:node [any-block!]] compose/deep [	;-- paren requires get-arg
-			while [node: find/tail node types] [
+		branch: function [:node [any-block!]] [					;-- paren requires get-arg
+			while [node: find/tail node types] [				;@@ use for-each
 				either any-block? value: node/-1 [
 					if filter value [repend/only plan ['branch value]]
 				][
@@ -105,17 +88,7 @@ context expand-directives [
 		result
 	]
 	
-	replicating-walker: make word-walker [						;-- copies the blocks before branching, visits every item
-		branch: function [:node [any-block!]] [branch' :node]	;-- get-arg ver in case root is a paren
-		branch': function [node [any-block!]] compose/deep [
-			repeat key length? node [
-				repend/only plan
-					either all [any-block? :node/:key filter node/:key]
-						[['branch' 'visit node key]]
-						[['visit node key]]
-			]
-		]
-	]
+	replicating-walker: make-series-walker/unordered any-block!	;-- copies the blocks before branching, visits every item
 
 	store: function [
 		"Get stored unique copy of original series"

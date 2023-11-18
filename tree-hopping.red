@@ -134,7 +134,8 @@ Red [
 ]
 
 
-#include %without-gc.red
+#include %without-gc.red								;-- gives massive speedup
+#include %xyloop.red									;-- for image iteration
 
 walker!: object [										;-- minimal tree walker template
 	plan:   []
@@ -149,6 +150,68 @@ batched-walker!: make walker! [							;-- GC-smarter basic template
 	stop:   does [
 		plan:  make [] 128
 		batch: make [] 128
+	]
+]
+
+series-walker!: make batched-walker! [					;-- template that visits all values in all series
+	;; NOTE: given a container, visitor MUST return new (or old) container to branch into it
+	
+	;; by default branches only into any-block, object and map
+	container!: make typeset! [any-block! map! object!]
+	container?: func [value [any-type!]] [find container! type? :value]
+	
+	;; avoids deadlocks and double visiting by keeping track of visits
+	history: make hash! 128
+	filter: unique-filter: func [value [any-type!]] [
+		all [
+			not find/only/same history :value
+			append/only history :value
+		]
+	]
+	
+	init: does [
+		clear plan
+		clear history
+	]
+	stop: does [
+		plan:    make block! 128
+		history: make hash!  128
+		batch:   make block! 128
+	]
+	
+	;; controls whether iteration is ordered or fast
+	; schedule: :append
+	schedule: :insert
+	
+	branch: function [:node [any-type!]] [branch' :node]		;-- entry point requires get-arg
+	branch': function [node [any-type!]] compose/deep [			;-- any-type because container! may be replaced
+		clear batch
+		switch type?/word :node [
+			(to [] any-block!) (to [] any-string!) vector! binary!
+					[repeat  key length? node [push :node/:key]]
+			(to [] any-object!)
+					[foreach key keys-of node [push :node/:key]]
+			;; while map can be iterated without keys-of, keys will become set-words, which isn't great
+			;; also maps are case-sensitive, so without iteration select/case has to be used
+			map!	[foreach key keys-of node [push select/case node :key]]
+			image!	[xyloop key node [push node/:key]]			;@@ use for-each
+		]
+		schedule next plan batch
+	]
+	
+	push: func [value [any-type!]] with :branch' [
+		repend/only batch
+			either all [container? :value filter :value]
+				[['branch' 'visit node key]]
+				[['visit node key]]
+	]
+]
+
+make-series-walker: function [types [block! typeset!] /unordered] [
+	make series-walker! [
+		container!: make typeset! types
+		if unordered [schedule: :append]
+		bind body-of :push :branch'
 	]
 ]
 
