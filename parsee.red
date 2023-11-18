@@ -171,6 +171,7 @@ context expand-directives [
 		filename [file!] 
 	][
 		filename: to-local-file filename
+		cwd: what-dir									;@@ workaround for #5427
 		self/config: any [
 			config
 			attempt [make map! load/all %parsee.cfg]
@@ -185,7 +186,8 @@ context expand-directives [
 					config/tool: `{"(to-local-file tool)"}`
 					call-result: call/shell/wait command: `{(config/tool) "(filename)"}`
 					either call-result = 0 [
-						save %parsee.cfg mold/only to [] config
+						change-dir cwd
+						write %parsee.cfg mold/only to [] config
 					][
 						print `"Call to '(command)' failed with code (call-result)."`
 					]

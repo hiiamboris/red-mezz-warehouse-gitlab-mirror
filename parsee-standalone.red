@@ -614,6 +614,7 @@ context [
             filename [file!]
         ] [
             filename: to-local-file filename 
+            cwd: what-dir 
             self/config: any [
                 config 
                 attempt [make map! load/all %parsee.cfg] 
@@ -627,7 +628,8 @@ context [
                         config/tool: rejoin [{"} (to-local-file tool) {"}] 
                         call-result: call/shell/wait command: rejoin ["" (config/tool) { "} (filename) {"}] 
                         either call-result = 0 [
-                            save %parsee.cfg mold/only to [] config
+                            change-dir cwd 
+                            write %parsee.cfg mold/only to [] config
                         ] [
                             print rejoin ["Call to '" (command) "' failed with code " (call-result) "."]
                         ]
