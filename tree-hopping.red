@@ -134,6 +134,7 @@ Red [
 ]
 
 
+#include %with.red										;-- used in series-walker
 #include %without-gc.red								;-- gives massive speedup
 #include %xyloop.red									;-- for image iteration
 

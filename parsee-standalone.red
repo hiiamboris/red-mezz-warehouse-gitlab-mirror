@@ -447,7 +447,8 @@ context [
                 (to [] any-object!) 
                 [foreach key keys-of node [push :node/:key]] 
                 map! [foreach key keys-of node [push select/case node :key]] 
-                image! [xyloop key node [push node/:key]]
+                image! [xyloop key node [push node/:key]] 
+                event! [foreach key system/catalog/accessors/event! [push node/:key]]
             ] 
             schedule next plan batch
         ] 
@@ -666,6 +667,7 @@ context [
             ] 
             following [parse/:case/:part/trace input rules length :tracer] [
                 events: new-line/all/skip events on 6 
+                changes: new-line/all/skip changes on 5 
                 names: to hash! collect-rule-names visited-rules 
                 data: reduce [cloned] 
                 append data sanitize reduce [events changes names] dict 
@@ -688,6 +690,7 @@ context [
             action: pick [insert remove] insert? 
             repend changes [
                 age 
+                head target 
                 pick [insert remove] insert? 
                 skip? target 
                 copy/part target part
