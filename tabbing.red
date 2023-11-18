@@ -66,12 +66,14 @@ unless object? get/any 'tabbing [						;-- avoid multiple inclusion and multiple
 			]
 		]
 		
+		gui-console: system/view/screens/1/pane/-1
 		tab-handler: function [face event] [
 			all [
 				event/key = #"^-"
-				not event/ctrl?							;-- let area and tab-panel handle ctrl-tab
-				result: 'stop							;-- stop to avoid area inserting Tab char
-				event/type = 'key-down					;-- only react to one event type (should be repeatable - key or key-down)
+				not event/ctrl?									;-- let area and tab-panel handle ctrl-tab
+				any [focusable? face face/type = 'window]		;-- don't disable tab-completion in console
+				result: 'stop									;-- stop to avoid area inserting Tab char
+				event/type = 'key-down							;-- only react to one event type (should be repeatable - key or key-down)
 				(
 					window-walker/forward?: not event/shift?
 					foreach-node face window-walker [
