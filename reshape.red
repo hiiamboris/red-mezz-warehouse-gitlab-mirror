@@ -34,8 +34,11 @@ context [
 		block [any-list!]
 		/with "If provided, becomes the 1st argument"
 			grammar [any-list!] "A block of 1-2 values: [substitution-marker if-marker], default: [@ /if]"
+		/sub  "Provide a value substitution function"
+			do-sub [any-function!] "Must be unary, defaults to `do`"
 	] bind [
 		either with [swap 'grammar 'block][grammar: [@ /if]]
+		unless :do-sub [do-sub: :do]
 		=sub=:	any [grammar/1 =fail=]
 		=if=:	any [grammar/2 =fail=]
 		parse/case result: copy/deep block =block=: [
@@ -44,8 +47,8 @@ context [
 				end
 			|	if (new-line? p) at-line: =if-section=
 			|	=sub= [
-					block! change only p (do p/2)
-				|	paren! change p (keep? do p/2)
+					block! change only p (do-sub p/2)
+				|	paren! change p (keep? do-sub p/2)
 				]
 			|	at-if: =if= =do-cond= [if (succ?) =rem-if= | =rem-line=]
 			|	ahead any-list!
@@ -245,6 +248,10 @@ comment {	;-- two-pass version about 2x slower, but does not evaluate skipped su
 	;; grammar test
 	[1 2 3        ] = reshape/with [@uh @oh] [1 @uh(1 + 1) 3 @oh yes]
 	[1 2 3 @oh yes] = reshape/with [@uh    ] [1 @uh(1 + 1) 3 @oh yes]
+
+	;; substitution func test
+	[1  4 3 2  5  ] = reshape/with/sub [@uh @oh] [1 @uh(2 3 4) 5 @oh yes] :reverse
+	[1 [4 3 2] 5  ] = reshape/with/sub [@uh @oh] [1 @uh[2 3 4] 5 @oh yes] :reverse
 ]]
 
 comment [	;-- speed tests - reshape is ~10x slower than compose, which is great result for a mezz
