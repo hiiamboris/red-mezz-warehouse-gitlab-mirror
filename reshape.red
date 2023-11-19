@@ -35,7 +35,7 @@ context [
 		/with "If provided, becomes the 1st argument"
 			grammar [any-list!] "A block of 1-2 values: [substitution-marker if-marker], default: [@ /if]"
 		/sub  "Provide a value substitution function"
-			do-sub [any-function!] "Must be unary, defaults to `do`"
+			do-sub [function! action! native! routine!] "Must be unary, defaults to `do`"
 	] bind [
 		either with [swap 'grammar 'block][grammar: [@ /if]]
 		unless :do-sub [do-sub: :do]
