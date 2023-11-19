@@ -9,7 +9,7 @@ The following 3 snippets create a string for program identification, e.g. `"Prog
 
 | method | code |
 |:-|-|
-| reshape | <pre>form reshape [<br>	@(pname) @(ver)	@(desc)<br>	"by"	/if author<br>	@(author) #"^/"<br>]</pre> |
+| reshape | <pre>form reshape [<br>	@(pname) @(ver)	@(desc)<br>	"by" @(author)	/if author<br>	#"^/"<br>]</pre> |
 | compose | <pre>form compose [<br>	(pname) (ver)<br>	(any [desc ()])<br>	(either author [rejoin ["by "author]][()])<br>	#"^/"<br>]</pre> |
 | build | <pre>form build/with [<br>	!pname !ver ?desc ?author #"^/"<br>][<br>	!pname: pname<br>	!ver: ver<br>	?desc: any [any [desc ()]<br>	?author: either author [rejoin ["by "author]][()]<br>]</pre> |
 
