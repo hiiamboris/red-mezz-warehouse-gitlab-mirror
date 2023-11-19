@@ -363,7 +363,7 @@ context [
 
 			to-next-possible-match: reshape [
 				all [
-					pos: !(find-call) from: at skip ii/series ii/offset val-ofs :val |skip|
+					pos: @[find-call] from: at skip ii/series ii/offset val-ofs :val |skip|
 					ii/offset: (index? pos) - val-ofs
 					more-iterations? ii
 					ii/iter: add  ii/iter  (offset? from pos) / ii/step

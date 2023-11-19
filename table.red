@@ -443,7 +443,7 @@ table: context [
 					type:   'panel
 					pane:   []
 					; color:  !(any [~colors/panel black])
-					color:  !(any [~colors/text black])
+					color:  @[any [~colors/text black]]
 					size:   100x400
 					text:   "Header"
 					anchors: [scale ignore]
