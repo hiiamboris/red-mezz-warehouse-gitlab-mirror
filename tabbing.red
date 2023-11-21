@@ -12,56 +12,78 @@ unless object? get/any 'tabbing [						;-- avoid multiple inclusion and multiple
 	
 	tabbing: context [
 		
-		window-walker: make batched-walker! [
+		window-walker: make walker! [
+			;; abstraction functions that can be overridden
+			window?:     function [face [object!]] [face/type = 'window]
+			next-linked: function [face [object!]] [select face/options 'next]
+			prev-linked: function [face [object!]] [select face/options 'prev]
+			first-child: function [face [object!]] [if face/pane [face/pane/1]]
+			last-child:  function [face [object!]] [if face/pane [last face/pane]]
+			has-child?:  function [face [object!]] [not empty? face/pane]
+			next-child:  function [parent [object!] child [object!]] [
+				select/same parent/pane child
+			]
+			prev-child:  function [parent [object!] child [object!]] [
+				if found: find/same parent/pane child [found/-1]
+			]
+			parent-of:   function [child [object!]] [
+				all [
+					parent: child/parent
+					parent/type <> 'screen				;-- window is the last allowed parent
+					parent
+				]
+			]
+			
+			;; tree iteration logic
 			next-face: function [face [object!]] [
 				any [
-					select face/options 'next
-					if face/pane [face/pane/1]
-					also no while [all [parent: face/parent face/type <> 'window]] [
-						if sibling: select/same parent/pane face [return sibling]
-						face: parent
-					]
-					if face/type = 'window [face/pane/1]
+					next-linked face
+					first-child face
+					(
+						while [parent: parent-of face] [
+							if sibling: next-child parent face [return sibling]
+							face: parent
+						]
+						first-child face				;-- 'face' is different now (usually a window)
+					)
 				]
 			]
 			bottom: function [face [object!]] [
-				while [not empty? face/pane] [face: last face/pane]
+				while [has-child? face] [face: last-child face]
 				face
 			]
 			prev-face: function [face [object!]] [
-				parent: face/parent
-				pane: find/same parent/pane face
 				any [
-					select face/options 'prev
-					if face/type = 'window [return last face/pane]
-					if pane/-1 [bottom pane/-1]
-					if parent/type <> 'window [parent]
-					bottom parent
+					prev-linked face
+					unless parent: parent-of face [bottom face]
+					if sibling: prev-child parent face [bottom sibling]
+					if window? parent [bottom parent]
+					parent
 				]
 			]
 		
+			;; chooses iteration direction
 			forward?: yes
 			
-			;; iterates over all other faces within the window
+			;; entry point - iterates over all other faces within the window
 			branch: function [face [object!]] [
 				fetch: either forward? [:next-face][:prev-face]
-				start: if face/type <> 'window [face]
-				while [all [
-					face: fetch face
-					not same? face start
-					any [start start: face]
-				]] [repend/only plan ['visit face/parent face]]
+				start: unless window? face [face]		;-- window will never be visited again, so avoid deadlock
+				while [all [face: fetch face  not same? face start]] [
+					repend/only plan ['visit parent-of face face]
+					start: any [start face]
+				]
 			]
 		]
 
-		enabled?: func [face] [
+		enabled?: function [face [object!]] [
 			while [face] [
 				unless all [face/enabled? face/visible?] [return no]
 				face: face/parent
 			]
 			yes
 		]
-		focusable?: func [face] [
+		focusable?: function [face [object!]] [
 			any [
 				face/flags = 'focusable
 				all [
@@ -71,23 +93,23 @@ unless object? get/any 'tabbing [						;-- avoid multiple inclusion and multiple
 			]
 		]
 		
-		gui-console: system/view/screens/1/pane/-1
+		visitor: function [parent [object! none!] child [object!]] [
+			if all [focusable? child enabled? child] [ 
+				set-focus child
+				break
+			]
+		]
+							
 		tab-handler: function [face event] [
 			all [
 				event/key = #"^-"								;-- this automatically covers all key- events
 				not event/ctrl?									;-- let area and tab-panel handle ctrl-tab
-				any [focusable? face face/type = 'window]		;-- don't disable tab-completion in console
+				any [focusable? face face/type = 'window]		;-- don't disable tab-completion in console and other custom faces
 				result: 'stop									;-- stop to avoid area inserting Tab char
-				event/type = 'key-down							;-- only react to one event type (should be repeatable - key or key-down)
-				(
+				if event/type = 'key-down [						;-- only react to one event type (should be repeatable - key or key-down)
 					window-walker/forward?: not event/shift?
-					foreach-node face window-walker [
-						if all [focusable? key enabled? key] [ 
-							set-focus key
-							break
-						]
-					]
-				) 
+					foreach-node face window-walker :visitor
+				]
 			]
 			result
 		]
