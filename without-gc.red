@@ -12,7 +12,9 @@ Red [
 without-GC: function [
 	"Evaluate CODE with GC temporarily turned off"
 	code [block!]
+	/local result
 ][
-	sort/compare [1 1] func [a b] code
+	sort/compare [1 1] func [a b] [set/any 'result do code]
+	:result
 ]
 
