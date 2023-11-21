@@ -111,7 +111,10 @@ typechecking: context [
 		parse spec [any [
 			set field word! set types opt block! set fallback opt paren! (
 				field: to get-word! field
-				repend checks [make-check-func field types fallback  field]
+				test:  make-check-func field types fallback
+				compose/deep/into [
+					if (:test) (field) [do make error! (:test) (field)]
+				] tail checks
 			)
 		]]
 		copy checks
@@ -131,7 +134,11 @@ typechecking: context [
 
 #hide [#assert [
 	(x: 1 y: 'y)
+	;; correct:
 	typecheck [x [integer!] y [word!]]
 	typecheck [x [none! integer!] y [any-word!]]
 	typecheck [x [number! (x > 0)] y [any-word! (find [y] y)]]
+	;; failures:
+	; typecheck [x [string!] y [any-word! (find [y] y)]]
+	; typecheck [x (x = "a") y [any-word! (find [y] y)]]
 ]]
