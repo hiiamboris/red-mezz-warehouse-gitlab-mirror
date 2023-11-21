@@ -64,14 +64,17 @@ unless object? get/any 'tabbing [						;-- avoid multiple inclusion and multiple
 		focusable?: func [face] [
 			any [
 				face/flags = 'focusable
-				find face/flags 'focusable
+				all [
+					block? face/flags
+					find face/flags 'focusable
+				]
 			]
 		]
 		
 		gui-console: system/view/screens/1/pane/-1
 		tab-handler: function [face event] [
 			all [
-				event/key = #"^-"
+				event/key = #"^-"								;-- this automatically covers all key- events
 				not event/ctrl?									;-- let area and tab-panel handle ctrl-tab
 				any [focusable? face face/type = 'window]		;-- don't disable tab-completion in console
 				result: 'stop									;-- stop to avoid area inserting Tab char
