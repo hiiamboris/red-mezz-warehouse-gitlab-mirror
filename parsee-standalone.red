@@ -388,9 +388,11 @@ context [
     {^/^-; test code^/^-r: make deep-reactor-92! [^/^-^-x: "abcd"^/^-^-^/^-^-on-deep-change-92*: func [^/^-^-^-word        [word!]    "name of the field value of which is being changed"^/^-^-^-target      [series!]  "series at removal or insertion point"^/^-^-^-part        [integer!] "length of removal or insertion"^/^-^-^-insert?     [logic!]   "true = just inserted, false = about to remove"^/^-^-^-reordering? [logic!]   "removed items won't leave the series, inserted items came from the same series"^/^-^-^-; done?       [logic!]   "signifies that series is in it's final state (after removal/insertion)"^/^-^-][^/^-^-^-; ...your code to handle changes... e.g.:^/^-^-^-print [^/^-^-^-^-word ":"^/^-^-^-^-either insert? ["inserted"]["removing"]^/^-^-^-^-"at" mold/flat target^/^-^-^-^-part "items"^/^-^-^-^-either reordering? ["(reordering)"][""]^/^-^-^-^-either part = 0 ["(done)"][""]^/^-^-^-^-; either done? ["(done)"][""]^/^-^-^-]^/^-^-]^/^-]^/^-^/^-?? r/x^/^-insert/part next r/x [1 0 1] 2^/^-reverse/part next r/x 2^/^-remove/part next next next r/x 3^/^-?? r/x^/} 
     without-GC: function [
         "Evaluate CODE with GC temporarily turned off" 
-        code [block!]
+        code [block!] 
+        /local result
     ] [
-        sort/compare [1 1] func [a b] code
+        sort/compare [1 1] func [a b] [set/any 'result do code] 
+        :result
     ] 
     xyloop: function [
         "Iterate over 2D series or size" 

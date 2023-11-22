@@ -227,7 +227,8 @@ context expand-directives [
 			on-deep-change-92*: :logger
 		]
 		following [parse/:case/:part/trace input rules length :tracer] [
-			events: new-line/all/skip events on 6
+			events:  new-line/all/skip events  on 6
+			changes: new-line/all/skip changes on 5
 			names: to hash! collect-rule-names visited-rules
 			data: reduce [cloned]
 			append data sanitize reduce [events changes names] dict
@@ -250,11 +251,12 @@ context expand-directives [
 		reordering? [logic!]   "removed items won't leave the series, inserted items came from the same series"
 	] with :parse-dump [
 		if zero? part [exit]
-		#assert [same? word in reactor 'tracked]				;-- only able to track the input series, nothing deeper
-		#assert [same? head target head reactor/tracked]
+		; #assert [same? word in reactor 'tracked]				;-- only able to track the input series, nothing deeper
+		; #assert [same? head target head reactor/tracked]
 		action: pick [insert remove] insert?
 		repend changes [
 			age
+			head target
 			pick [insert remove] insert?
 			skip? target
 			copy/part target part
