@@ -191,8 +191,8 @@ context [
 				append sp-list self
 			]
 			init: [
-				context copy/deep [
-					panel: face
+				context copy/deep compose/deep [
+					panel: (self)
 					react [[panel/pane]             check-pane panel]
 					react [[panel/size panel/total] check-size panel]		;-- size & total change may trigger scrollers update
 					react [[panel/updates]          update-total panel]

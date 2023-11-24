@@ -5,6 +5,7 @@ Red [
 	license: 'BSD-3
 ]
 
+#include %assert.red
 #include %scrollpanel.red
 
 view [
