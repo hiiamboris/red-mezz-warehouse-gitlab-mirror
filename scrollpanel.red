@@ -108,14 +108,15 @@ context [
 	]
 
 	;; offset inner faces according to scroller data and panel/total
+	#include %show-trace.red
 	scroll: function [panel [object!]] [
 		hsc: panel/hsc  vsc: panel/vsc
 		hidden: max 0x0 panel/total - panel/size + (vsc/size/x by hsc/size/y)
 		;@@ BUG: for some reasons scroller/data + selected goes out of [0..1] segment
 		ox: hidden/x * max 0.0 min 1.0 hsc/data / (1.0 - hsc/selected)
 		oy: hidden/y * max 0.0 min 1.0 vsc/data / (1.0 - vsc/selected)
-		if hidden/x = 0 [ox: 0]
-		if hidden/y = 0 [oy: 0]
+		if nan? ox [ox: 0]
+		if nan? oy [oy: 0]
 		origin: ox by oy
 		if 0x0 <> shift: origin - panel/origin [
 			do-atomic [do-unseen [
@@ -151,6 +152,8 @@ context [
 		hidden: max 0x0 panel/total - viewsize
 		dx: 1.0 * shift/x / hidden/x * (1 - hsc/selected)
 		dy: 1.0 * shift/y / hidden/y * (1 - vsc/selected)
+		if nan? dx [dx: 0]
+		if nan? dy [dy: 0]
 		do-atomic [
 			maybe hsc/data: max 0.0 min 1.0 hsc/data - dx		;@@ BUG: scroller/data won't work with `0`, only `0.0`
 			maybe vsc/data: max 0.0 min 1.0 vsc/data - dy
