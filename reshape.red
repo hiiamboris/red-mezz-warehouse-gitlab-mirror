@@ -3,14 +3,14 @@ Red [
 	purpose: "Build a block of code using expressions and conditions"
 	author:  @hiiamboris
 	license: 'BSD-3
-	usage: {See in the reshape.md, and in the tests below}
+	usage:   {See in the reshape.md, and in the tests below}
 ]
 
 #include %hide-macro.red
 #include %assert.red
 ; #include %parsee-standalone.red
 
-;@@ TODO: implement it in R/S to be more useful
+;@@ TODO: implement it in R/S to be more useful, also see REP #133
 reshape: none
 context [
 	keep?: func [x [any-type!]] [
@@ -27,8 +27,8 @@ context [
 	;; @[] inserts as value
 	;; @() splices
 	;; /if after non-empty line - enables/disables the line
-	;; /if after empty line - enables/disables section (until next such /if)
-	;; optional /prefix refinement to replace the default @ token (instead of /skip)
+	;; /if after empty line - enables/disables section (until next such /if or end)
+	;; optional /with refinement to replace the default [@ /if] tokens (instead of /skip)
 	set 'reshape function [
 		"Deeply rewrite the block using provided grammar"
 		block [any-list!]
