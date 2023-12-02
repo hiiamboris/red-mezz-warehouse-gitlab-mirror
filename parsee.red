@@ -28,7 +28,10 @@ context expand-directives [
 	complex!: make typeset! [function! object! error! map! vector! image!]
 	
 	;; this relies on the property of Redbin: it ignores values from system/words
-	unbind: function [word [any-word!]] [bind word system/words]
+	;@@ refinement! support and double conversion is a workaround for #5437
+	unbind: function [word [any-word! refinement!]] [
+		to word bind to word! word system/words
+	]
 	; unbind: function [word [any-word!]] [anonymize word none]
 	
 	unbind-block: function [block [block!]] compose/deep [
@@ -115,7 +118,7 @@ context expand-directives [
 				(to [] any-block!) [							;-- blocks must be copied so they can be modified
 					return block/:i: store dict block/:i		;-- will branch into this new block
 				]
-				(to [] any-word!) [								;-- any-words must be unbound from their contexts
+				(to [] any-word!) refinement! [					;-- any-words must be unbound from their contexts
 					block/:i: unbind block/:i
 				]
 				function! map! object! error! vector! image!	;-- complex types are abbreviated to avoid scanning them
@@ -125,6 +128,22 @@ context expand-directives [
 			]
 		]
 		series
+	]
+	
+	check: function [											;-- the only way to debug this codec :(
+		"Deeply check if all values can be compressed by Redbin"
+		series [series!]
+	][
+		walker: make-series-walker [any-block!]
+		foreach-node series walker [
+			saved: attempt [system/codecs/redbin/encode reduce [:node/:key] none]
+			either saved [
+				[]												;-- do not descend into it if it can be encoded
+			][
+				print ["Cannot save" mold/flat/part :node/:key 100]
+				:node/:key
+			]
+		]
 	]
 	
 	
@@ -232,6 +251,7 @@ context expand-directives [
 			names: to hash! collect-rule-names visited-rules
 			data: reduce [cloned]
 			append data sanitize reduce [events changes names] dict
+			; check data
 			save/as filename data 'redbin
 		]
 	]

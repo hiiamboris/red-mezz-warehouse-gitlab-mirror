@@ -487,7 +487,9 @@ context [
         unsupported!: make typeset! [native! action! routine! handle! op!] 
         if datatype? :event! [unsupported!: union unsupported! make typeset! [event!]] 
         complex!: make typeset! [function! object! error! map! vector! image!] 
-        unbind: function [word [any-word!]] [bind word system/words] 
+        unbind: function [word [any-word! refinement!]] [
+            to word bind to word! word system/words
+        ] 
         unbind-block: function [block [block!]] compose/deep [
             forall block [
                 switch type?/word :block/1 [
@@ -566,7 +568,7 @@ context [
                     (to [] any-block!) [
                         return block/:i: store dict block/:i
                     ] 
-                    (to [] any-word!) [
+                    (to [] any-word!) refinement! [
                         block/:i: unbind block/:i
                     ] 
                     function! map! object! error! vector! image! 
@@ -576,6 +578,21 @@ context [
                 ]
             ] 
             series
+        ] 
+        check: function [
+            {Deeply check if all values can be compressed by Redbin} 
+            series [series!]
+        ] [
+            walker: make-series-walker [any-block!] 
+            foreach-node series walker [
+                saved: attempt [system/codecs/redbin/encode reduce [:node/:key] none] 
+                either saved [
+                    []
+                ] [
+                    print ["Cannot save" mold/flat/part :node/:key 100] 
+                    :node/:key
+                ]
+            ]
         ] 
         make-dump-name: function [] [
             if exists? filename: rejoin [%"" timestamp %.pdump] [
