@@ -5,11 +5,11 @@ Red [
 	usage:   {Just include it}
 ]
 
+#include %tree-hopping.red
+	
 if object? :system/view [								;-- CLI programs skip this
 unless object? get/any 'tabbing [						;-- avoid multiple inclusion and multiple handler functions
 
-	#include %tree-hopping.red
-	
 	tabbing: context [
 		
 		window-walker: make walker! [
