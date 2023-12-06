@@ -64,6 +64,7 @@ Red [
 #include %hide-macro.red
 #include %profiling.red
 
+#include %tree-hopping.red
 #include %glob.red
 
 #include %do-atomic.red
