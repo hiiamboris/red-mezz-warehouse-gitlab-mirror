@@ -62,6 +62,8 @@ Notes:
 | [median](median.red)                       | Find median value of a sample |
 | [count](count.red)                         | Count occurences of an item in the series |
 | [split](split.red)                         | Generalized series splitter (docs in the header) |
+| [join](join.red)                           | Join a list as a string |
+| [delimit](delimit.red)                     | Insert a delimiter between all list items |
 | [keep-type](keep-type.red)                 | Filter list using accepted type or typeset |
 | [collect-set-words](collect-set-words.red) | Deeply collect set-words from a block of code |
 | [morph](morph.red)                         | Dialect for persistent local series mapping. [Read more](morph.md) |
