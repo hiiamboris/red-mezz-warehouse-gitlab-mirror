@@ -117,10 +117,11 @@ These functions mainly help one follow design-by-contract guidelines in one's co
 | [ERROR macro](error-macro.red)     | Shortcut for raising an error using string interpolation for the message. [Read more](https://gitlab.com/hiiamboris/red-mezz-warehouse/-/blob/master/composite.md#error-macro) |
 | [#print macro](print-macro.red)    | Shortcut for `print #composite` |
 
-### Filesystem scanning
-| Source file                  | Description |
-| ---                          | --- |
-| [glob](glob.red)             | Allows you to recursively list files. [Read more](glob.md). [Run tests](glob-test.red) |
+### Filesystem related
+| Source file                          | Description |
+| ---                                  | --- |
+| [glob](glob.red)                     | Allows you to recursively list files. [Read more](glob.md). [Run tests](glob-test.red) |
+| [data-store context](data-store.red) | Standardized zero-fuss loading and saving of data, config and other state (documented in the header) |
 
 ### Graphics & Reactivity
 | Source file                              | Description |

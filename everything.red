@@ -66,6 +66,7 @@ Red [
 
 #include %tree-hopping.red
 #include %glob.red
+#include %data-store.red
 
 #include %do-atomic.red
 #include %do-queued-events.red
