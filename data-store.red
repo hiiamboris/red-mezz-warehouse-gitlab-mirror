@@ -16,8 +16,9 @@ Red [
 		
 		/READ-FILE, /WRITE-FILE, /LOAD-FILE and /SAVE-FILE are generic wrappers around /MAKE-PATH and /FIND-FILE.
 		
-		/LOAD-CONFIG, /LOAD-STATE and /SAVE-STATE are most commonly used wrappers around /LOAD-FILE and /SAVE-FILE.
+		/LOAD-CONFIG, /SAVE-CONFIG, /LOAD-STATE and /SAVE-STATE are most commonly used wrappers around /LOAD-FILE and /SAVE-FILE.
 		Use /LOAD-CONFIG to load user- or system-provided configuration (in Red key/value format by default).
+		Use /SAVE-CONFIG to when you want to store configuration set by user via GUI means into a user-local config file.
 		Use /LOAD-STATE and /SAVE-STATE to store all state you want to restore on the next run (in Redbin format by default).
 		
 		/PORTABLE? flag, when set, works inside the directory of the binary instead of /PATHS. 
@@ -276,6 +277,19 @@ data-store: context [
 		if block? :data [data: make map! data]
 		if defaults'    [data: extend defaults' data]
 		data
+	]
+	
+	save-config: function [
+		"Save program configuration as key-value dictionary (WARNING: this may overwrite user-provided config file)"
+		config [map!]
+		/name "Provide custom config filename"
+			name' [file!] "Defaults to <script-name>.config"
+	][
+		unless name' [name': rejoin [as file! script-name ".config"]]	;@@ use advanced-function or default
+		unless find [%.redbin %.json] suffix? name' [			;-- remove #() decoration from Red files
+			config: to block! config
+		]
+		save-file 'config name' config
 	]
 	
 	load-state: function [
