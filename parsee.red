@@ -16,6 +16,7 @@ Red [
 #include %timestamp.red									;-- for dump file name
 #include %reactor92.red									;-- for changes tracking
 #include %tree-hopping.red								;-- for cloning data
+#include %data-store.red								;-- for config load/save
 
 parsee: inspect-dump: parse-dump: none
 context expand-directives [
@@ -191,10 +192,8 @@ context expand-directives [
 	][
 		filename: to-local-file filename
 		cwd: what-dir									;@@ workaround for #5427
-		self/config: any [
-			config
-			attempt [make map! load/all %parsee.cfg]
-			default-config
+		unless config [
+			self/config: data-store/load-config/name/defaults %parsee.cfg default-config
 		]
 		call-result: call/shell/wait/output command: `{(config/tool) "(filename)"}` output: make {} 64
 		; #debug [print `"Tool call output:^/(output)"`]
@@ -206,7 +205,7 @@ context expand-directives [
 					call-result: call/shell/wait command: `{(config/tool) "(filename)"}`
 					either call-result = 0 [
 						change-dir cwd
-						write %parsee.cfg mold/only to [] config
+						data-store/save-config/name config %parsee.cfg
 					][
 						print `"Call to '(command)' failed with code (call-result)."`
 					]

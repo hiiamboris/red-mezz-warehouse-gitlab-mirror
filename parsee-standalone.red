@@ -481,6 +481,167 @@ context [
         also without-gc bind/copy [forall plan [do plan/1]] walker 
         walker/stop
     ] 
+    data-store: context [
+        portable?: off 
+        from-env: function [
+            {Get value of an environment variable, or its default, as a file} 
+            var [string!]
+        ] [
+            if var: any [get-env var paths/defaults/:var] [
+                to-red-file var
+            ]
+        ] 
+        join-paths: function [
+            {Construct absolute path by going into PATH from ROOT} 
+            root [file!] path [file!]
+        ] [
+            either #"/" = first path [path] [clean-path rejoin [dirize root path]]
+        ] 
+        group-env: function [
+            "Fetch and group multiple environment variables" 
+            spec [block!]
+        ] [
+            parse spec [collect any [
+                set group opt '* set name string! keep pick (
+                    if value: from-env name [
+                        if group [value: split value #":"]
+                    ] 
+                    any [value []]
+                )
+            ]]
+        ] 
+        paths: context [
+            script: first split-path join-paths 
+            to-red-file system/options/path 
+            to-red-file system/options/boot 
+            home: to-red-file get-env "USERPROFILE" 
+            defaults: make map! compose []
+        ] 
+        paths: make paths [
+            temp: any [
+                from-env "TEMP" 
+                from-env "TMP" 
+                from-env "TMPDIR" %.
+            ] 
+            data: group-env ["LOCALAPPDATA" "ALLUSERSPROFILE"] 
+            config: group-env ["APPDATA" "ALLUSERSPROFILE"] 
+            state: from-env "APPDATA" 
+            cache: temp 
+            runtime: temp
+        ] 
+        script-name: "inline" 
+        make-path: function [
+            {Construct full path to the data file of given type} 
+            type [word!] "One of: [data config state cache runtime]" 
+            subpath [file!] "File name or path unique within the program" 
+            /create "Prepare the directory structure"
+        ] [
+            if portable? [type: 'script] 
+            if block? path: paths/:type [path: path/1] 
+            unless portable? [path: path/(script-name)] 
+            path: path/:subpath 
+            if create [make-dir/deep dir: first split-path path] 
+            path
+        ] 
+        find-file: function [
+            "Find data file of given type; none if not found" 
+            type [word!] "One of: [data config state cache runtime]" 
+            subpath [file!] "File name or path unique within the program"
+        ] [
+            if portable? [type: 'script] 
+            unless block? alts: paths/:type [alts: reduce [alts]] 
+            foreach path alts [
+                unless portable? [path: path/(script-name)] 
+                if exists? file: path/:subpath [return file]
+            ] 
+            none
+        ] 
+        read-file: function [
+            "Read data file of given type; none if not found" 
+            type [word!] "One of: [data config state cache runtime]" 
+            subpath [file!] "File name or path unique within the program" 
+            /binary "Preserves contents exactly" 
+            /lines "Convert to block of strings"
+        ] [
+            if file: find-file type subpath [read/:binary/:lines file]
+        ] 
+        load-file: function [
+            "Load data file of given type; none if not found" 
+            type [word!] "One of: [data config state cache runtime]" 
+            subpath [file!] "File name or path unique within the program" 
+            /as {Specify the format of data; use NONE to load as code.} 
+            format [word! none!] "E.g. bmp, gif, jpeg, png, redbin, json, csv."
+        ] [
+            if file: find-file type subpath [load/all/:as file format]
+        ] 
+        write-file: function [
+            "Write data file of given type" 
+            type [word!] "One of: [data config state cache runtime]" 
+            subpath [file!] "File name or path unique within the program" 
+            text [string! binary! block!] 
+            /binary "Preserves contents exactly" 
+            /lines "Convert to block of strings"
+        ] [
+            file: make-path/create type subpath 
+            write/:binary/:lines file text
+        ] 
+        save-file: function [
+            "Save data file of given type" 
+            type [word!] "One of: [data config state cache runtime]" 
+            subpath [file!] "File name or path unique within the program" 
+            data [any-type!] "Value(s) to save" 
+            /all "Save in serialized format" 
+            /as {Specify the format of data; use NONE to save as plain text.} 
+            format [word! none!] "E.g. bmp, gif, jpeg, png, redbin, json, csv."
+        ] [
+            file: make-path/create type subpath 
+            save/:all/:as file :data format
+        ] 
+        load-config: function [
+            "Load program configuration" 
+            /defaults defaults' [map!] "Provide defaults for unspecified fields" 
+            /name "Provide custom config filename" 
+            name' [file!] "Defaults to <script-name>.config"
+        ] [
+            unless name' [name': rejoin [as file! script-name ".config"]] 
+            data: any [load-file 'config name' make map! 16] 
+            if block? :data [data: make map! data] 
+            if defaults' [data: extend defaults' data] 
+            data
+        ] 
+        save-config: function [
+            {Save program configuration as key-value dictionary (WARNING: this may overwrite user-provided config file)} 
+            config [map!] 
+            /name "Provide custom config filename" 
+            name' [file!] "Defaults to <script-name>.config"
+        ] [
+            unless name' [name': rejoin [as file! script-name ".config"]] 
+            unless find [%.redbin %.json] suffix? name' [
+                config: to block! config
+            ] 
+            save-file 'config name' config
+        ] 
+        load-state: function [
+            "Load program state" 
+            /defaults defaults' [map!] "Provide defaults for unspecified fields" 
+            /name "Provide custom state filename" 
+            name' [file!] "Defaults to <script-name>.state.redbin"
+        ] [
+            unless name' [name': rejoin [as file! script-name ".state.redbin"]] 
+            data: any [load-file 'state name' make map! 16] 
+            if defaults' [data: extend defaults' data] 
+            data
+        ] 
+        save-state: function [
+            "Save program state" 
+            state [map!] 
+            /name "Provide custom state filename" 
+            name' [file!] "Defaults to <script-name>.state.redbin"
+        ] [
+            unless name' [name': rejoin [as file! script-name ".state.redbin"]] 
+            save-file/all 'state name' state
+        ]
+    ] 
     parsee: inspect-dump: parse-dump: none 
     context expand-directives [
         skip?: func [s [series!]] [-1 + index? s] 
@@ -635,10 +796,8 @@ context [
         ] [
             filename: to-local-file filename 
             cwd: what-dir 
-            self/config: any [
-                config 
-                attempt [make map! load/all %parsee.cfg] 
-                default-config
+            unless config [
+                self/config: data-store/load-config/name/defaults %parsee.cfg default-config
             ] 
             call-result: call/shell/wait/output command: rejoin ["" (config/tool) { "} (filename) {"}] output: make "" 64 
             if call-result <> 0 [
@@ -649,7 +808,7 @@ context [
                         call-result: call/shell/wait command: rejoin ["" (config/tool) { "} (filename) {"}] 
                         either call-result = 0 [
                             change-dir cwd 
-                            write %parsee.cfg mold/only to [] config
+                            data-store/save-config/name config %parsee.cfg
                         ] [
                             print rejoin ["Call to '" (command) "' failed with code " (call-result) "."]
                         ]
