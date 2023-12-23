@@ -19,7 +19,7 @@ Red [
 		/LOAD-CONFIG, /SAVE-CONFIG, /LOAD-STATE and /SAVE-STATE are most commonly used wrappers around /LOAD-FILE and /SAVE-FILE.
 		Use /LOAD-CONFIG to load user- or system-provided configuration (in Red key/value format by default).
 		Use /SAVE-CONFIG to when you want to store configuration set by user via GUI means into a user-local config file.
-		Use /LOAD-STATE and /SAVE-STATE to store all state you want to restore on the next run (in Redbin format by default).
+		Use /LOAD-STATE and /SAVE-STATE to store all state you want to restore on the next run.
 		
 		/PORTABLE? flag, when set, works inside the directory of the binary instead of /PATHS. 
 		
@@ -296,10 +296,10 @@ data-store: context [
 		"Load program state"
 		/defaults defaults' [map!] "Provide defaults for unspecified fields"
 		/name "Provide custom state filename"
-			name' [file!] "Defaults to <script-name>.state.redbin"
+			name' [file!] "Defaults to <script-name>.state"
 	][
-		unless name' [name': rejoin [as file! script-name ".state.redbin"]]	;@@ use advanced-function or default
-		data: any [load-file 'state name'  make map! 16]		;-- silently allow absence of state
+		unless name' [name': rejoin [as file! script-name ".state"]]	;@@ use advanced-function or default
+		data: make map! any [load-file 'state name'  16]		;-- silently allow absence of state
 		if defaults' [data: extend defaults' data]
 		data
 	]
@@ -308,9 +308,12 @@ data-store: context [
 		"Save program state"
 		state [map!]
 		/name "Provide custom state filename"
-			name' [file!] "Defaults to <script-name>.state.redbin"
+			name' [file!] "Defaults to <script-name>.state"
 	][
-		unless name' [name': rejoin [as file! script-name ".state.redbin"]]	;@@ use advanced-function or default
+		unless name' [name': rejoin [as file! script-name ".state"]]	;@@ use advanced-function or default
+		unless find [%.redbin %.json] suffix? name' [			;-- remove #() decoration from Red files
+			state: to block! state
+		]
 		save-file/all 'state name' state
 	]
 	

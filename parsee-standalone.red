@@ -625,10 +625,10 @@ context [
             "Load program state" 
             /defaults defaults' [map!] "Provide defaults for unspecified fields" 
             /name "Provide custom state filename" 
-            name' [file!] "Defaults to <script-name>.state.redbin"
+            name' [file!] "Defaults to <script-name>.state"
         ] [
-            unless name' [name': rejoin [as file! script-name ".state.redbin"]] 
-            data: any [load-file 'state name' make map! 16] 
+            unless name' [name': rejoin [as file! script-name ".state"]] 
+            data: make map! any [load-file 'state name' 16] 
             if defaults' [data: extend defaults' data] 
             data
         ] 
@@ -636,9 +636,12 @@ context [
             "Save program state" 
             state [map!] 
             /name "Provide custom state filename" 
-            name' [file!] "Defaults to <script-name>.state.redbin"
+            name' [file!] "Defaults to <script-name>.state"
         ] [
-            unless name' [name': rejoin [as file! script-name ".state.redbin"]] 
+            unless name' [name': rejoin [as file! script-name ".state"]] 
+            unless find [%.redbin %.json] suffix? name' [
+                state: to block! state
+            ] 
             save-file/all 'state name' state
         ]
     ] 
