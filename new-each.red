@@ -406,6 +406,7 @@ context [
 
 	;-- the frontend
 	set 'for-each function [
+		[no-trace]
 		"Evaluate CODE for each match of the SPEC on SERIES"
 		'spec  [word! block!]                "Words & index to set, values/types to match"
 		series [series! map! pair! integer!] "Series, map or limit"
@@ -428,6 +429,7 @@ context [
 	]
 
 	set 'map-each function [
+		[no-trace]
 		"Map SERIES into a new one and return it"
 		'spec  [word! block!]                "Words & index to set, values/types to match"
 		series [series! map! pair! integer!] "Series, map or range"
@@ -517,6 +519,7 @@ context [
 	;@@ at RS level it's a hash so it'll be easier there
 	;@@ so, map at least should be converted into a hash, not block
 	set 'remove-each function [
+		[no-trace]
 		"Remove parts of SERIES that match SPEC and return a truthy value"
 		'spec  [word! block!]                "Words & index to set, values/types to match"
 		series [series! map! pair! integer!] "Series, map or range"
