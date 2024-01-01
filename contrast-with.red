@@ -37,8 +37,7 @@ contrast-with: function [
 			d': min absolute l' - l- absolute l' - l+			;-- distance from l' to closest color lightness
 			if d' > d [d: d' l: l']
 		]
-		hsl: reduce [h 1.0 l]									;-- always saturated
-		HSL2RGB/tuple hsl
+		HSL2RGB/tuple as-point3D h 1 l							;-- always saturated
 	][
 		bw: either 0.5 > brightness? color [white][black]		;-- pick black or write: what's more contrast 
 		white - color / 5 + (bw * 0.8)							;-- 20% of inverted color + 80% of B/W

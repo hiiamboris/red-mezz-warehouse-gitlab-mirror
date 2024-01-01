@@ -6,7 +6,6 @@ Red [
 	TODO:    {HSV, HSI does anyone use these?}
 ]
 
-
 ; #include %assert.red
 ; #include %hide-macro.red
 
@@ -52,16 +51,34 @@ from-byte: function [
 	]
 ]
 
+;@@ consider moving these out into another module
+tuple->point: function [
+	"Convert tuple into a point3D"
+	tuple [tuple!]
+][
+	as-point3D
+		from-byte tuple/1
+		from-byte tuple/2
+		from-byte tuple/3
+]
+point->tuple: function [
+	"Convert point3D into a tuple"
+	point [point3D!]
+][
+	as-color											;@@ this routine may overflow if > 255 - need bounds checking
+		to-byte point/1
+		to-byte point/2
+		to-byte point/3
+]
 
 ;; https://en.wikipedia.org/wiki/HSL_and_HSV#Color_conversion_formulae
 RGB2HSL: function [
-	"Convert colors from RGB into HSL color model"
-	; RGB [block! (parse RGB [3 number!]) tuple!] "0-1 each if block"
-	RGB [block! tuple!] "0-1 each if block"
+	"Convert colors from RGB(1,1,1) into HSL(360,1,1) color model"
+	RGB [point3D! tuple!] "0-1 each if point"
 	/tuple "Return as a 3-tuple"
 ][
-	if tuple? RGB [RGB: reduce [from-byte RGB/1 from-byte RGB/2 from-byte RGB/3]]	;@@ use map-each
-	set [R: G: B:] RGB
+	if tuple? RGB [RGB: tuple->point RGB]
+	R: RGB/1  G: RGB/2  B: RGB/3
 	X+: max max R G B									;-- max of channels = value
 	X-: min min R G B									;-- min of channels
 	C:  X+ - X-											;-- chroma
@@ -73,33 +90,31 @@ RGB2HSL: function [
 		X+ == G [B - R / C +  2]
 		X+ == B [r - G / C +  4]
 	]
-	HSL: reduce [H S L]
-	if tuple [
-		forall HSL [HSL/1: to-byte HSL/1]				;@@ use map-each
-		HSL: to tuple! HSL
-	]
+	HSL: as-point3D H S L
+	if tuple [HSL: point->tuple HSL / (360,1,1)]
 	HSL
 ]
 HSL2RGB: function [
-	"Convert colors from HSL into RGB color model"
-	; HSL [block! (parse HSL [3 number!]) tuple!] "0-360 hue, 0-1 others if block"
-	HSL [block! tuple!] "0-360 hue, 0-1 others if block"
+	"Convert colors from HSL(360,1,1) into RGB(1,1,1) color model"
+	HSL [point3D! tuple!] "0-360 hue, 0-1 others if point"
 	/tuple "Return as a 3-tuple"
 ][
-	if tuple? HSL [HSL: reduce [from-byte HSL/1 from-byte HSL/2 from-byte HSL/3]]	;@@ use map-each
-	set [H: S: L:] HSL
+	if tuple? HSL [HSL: (360,1,1) * tuple->point HSL]
+	H: HSL/1  S: HSL/2  L: HSL/3
 	H': H / 60
 	C:  S * 2 * min L 1 - L								;-- chroma
 	D:  L - (C / 2)										;-- darkest channel
 	B:  C + D											;-- brightest channel
 	M:  C * (1 - absolute H' % 2 - 1) + D				;-- middle channel
-	RGB: reduce pick [
-		[B M D] [M B D] [D B M] [D M B] [M D B] [B D M] [B M D]	;-- 7th=1th - for H=360 case
-	] 1 + to integer! H'
-	if tuple [
-		forall RGB [RGB/1: to-byte RGB/1]				;@@ use map-each
-		RGB: to tuple! RGB
+	RGB: switch to integer! H' [
+		0 6 [as-point3D B M D]							;-- 6=0 - for H=360 case
+		1   [as-point3D M B D]
+		2   [as-point3D D B M]
+		3   [as-point3D D M B]
+		4   [as-point3D M D B]
+		5   [as-point3D B D M]
 	]
+	if tuple [RGB: point->tuple RGB]
 	RGB
 ]
 
@@ -112,40 +127,40 @@ HSL2RGB: function [
 			0.3% >= absolute a/3 - b/3
 		]
 	]
-  	[  0   0%   0%] ~= RGB2HSL 0.0.0
-  	[  0   0% 100%] ~= RGB2HSL 255.255.255
-  	[  0 100%  50%] ~= RGB2HSL 255.0.0
-  	[120 100%  50%] ~= RGB2HSL 0.255.0
-  	[240 100%  50%] ~= RGB2HSL 0.0.255
-  	[ 60 100%  50%] ~= RGB2HSL 255.255.0
-  	[180 100%  50%] ~= RGB2HSL 0.255.255
-  	[300 100%  50%] ~= RGB2HSL 255.0.255
-  	[  0   0%  75%] ~= RGB2HSL 191.191.191
-  	[  0   0%  50%] ~= RGB2HSL 127.127.127
-  	[  0 100%  25%] ~= RGB2HSL 127.0.0
-  	[ 60 100%  25%] ~= RGB2HSL 127.127.0
-  	[120 100%  25%] ~= RGB2HSL 0.127.0
-  	[300 100%  25%] ~= RGB2HSL 127.0.127
-  	[180 100%  25%] ~= RGB2HSL 0.127.127
-  	[240 100%  25%] ~= RGB2HSL 0.0.127
+  	(  0, 0, 0.00) ~= RGB2HSL 0.0.0
+  	(  0, 0, 1.00) ~= RGB2HSL 255.255.255
+  	(  0, 1, 0.50) ~= RGB2HSL 255.0.0
+  	(120, 1, 0.50) ~= RGB2HSL 0.255.0
+  	(240, 1, 0.50) ~= RGB2HSL 0.0.255
+  	( 60, 1, 0.50) ~= RGB2HSL 255.255.0
+  	(180, 1, 0.50) ~= RGB2HSL 0.255.255
+  	(300, 1, 0.50) ~= RGB2HSL 255.0.255
+  	(  0, 0, 0.75) ~= RGB2HSL 191.191.191
+  	(  0, 0, 0.50) ~= RGB2HSL 127.127.127
+  	(  0, 1, 0.25) ~= RGB2HSL 127.0.0
+  	( 60, 1, 0.25) ~= RGB2HSL 127.127.0
+  	(120, 1, 0.25) ~= RGB2HSL 0.127.0
+  	(300, 1, 0.25) ~= RGB2HSL 127.0.127
+  	(180, 1, 0.25) ~= RGB2HSL 0.127.127
+  	(240, 1, 0.25) ~= RGB2HSL 0.0.127
 ]]
 #assert [
-  	(HSL2RGB/tuple [  0   0%   0%]) = 0.0.0
-  	(HSL2RGB/tuple [  0   0% 100%]) = 255.255.255
-  	(HSL2RGB/tuple [  0 100%  50%]) = 255.0.0
-  	(HSL2RGB/tuple [120 100%  50%]) = 0.255.0
-  	(HSL2RGB/tuple [240 100%  50%]) = 0.0.255
-  	(HSL2RGB/tuple [ 60 100%  50%]) = 255.255.0
-  	(HSL2RGB/tuple [180 100%  50%]) = 0.255.255
-  	(HSL2RGB/tuple [300 100%  50%]) = 255.0.255
-  	(HSL2RGB/tuple [  0   0%  75%]) = 191.191.191
-  	(HSL2RGB/tuple [  0   0%  50%]) = 127.127.127
-  	(HSL2RGB/tuple [  0 100%  25%]) = 127.0.0
-  	(HSL2RGB/tuple [ 60 100%  25%]) = 127.127.0
-  	(HSL2RGB/tuple [120 100%  25%]) = 0.127.0
-  	(HSL2RGB/tuple [300 100%  25%]) = 127.0.127
-  	(HSL2RGB/tuple [180 100%  25%]) = 0.127.127
-  	(HSL2RGB/tuple [240 100%  25%]) = 0.0.127
+  	(HSL2RGB/tuple (  0, 0, 0.00]) = 0.0.0
+  	(HSL2RGB/tuple (  0, 0, 1.00]) = 255.255.255
+  	(HSL2RGB/tuple (  0, 1, 0.50)) = 255.0.0
+  	(HSL2RGB/tuple (120, 1, 0.50)) = 0.255.0
+  	(HSL2RGB/tuple (240, 1, 0.50)) = 0.0.255
+  	(HSL2RGB/tuple ( 60, 1, 0.50)) = 255.255.0
+  	(HSL2RGB/tuple (180, 1, 0.50)) = 0.255.255
+  	(HSL2RGB/tuple (300, 1, 0.50)) = 255.0.255
+  	(HSL2RGB/tuple (  0, 0, 0.75)) = 191.191.191
+  	(HSL2RGB/tuple (  0, 0, 0.50)) = 127.127.127
+  	(HSL2RGB/tuple (  0, 1, 0.25)) = 127.0.0
+  	(HSL2RGB/tuple ( 60, 1, 0.25)) = 127.127.0
+  	(HSL2RGB/tuple (120, 1, 0.25)) = 0.127.0
+  	(HSL2RGB/tuple (300, 1, 0.25)) = 127.0.127
+  	(HSL2RGB/tuple (180, 1, 0.25)) = 0.127.127
+  	(HSL2RGB/tuple (240, 1, 0.25)) = 0.0.127
   	
   	(HSL2RGB/tuple RGB2HSL 0.0.0      ) = 0.0.0      
   	(HSL2RGB/tuple RGB2HSL 255.255.255) = 255.255.255
