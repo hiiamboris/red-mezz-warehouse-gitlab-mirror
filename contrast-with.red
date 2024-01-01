@@ -18,18 +18,46 @@ Red [
 
 #include %color-models.red
 
-;@@ need 3-point constrast too, but it's trickier
 contrast-with: function [
 	"Pick a color that would contrast with the given one"
 	color [tuple!]
+	/both other [tuple!] "Should contrast with both given colors"
 ][
-	bw: either 0.5 > brightness? color [white][black]	;-- pick black or write: what's more contrast 
-	white - color / 5 + (bw * 0.8)						;-- 20% of inverted color + 80% of B/W
+	either all [both other <> color] [
+		;@@ this should be done in Lab space, otherwise prone to bad choices, esp on blue
+		hsl1: RGB2HSL color
+		hsl2: RGB2HSL other
+		h: hsl1/1 + hsl2/1 / 2									;-- pick hue contrast to the average hue of both
+		if (absolute h - hsl1/1) < 90 [h: h + 180 % 360]		;-- pick the longer arc center
+		l+: max hsl1/3 hsl2/3
+		l-: min hsl1/3 hsl2/3
+		l: l+ + l- / 2
+		d: l+ - l- / 2											;-- distance from l to both colors lightness
+		foreach l' [0.8 0.2] [									;-- pick best of 3 variants of lightness: l1+l2/2, 0.2 and 0.8
+			d': min absolute l' - l- absolute l' - l+			;-- distance from l' to closest color lightness
+			if d' > d [d: d' l: l']
+		]
+		hsl: reduce [h 1.0 l]									;-- always saturated
+		HSL2RGB/tuple hsl
+	][
+		bw: either 0.5 > brightness? color [white][black]		;-- pick black or write: what's more contrast 
+		white - color / 5 + (bw * 0.8)							;-- 20% of inverted color + 80% of B/W
+	]
 ]
 
 
+comment {
+	;; Dual color test
+	colors: map-each/drop [n t [tuple!]] body-of system/words [to word! n]
+	view/tight [
+		b1: base "TEXT" bold right b2: base "TEXT" bold left rate 1 on-time [
+			b1/color: get probe random/only colors
+			b2/color: get probe random/only colors
+			b1/font/color: b2/font/color: contrast-with/both b1/color b2/color
+		]
+	]
 
-comment {	;; Test (up to 30% factor works best, but closer to 0% loses hue)
+	;; Single color test (up to 30% factor works best, but closer to 0% loses hue)
 	factor: 5.0
 	brightness: func [c] [(c/1 / 240 ** 2) + (c/2 / 200 ** 2) ** 0.5]	;-- doesn't count blue for speed
 	contrast-with: function [c][
