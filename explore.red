@@ -358,8 +358,8 @@ context [
 				label: lens: overlay: whole: none
 			]
 			init: [
-				context with face copy/deep [
-					panel: face
+				context copy/deep compose [
+					panel: (self)
 					do [
 						label: make-face/offset/spec 'text 0x0 [500 no-wrap]	;@@ should be big enough until #4778 is fixed
 						lens:  make-face/offset/spec 'base 0x25 [
