@@ -236,7 +236,11 @@ data-store: context [
 		/as "Specify the format of data; use NONE to load as code."
 			format [word! none!] "E.g. bmp, gif, jpeg, png, redbin, json, csv."
 	][
-		if file: find-file type subpath [load/all/:as file format]	;-- make no sense without /all for files
+		if file: find-file type subpath [
+			result: load/all/:as file format			;-- make no sense without /all for files
+			unless format [result: expand-directives result]
+			:result
+		]
 	]
 	
 	write-file: function [
