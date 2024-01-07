@@ -20,6 +20,24 @@ Red [
 	}
 ]
 
+;; let compiler and inline tool keep the macro for runtime so it keeps working while expanding loaded data
+;@@ ugly because includes workarounds for #5462,3
+#if rebol [
+	expand-directives [#do keep [load {
+		#macro [## block!] func [[manual] s e] [
+			change/only remove s do expand-directives s/1
+		]
+	}]]
+]
+#if all [value? 'inlining? get 'inlining?] [
+	;; this needs to skip #macro while inlining, but use it when compiling
+	expand-directives [#do keep [[#do keep]] [load {
+		#macro [## block!] func [[manual] s e] [
+			change/only remove s do expand-directives s/1
+		]
+	}]]
+]
+
 #macro [## block!] func [[manual] s e] [
 	change/only remove s do expand-directives s/1
 ]
