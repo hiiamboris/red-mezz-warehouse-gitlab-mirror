@@ -90,8 +90,7 @@ Red [
 ;; #BYOS [linux+mac-code][windows-code] local helper macro
 #macro [#BYOS 2 block!] func [[manual] s e /local chosen] [		;-- choose proper code from 2 variants
 	chosen: pick next s
-		select [Linux 1 MacOS 1 Windows 2]
-		either Rebol [red/job/OS][system/platform]
+		pick [2 1] 'Windows = either Rebol [red/job/OS][system/platform]
 	insert remove/part s 3 chosen
 	s
 ]
