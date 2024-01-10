@@ -39,7 +39,7 @@ Red [
 		- insert `change-dir` into file contents block to properly handle relative includes
 		
 		It's not possible to compile using this approach, because Red code is not usually loadable in R2
-		For compiling, see https://gitlab.com/hiiamboris/red-cli/-/tree/master/mockups/inline
+		For compiling, see https://codeberg.org/hiiamboris/red-cli/src/master/mockups/inline
 	}
 ]
 ;@@ TODO: instead of printing, use `try/all` and report the file where the error happens

@@ -4,7 +4,7 @@ Red [
 	author:  @hiiamboris
 	license: 'BSD-3
 	notes: {
-		This function originated from the Red View Test System: https://gitlab.com/hiiamboris/red-view-test-system
+		This function originated from the Red View Test System: https://codeberg.org/hiiamboris/red-view-test-system
 		Since the whole system is pretty big, when some test fails I didn't want to poke around in search of a broken element.
 		Rather I wanted to immediately see where the behavior started to become unexpected.
 

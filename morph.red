@@ -4,7 +4,7 @@ Red [
 	author:  @hiiamboris
 	license: 'BSD-3
 	usage: {
-		See https://gitlab.com/hiiamboris/red-mezz-warehouse/-/blob/master/morph.md
+		See https://codeberg.org/hiiamboris/red-common/src/master/morph.md
 	}
 ]
 
