@@ -108,7 +108,7 @@ ASSERTION FAILED! But of course this will fail
 ```
 Full reduction log helps you see what happened. Notice the error message I provided. Evaluation continues despite the errors.
 
-More real world uses can be found in my [mezz-warehouse repo](https://gitlab.com/search?search=%23assert&group_id=&project_id=18539768&scope=&search_code=true&snippets=false&repository_ref=master&nav_source=navbar) to help you get more confident with `#assert`.
+More real world uses can be found in my [red-common repo](https://github.com/search?q=repo%3Ahiiamboris%2Fred-mezz-warehouse-gitlab-mirror%20assert&type=code) to help you get more confident with `#assert`.
 
 ### Guidelines
 
