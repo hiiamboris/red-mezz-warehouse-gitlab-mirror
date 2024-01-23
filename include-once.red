@@ -83,12 +83,12 @@ Red [
 		postlude: compose [change-dir (old-path)]		;-- restore path after evaluation (unless errors out or halts..)
 		if verb? [
 			prelude: compose/deep [
-				print rejoin [append indent " " "processing " (mold file)]
+				print rejoin [append (indent) " " "processing " (mold file)]
 				(prelude)
 			]
 			postlude: compose/deep [
 				(postlude)
-				print rejoin [" " remove indent "finished " (mold file)]
+				print rejoin [" " remove (indent) "finished " (mold file)]
 			]
 		]
 		
