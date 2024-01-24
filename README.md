@@ -2,10 +2,10 @@ Official URL of this project: [https://codeberg.org/hiiamboris/red-common](https
 
 # A collection of my Red mezzanines & macros
 
-Some of these are trivial. Some may look simple in code, but are a result long design process. Some are only emerging experiments. See headers of each file for usage, info, design info!
+Some of these are trivial. Some may look simple in code, but are a result long design process. Some are only emerging experiments. **See headers** of each file for usage, info, design info!
 
 Notes:
-- most scripts are standalone, I tried to keep dependencies at minimum
+- I try to keep dependencies at minimum for simpler until it stops making sense  
 - mostly untested for compileability so far; optimized for the interpreted use
 - use `#include %everything.red` to include all the scripts at once and play
 
@@ -30,36 +30,50 @@ Notes:
 | [new replace](new-replace.red)         | Based on the new apply, but awaits team consensus on design |
 
 ### General purpose
-| Source file                            | Description |
-| ---                                    | --- |
-| [setters](setters.red)                 | Contains ONCE, DEFAULT, MAYBE, QUIETLY, ANONYMIZE value assignment wrappers, and IMPORT/EXPORT to expose some object's words globally |
-| [step](step.red)                       | Increment & decrement function useful for code readability |
-| [clip](clip.red)                       | Contain a value within given range |
-| [catchers](catchers.red)               | TRAP - enhanced TRY, FCATCH - Filtered catch, PCATCH - Pattern-matched catch, FOLLOWING - guaranteed cleanup |
-| [#include macro](include-once.red)     | Smart replacement for #include directive that includes every file only once |
-| [with](with.red)                       | A convenient/readable BIND variant |
-| [#hide macro](hide-macro.red)          | Automatic set-word and loop counter hiding |
-| [bind-only](bind-only.red)             | Selectively bind a word or a few only |
-| [apply](apply.red)                     | Call a function with arguments specified as key-value pairs |
-| [timestamp](timestamp.red)             | Ready-to-use and simple timestamp formatter for naming files |
+| Source file                                | Description |
+| ---                                        | --- |
+| [setters](setters.red)                     | Contains ONCE, DEFAULT, MAYBE, QUIETLY, ANONYMIZE value assignment wrappers, and IMPORT/EXPORT to expose some object's words globally |
+| [with](with.red)                           | A convenient/readable BIND variant |
+| [#hide macro](hide-macro.red)              | Automatic set-word and loop counter hiding |
 | [stepwise-macro](stepwise-macro.red) and [stepwise-func](stepwise-func.red) | Allows you write long compound expressions as a sequence of steps |
-| [trace](trace.red)                     | Step-by-step evaluation of a block of expressions with a callback |
-| [trace-deep](trace-deep.red)           | Step-by-step evaluation of each sub-expression with a callback |
-| [selective-catch](selective-catch.red) | Catch `break`/`continue`/etc. - for use in building custom loops |
-| [prettify](prettify.red)               | Automatically fill some (possibly flat) code with new-line markers for readability |
-| [reshape](reshape.red)                 | Advanced code construction dialect to replace `compose` and `build`. [Read more](reshape.md) |
-| [leak-check](leak-check.red)           | Find words leaking from complex code |
-| [modulo](modulo.red)                   | Working modulo implementation with tests |
+| [trace](trace.red)                         | Step-by-step evaluation of a block of expressions with a callback |
+| [trace-deep](trace-deep.red)               | Step-by-step evaluation of each sub-expression with a callback |
+| [selective-catch](selective-catch.red)     | Catch `break`/`continue`/etc. - for use in building custom loops |
+| [reshape](reshape.red)                     | Advanced code construction dialect to replace `compose` and `build`. [Read more](reshape.md) |
+| [without-GC](without-gc.red)               | Evaluate code with GC temporarily turned off (brings massive speedup when used wisely) |
+| [scoping](scoping.red)                     | Primitive experimental support for scope-based resource lifetime management |
+
+### Design extensions and fixes
+| Source file                                | Description |
+| ---                                        | --- |
+| [#include macro](include-once.red)         | Smart replacement for #include directive that includes every file only once |
+| [\#\# macro](load-anything.red)            | Macro for arbitrary load-time evaluation, to be able to save and load any kind of value |
+| [bind-only](bind-only.red)                 | Selectively bind a word or a few only |
+| [catchers](catchers.red)                   | TRAP - enhanced TRY, FCATCH - Filtered catch, PCATCH - Pattern-matched catch, FOLLOWING - guaranteed cleanup |
+| [classy object](classy-object.red)         | Object 'class' support that adds type checks and per-word on-change functions to objects |
+| [typed object](typed-object.red)           | Simple per-object type checks support |
+| [advanced function](advanced-function.red) | Support for value checks and defaults in FUNCTION's spec argument |
+
+### Math
+| Source file                                | Description |
+| ---                                        | --- |
+| [step](step.red)                           | Increment & decrement function useful for code readability |
+| [clip](clip.red)                           | Contain a value within given range |
+| [exponent-of](exponent-of.red)             | Compute exponent of a number (i.e. how many digits it has) |
+| [quantize](quantize.red)                   | Quantize a float sequence into rounded bits (e.g. to get an integer vector) |
+| [modulo](modulo.red)                       | Working modulo implementation with tests |
+| [timestamp](timestamp.red)                 | Ready-to-use and simple timestamp formatter for naming files |
 
 ### Series-related
 | Source file                                | Description |
 | ---                                        | --- |
-| [extremi](extremi.red)                     | Find minimum and maximum points over a series |
+| [extrema](extrema.red)                     | Find minimum and maximum points over a series |
 | [median](median.red)                       | Find median value of a sample |
 | [count](count.red)                         | Count occurences of an item in the series |
 | [split](split.red)                         | Generalized series splitter (docs in the header) |
 | [join](join.red)                           | Join a list as a string |
 | [delimit](delimit.red)                     | Insert a delimiter between all list items |
+| [match](match.red)                         | Mask based pattern matching for strings (used by GLOB) |
 | [keep-type](keep-type.red)                 | Filter list using accepted type or typeset |
 | [sift & locate](sift-locate.red)           | High level dialected series filter and finder [Read more](sift-locate.md) |
 | [collect-set-words](collect-set-words.red) | Deeply collect set-words from a block of code |
@@ -69,17 +83,14 @@ Notes:
 | Source file                                | Description |
 | ---                                        | --- |
 | [xyloop](xyloop.red)                       | Iterate over 2D area - image or just size |
-| [forparse](forparse.red)                   | Leverage parse power to filter series |
+| [forparse](forparse.red)                   | Leverage parse power to iterate over series |
+| [mapparse](mapparse.red)                   | FORPARSE-based mapping over series |
 | [for-each](new-each.red)                   | Powerful version of FOREACH, covering most use cases |
 | [map-each](new-each.red)                   | Map one series into another, leveraging FOR-EACH power |
 | [remove-each](new-each.red)                | Extends native REMOVE-EACH with FOR-EACH syntax and fixes its bugs |
 | [bulk](bulk.red)                           | Bulk evaluation syntax support. [Read more](https://github.com/greggirwin/red-hof/tree/master/code-analysis#bulk-syntax)] |
 | [search](search.red)                       | Find root of a function with better than linear complexity. Supports [binary / bisection](https://en.wikipedia.org/wiki/Binary_search_algorithm), [interpolation / false position](https://en.wikipedia.org/wiki/Interpolation_search) and [jump](https://en.wikipedia.org/wiki/Jump_search) search. |
 | [foreach-node](tree-hopping.red)           | Tree visitor pattern support (for building all kinds of tree iterators) |
-
-Interestingly, `for-each` and `map-each` code showcases how limited `compose` is when building complex nested code with a lot of special cases.
-It works, but uglifies it so much that a question constantly arises: can we do something better than `compose`?
-These two functions will serve as a great playground for such an experiment.
 
 ### Debugging
 
@@ -93,20 +104,21 @@ These functions mainly help one follow design-by-contract guidelines in one's co
 | [expect](expect.red)                   | Test a condition, showing full backtrace when it fails |
 | [show-trace](show-trace.red)           | Example TRACE wrapper that just prints the evaluation log to console |
 | [show-deep-trace](show-deep-trace.red) | Example TRACE-DEEP wrapper that just prints the evaluation log to console |
+| [shallow-trace](shallow-trace.red)     | Basic step by step expression evaluator |
 | [parsee](parsee.red)                   | Parse visual debugger. [Read more](https://codeberg.org/hiiamboris/red-spaces/src/branch/master/programs/README.md#parsee-parsing-flow-visual-analysis-tool-parsee-tool-red) |
 
 ### Profiling
 | Source file                  | Description |
 | ---                          | --- |
-| [clock](clock.red)           | Simple, even minimal, mezz for timing code execution |
-| [clock-each](clock-each.red) | Allows you to profile each expression in a block of code (obsolete) |
 | [profiling](profiling.red)   | Inline profiling macros and functions (documented in the header) |
 
 ### Formatting
-| Source file                        | Description |
-| ---                                | --- |
-| [entab & detab](tabs.red)          | Tabs to spaces conversion and back |
-| [format-number](format-number.red) | Simple number formatter with the ability to control integer & fractional parts size |
+| Source file                            | Description |
+| ---                                    | --- |
+| [entab & detab](tabs.red)              | Tabs to spaces conversion and back |
+| [format-number](format-number.red)     | Simple number formatter with the ability to control integer & fractional parts size |
+| [format-readable](format-readable.red) | Experimental advanced number formatter targeted at human reader (used by the profiler). For a better design see the [Format module](https://github.com/red/red/pull/5069) |
+| [prettify](prettify.red)               | Automatically fill some (possibly flat) code with new-line markers for readability |
 
 ### String interpolation
 | Source file                        | Description |
@@ -131,7 +143,16 @@ These functions mainly help one follow design-by-contract guidelines in one's co
 | [do-queued-events](do-queued-events.red) | Flush the View event queue |
 | [do-atomic](do-atomic.red)               | Atomically execute a piece of code that triggers reactions |
 | [do-unseen](do-unseen.red)               | Disable View redraws from triggering during given code evaluation |
+| [reactor92](reactor92.red)               | A higher level `on-deep-change*` replacement based on [REP 92](https://github.com/red/REP/issues/92) |
 | [embed-image](embed-image.red)           | Macro to compile images into exe |
 | [explore & image-explorer style](explore.red) | Show UI to explore an image in detail (TODO: support any Red value) |
 | [scrollpanel style](scrollpanel.red)     | Automatic scrolling capability to a panel, until such is available out of the box. [Read more](scrollpanel.md) |
-| [table style](table.red)                 | WIP experiment on VID-based table construction |
+| [tabbing support](tabbing.red)           | Simpler and extensible replacement for native tabbing support (extended when using [Spaces](https://codeberg.org/hiiamboris/red-spaces/)) |
+| [table style](table.red)                 | Old experiment on VID-based table construction |
+
+### Utilities
+| Source file                              | Description |
+| ---                                      | --- |
+| [leak-check](leak-check.red)             | Find words leaking from complex code |
+| [bmatch](bmatch.red)                     | Bracket matching for Red sources (see [CLI implementation](https://codeberg.org/hiiamboris/red-cli/src/branch/master/mockups/bmatch)) |
+

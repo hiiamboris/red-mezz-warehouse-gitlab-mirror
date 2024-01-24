@@ -43,7 +43,6 @@ Red [
 #include %explore.red
 #include %bulk.red	
 
-#include %clock.red
 #include %shallow-trace.red							;-- included by clock-each.red & show-trace.red & stepwise-func.red
 #include %clock-each.red
 #include %show-trace.red								;-- unlikely needed given now available trace mezz
