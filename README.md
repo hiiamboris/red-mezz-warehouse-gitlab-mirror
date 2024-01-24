@@ -27,10 +27,6 @@ Notes:
 | Source file                            | Description |
 | ---                                    | --- |
 | [map, fold, scan, sum, partition (external)](https://github.com/greggirwin/red-hof/tree/master/mapfold) | Fast FP-like HOFs, as alternative to dialected \*each (routines, require compilation) |
-| [new apply](new-apply.red)             | Waits for #4854 to be fixed and then I can start porting it to R/S |
-| [new for-each, map-each, remove-each](new-each.red) | Waits for Gregg's review then I can start porting it to R/S |
-| [new count](new-count.red)             | Based on the new apply, waits for it's R/S implementation |
-| [sift & locate](sift-locate.red)       | Based on the new-each and new-apply. [Read more](sift-locate.md) |
 | [new replace](new-replace.red)         | Based on the new apply, but awaits team consensus on design |
 
 ### General purpose
@@ -65,6 +61,7 @@ Notes:
 | [join](join.red)                           | Join a list as a string |
 | [delimit](delimit.red)                     | Insert a delimiter between all list items |
 | [keep-type](keep-type.red)                 | Filter list using accepted type or typeset |
+| [sift & locate](sift-locate.red)           | High level dialected series filter and finder [Read more](sift-locate.md) |
 | [collect-set-words](collect-set-words.red) | Deeply collect set-words from a block of code |
 | [morph](morph.red)                         | Dialect for persistent local series mapping. [Read more](morph.md) |
 
@@ -73,8 +70,9 @@ Notes:
 | ---                                        | --- |
 | [xyloop](xyloop.red)                       | Iterate over 2D area - image or just size |
 | [forparse](forparse.red)                   | Leverage parse power to filter series |
-| [for-each](for-each.red)                   | Experimental design of an extended FOREACH |
-| [map-each](map-each.red)                   | Map one series into another, leveraging FOR-EACH power |
+| [for-each](new-each.red)                   | Powerful version of FOREACH, covering most use cases |
+| [map-each](new-each.red)                   | Map one series into another, leveraging FOR-EACH power |
+| [remove-each](new-each.red)                | Extends native REMOVE-EACH with FOR-EACH syntax and fixes its bugs |
 | [bulk](bulk.red)                           | Bulk evaluation syntax support. [Read more](https://github.com/greggirwin/red-hof/tree/master/code-analysis#bulk-syntax)] |
 | [search](search.red)                       | Find root of a function with better than linear complexity. Supports [binary / bisection](https://en.wikipedia.org/wiki/Binary_search_algorithm), [interpolation / false position](https://en.wikipedia.org/wiki/Interpolation_search) and [jump](https://en.wikipedia.org/wiki/Jump_search) search. |
 | [foreach-node](tree-hopping.red)           | Tree visitor pattern support (for building all kinds of tree iterators) |
