@@ -1,3 +1,8 @@
+---
+gitea: none
+include_toc: true
+---
+
 Official URL of this project: [https://codeberg.org/hiiamboris/red-common](https://codeberg.org/hiiamboris/red-common)
 
 # A collection of my Red mezzanines & macros
@@ -9,25 +14,7 @@ Notes:
 - mostly untested for compileability so far; optimized for the interpreted use
 - use `#include %everything.red` to include all the scripts at once and play
 
-**Navigate by category:**
-* [General purpose](#general-purpose)
-* [Series-related](#series-related)
-* [Loops](#loops)
-* [Debugging](#debugging)
-* [Profiling](#profiling)
-* [Formatting](#formatting)
-* [String interpolation](#string-interpolation)
-* [Filesystem scanning](#filesystem-scanning)
-* [Graphics & Reactivity](#graphics-reactivity)
-
-
-## By category:
-
-### Recent implementations, not yet incorporated into the whole
-| Source file                            | Description |
-| ---                                    | --- |
-| [map, fold, scan, sum, partition (external)](https://github.com/greggirwin/red-hof/tree/master/mapfold) | Fast FP-like HOFs, as alternative to dialected \*each (routines, require compilation) |
-| [new replace](new-replace.red)         | Based on the new apply, but awaits team consensus on design |
+## By category
 
 ### General purpose
 | Source file                                | Description |
@@ -155,4 +142,10 @@ These functions mainly help one follow design-by-contract guidelines in one's co
 | ---                                      | --- |
 | [leak-check](leak-check.red)             | Find words leaking from complex code |
 | [bmatch](bmatch.red)                     | Bracket matching for Red sources (see [CLI implementation](https://codeberg.org/hiiamboris/red-cli/src/branch/master/mockups/bmatch)) |
+
+### Implementations not yet incorporated into the whole
+| Source file                            | Description |
+| ---                                    | --- |
+| [map, fold, scan, sum, partition (external)](https://github.com/greggirwin/red-hof/tree/master/mapfold) | Fast FP-like HOFs, as alternative to dialected \*each (routines, require compilation) |
+| [new replace](new-replace.red)         | Based on the new apply, but awaits team consensus on design (see [REP 146](https://github.com/red/REP/issues/146)) |
 
