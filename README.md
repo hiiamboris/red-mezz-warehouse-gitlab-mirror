@@ -48,16 +48,16 @@ Notes:
 | [clip](clip.red)                           | Contain a value within given range |
 | [exponent-of](exponent-of.red)             | Compute exponent of a number (i.e. how many digits it has) |
 | [quantize](quantize.red)                   | Quantize a float sequence into rounded bits (e.g. to get an integer vector) |
+| [extrema](extrema.red)                     | Find minimum and maximum points over a series |
+| [median](median.red)                       | Find median value of a sample |
+| [count](count.red)                         | Count occurences of an item in the series |
 | [modulo](modulo.red)                       | Working modulo implementation with tests |
 | [timestamp](timestamp.red)                 | Ready-to-use and simple timestamp formatter for naming files |
 
 ### Series-related
 | Source file                                | Description |
 | ---                                        | --- |
-| [extrema](extrema.red)                     | Find minimum and maximum points over a series |
-| [median](median.red)                       | Find median value of a sample |
-| [count](count.red)                         | Count occurences of an item in the series |
-| [split](split.red)                         | Generalized series splitter (docs in the header) |
+| [split](split.red)                         | Generalized series splitter |
 | [join](join.red)                           | Join a list as a string |
 | [delimit](delimit.red)                     | Insert a delimiter between all list items |
 | [match](match.red)                         | Mask based pattern matching for strings (used by GLOB) |
@@ -75,7 +75,7 @@ Notes:
 | [for-each](new-each.red)                   | Powerful version of FOREACH, covering most use cases |
 | [map-each](new-each.red)                   | Map one series into another, leveraging FOR-EACH power |
 | [remove-each](new-each.red)                | Extends native REMOVE-EACH with FOR-EACH syntax and fixes its bugs |
-| [bulk](bulk.red)                           | Bulk evaluation syntax support. [Read more](https://github.com/greggirwin/red-hof/tree/master/code-analysis#bulk-syntax)] |
+| [bulk](bulk.red)                           | Bulk evaluation syntax support. [Read more](https://github.com/greggirwin/red-hof/tree/master/code-analysis#bulk-syntax) |
 | [search](search.red)                       | Find root of a function with better than linear complexity. Supports [binary / bisection](https://en.wikipedia.org/wiki/Binary_search_algorithm), [interpolation / false position](https://en.wikipedia.org/wiki/Interpolation_search) and [jump](https://en.wikipedia.org/wiki/Jump_search) search. |
 | [foreach-node](tree-hopping.red)           | Tree visitor pattern support (for building all kinds of tree iterators) |
 
