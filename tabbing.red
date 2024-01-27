@@ -69,7 +69,13 @@ unless object? get/any 'tabbing [						;-- avoid multiple inclusion and multiple
 			branch: function [face [object!]] [
 				fetch: either forward? [:next-face][:prev-face]
 				start: unless window? face [face]		;-- window will never be visited again, so avoid deadlock
-				while [all [face: fetch face  not same? face start]] [
+				while [
+					all [
+						face: fetch face': face
+						not same? face start
+						not same? face face'			;-- avoid deadlock on short circuited faces
+					]
+				] [
 					repend/only plan ['visit parent-of face face]
 					start: any [start face]
 				]
