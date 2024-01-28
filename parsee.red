@@ -49,7 +49,7 @@ context expand-directives [
 		"Convert value of a complex datatype into a short readable form"
 		value [complex! unsupported!]
 	][
-		rest: switch/default type: type?/word :value [
+		rest: switch type: type?/word :value [
 			op! native! action! routine! function!
 					[copy/deep spec-of :value]
 			object!	[
