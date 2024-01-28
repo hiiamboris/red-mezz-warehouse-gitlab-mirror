@@ -529,7 +529,7 @@ context [
             cache: temp 
             runtime: temp
         ] 
-        script-name: "inline" 
+        script-name: "parsee-standalone-source" 
         make-path: function [
             {Construct full path to the data file of given type} 
             type [word!] "One of: [data config state cache runtime]" 
@@ -572,7 +572,11 @@ context [
             /as {Specify the format of data; use NONE to load as code.} 
             format [word! none!] "E.g. bmp, gif, jpeg, png, redbin, json, csv."
         ] [
-            if file: find-file type subpath [load/all/:as file format]
+            if file: find-file type subpath [
+                result: load/all/:as file format 
+                unless format [result: expand-directives result] 
+                :result
+            ]
         ] 
         write-file: function [
             "Write data file of given type" 
@@ -667,7 +671,7 @@ context [
             {Convert value of a complex datatype into a short readable form} 
             value [complex! unsupported!]
         ] [
-            rest: switch/default type: type?/word :value [
+            rest: switch type: type?/word :value [
                 op! native! action! routine! function! 
                 [copy/deep spec-of :value] 
                 object! [
