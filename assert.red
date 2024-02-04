@@ -23,7 +23,7 @@ Red [
 #macro [#assert 'off] func [s e] [assertions: off []]
 #do [unless value? 'assertions [assertions: on]]		;-- only reset it on first include
 
-#macro [#assert block!] func [[manual] s e] [			;-- allow macros within assert block!
+#macro [#assert block!] func [[manual] s e /local nl] [	;-- allow macros within assert block!
 	nl: new-line? s										;-- preserve newline marker state before #assert
 	either assertions [change s 'assert][remove/part s e]
 	new-line s nl
