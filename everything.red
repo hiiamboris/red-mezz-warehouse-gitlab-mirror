@@ -5,6 +5,7 @@ Red [
 ]
 
 #include %include-once.red
+; #do [verbose-inclusion?: yes]
 #include %assert.red									;-- including it first will expand embedded assertions in the other scripts
 ; #assert off												;-- optionally uncomment this to disable assertions 
 #include %debug.red

@@ -145,8 +145,8 @@ HSL2RGB: function [
   	(240, 1, 0.25) ~= RGB2HSL 0.0.127
 ]]
 #assert [
-  	(HSL2RGB/tuple (  0, 0, 0.00]) = 0.0.0
-  	(HSL2RGB/tuple (  0, 0, 1.00]) = 255.255.255
+  	(HSL2RGB/tuple (  0, 0, 0.00)) = 0.0.0
+  	(HSL2RGB/tuple (  0, 0, 1.00)) = 255.255.255
   	(HSL2RGB/tuple (  0, 1, 0.50)) = 255.0.0
   	(HSL2RGB/tuple (120, 1, 0.50)) = 0.255.0
   	(HSL2RGB/tuple (240, 1, 0.50)) = 0.0.255
