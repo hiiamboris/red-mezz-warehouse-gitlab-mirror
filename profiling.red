@@ -275,7 +275,7 @@ prof: context [
 	][
 		n: to integer! any [n 1]
 		code-copy: copy/deep code						;-- preserve the original code in case it changes during execution ;@@ copy maps too
-		test-code: compose [#[none] #[none] (code)]		;-- need 2 no-ops to: (1) negate startup time of `shallow-trace`, (2) establish a baseline
+		test-code: compose [#(none) #(none) (code)]		;-- need 2 no-ops to: (1) negate startup time of `shallow-trace`, (2) establish a baseline
 		
 		timer: func [result [any-type!] pos [block!]] [	;-- collects timing of each expression
 			t2: now/utc/precise							;-- 2 time markers here - to minimize `timer` influence on timings

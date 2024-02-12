@@ -47,7 +47,7 @@ Apart from iteration over series, this version supports:
 |-|-|-|
 | integer! | `foreach [x y] 10` | `repeat` generalization that can unfold integer range in groups |
 | pair! | `foreach xy 10x10` | `repeat` generalization on pairs (can also fill multiple items at once, though unlikely ever needed) |
-| map! | `foreach [/i k v] #(a b)` | map is treated as series of key-value pairs |
+| map! | `foreach [/i k v] #[a b]` | map is treated as series of key-value pairs |
 
 Note: `map-each/self` does not support integer & pair ranges, because `map-each` is enough, and `/self` is simply not needed.\
 `remove-each` supports ranges, but creates a new block as a result:

@@ -163,7 +163,7 @@ anonymize: function [
 	'none   = get anonymize 'value 'none
 	unset?    get/any anonymize 'value ()
 	[1 2]   = get/any anonymize 'value [1 2]
-	#(a: 1) = get/any anonymize 'value #(a: 1)
+	#[a: 1] = get/any anonymize 'value #[a: 1]
 	(object [a: 1]) = get/any anonymize 'value object [a: 1]
 	set-word? get/any anonymize 'value quote value:
 	lit-word? get/any anonymize 'value quote 'value

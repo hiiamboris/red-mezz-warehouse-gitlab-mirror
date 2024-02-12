@@ -600,9 +600,9 @@ context [
 	[1    ] = collect [for-each [x]      [1      ] [keep x]]
 	[1 2  ] = collect [for-each [x]      [1 2    ] [keep x]]
 	[1 2 3] = collect [for-each [x]      [1 2 3  ] [keep x]]
-	[[1 2] [3 #[none]]      ] = collect [for-each [x y] [1 2 3    ] [keep/only reduce [x y]]]
+	[[1 2] [3 #(none)]      ] = collect [for-each [x y] [1 2 3    ] [keep/only reduce [x y]]]
 	[[1 2] [3 4]            ] = collect [for-each [x y] [1 2 3 4  ] [keep/only reduce [x y]]]
-	[[1 2] [3 4] [5 #[none]]] = collect [for-each [x y] [1 2 3 4 5] [keep/only reduce [x y]]]
+	[[1 2] [3 4] [5 #(none)]] = collect [for-each [x y] [1 2 3 4 5] [keep/only reduce [x y]]]
 
 	;; `continue` & `break` support
 	[1 2 3] = collect [for-each  x [1 2 3] [keep x continue]]
@@ -625,7 +625,7 @@ context [
 	[5 3 1  ] = collect [for-each/reverse [p: x y] [a b c d e] [keep index? p]]
 	[3 2 1  ] = collect [for-each/reverse x 3                  [keep x ]]
 	[3 4 1 2] = collect [for-each/reverse [x y] 4              [keep reduce [x y]]]
-	[3 #[none] 1 2] = collect [for-each/reverse [x y] 3        [keep reduce [x y]]]
+	[3 #(none) 1 2] = collect [for-each/reverse [x y] 3        [keep reduce [x y]]]
 	empty?      collect [for-each/reverse x            0       [keep x]]
 	empty?      collect [for-each/reverse x           -1       [keep x]]
 	[3 2    ] = collect [for-each/reverse x next      [1 2 3]  [keep x]]		;-- should stop at initial index
@@ -682,20 +682,20 @@ context [
 	[1 3 5 7 9      ] = collect [for-each [i j] 10  [keep i]]				;-- unfold length into integers
 
 	;; maps support
-	    error?              try [for-each [p: x] #(1 2 3 4) []]							;-- no series index for maps allowed
-	not error?              try [for-each [/i x] #(1 2 3 4) []]
-	[1 2 3 4        ] = collect [for-each [k v]       #(1 2 3 4) [keep k keep v]]		;-- map iteration is very relaxed
-	[1 2 3 4        ] = collect [for-each x           #(1 2 3 4) [keep x]]       
-	[1 2 3 4 #[none]] = collect [for-each [a b c d e] #(1 2 3 4) [keep reduce [a b c d e]]]
+	    error?              try [for-each [p: x] #[1 2 3 4] []]							;-- no series index for maps allowed
+	not error?              try [for-each [/i x] #[1 2 3 4] []]
+	[1 2 3 4        ] = collect [for-each [k v]       #[1 2 3 4] [keep k keep v]]		;-- map iteration is very relaxed
+	[1 2 3 4        ] = collect [for-each x           #[1 2 3 4] [keep x]]       
+	[1 2 3 4 #(none)] = collect [for-each [a b c d e] #[1 2 3 4] [keep reduce [a b c d e]]]
 
 	;; vectors support
 	v: make vector! [1 2 3 4 5]
 	[1 2 3 4 5              ] = collect [for-each  x    v [keep x]]                
-	[[1 2] [3 4] [5 #[none]]] = collect [for-each [x y] v [keep/only reduce [x y]]]
+	[[1 2] [3 4] [5 #(none)]] = collect [for-each [x y] v [keep/only reduce [x y]]]
 
 	;; any-block support
-	[[1 2] [3 4] [5 #[none]]] = collect [for-each [x y] make hash!   [1 2 3 4 5] [keep/only reduce [x y]]]
-	[[1 2] [3 4] [5 #[none]]] = collect [for-each [x y] as paren!    [1 2 3 4 5] [keep/only reduce [x y]]]
+	[[1 2] [3 4] [5 #(none)]] = collect [for-each [x y] make hash!   [1 2 3 4 5] [keep/only reduce [x y]]]
+	[[1 2] [3 4] [5 #(none)]] = collect [for-each [x y] as paren!    [1 2 3 4 5] [keep/only reduce [x y]]]
 	; [[1 2] [3 4] [5 #[none]]] = collect [for-each [x y] as path!     [1 2 3 4 5] [keep/only reduce [x y]]]		;@@ uncomment me when #4421 gets fixed
 	; [[1 2] [3 4] [5 #[none]]] = collect [for-each [x y] as lit-path! [1 2 3 4 5] [keep/only reduce [x y]]]		;@@ uncomment me when #4421 gets fixed
 	; [[1 2] [3 4] [5 #[none]]] = collect [for-each [x y] as set-path! [1 2 3 4 5] [keep/only reduce [x y]]]		;@@ uncomment me when #4421 gets fixed
@@ -749,14 +749,14 @@ context [
 	[1    ] = map-each [x] [1    ] [x]
 	[1 2  ] = map-each [x] [1 2  ] [x]
 	[1 2 3] = map-each [x] [1 2 3] [x]
-	[[1 2] [3 #[none]]      ] = map-each/only [x y] [1 2 3    ] [reduce [x y]]
+	[[1 2] [3 #(none)]      ] = map-each/only [x y] [1 2 3    ] [reduce [x y]]
 	[[1 2] [3 4]            ] = map-each/only [x y] [1 2 3 4  ] [reduce [x y]]
-	[[1 2] [3 4] [5 #[none]]] = map-each/only [x y] [1 2 3 4 5] [reduce [x y]]
+	[[1 2] [3 4] [5 #(none)]] = map-each/only [x y] [1 2 3 4 5] [reduce [x y]]
 
 	;; decomposition of strings
 	[#"a" #"b" #"c"]    = map-each  x    "abc"   [x]
 	[#"a" #"c" #"e"]    = map-each [x y] "abcde" [x]
-	[#"b" #"d" #[none]] = map-each [x y] "abcde" [y]
+	[#"b" #"d" #(none)] = map-each [x y] "abcde" [y]
 	[#"b" #"d"]         = map-each [x y] "abcd"  [y]
 	[#"a" #"b" #"c"]    = map-each  x     <abc>  [x]
 	[#"a" #"b" #"c"]    = map-each  x     %abc   [x]
@@ -794,22 +794,22 @@ context [
 	[               ] = map-each  i  -5x-5 [i]				;-- negative length
 
 	;; maps support
-	error?         try [map-each [p: x] #(1 2 3 4) []]								;-- no indexes for maps allowed
+	error?         try [map-each [p: x] #[1 2 3 4] []]								;-- no indexes for maps allowed
 	; error?         try [map-each [/i x] #(1 2 3 4) []]
-	[1 2 3 4        ] = map-each [k v]       #(1 2 3 4) [reduce [k v]]		;-- map iteration is very relaxed
-	[1 2 3 4        ] = map-each x           #(1 2 3 4) [x]       
-	[1 2 3 4 #[none]] = map-each [a b c d e] #(1 2 3 4) [reduce [a b c d e]]
+	[1 2 3 4        ] = map-each [k v]       #[1 2 3 4] [reduce [k v]]		;-- map iteration is very relaxed
+	[1 2 3 4        ] = map-each x           #[1 2 3 4] [x]       
+	[1 2 3 4 #(none)] = map-each [a b c d e] #[1 2 3 4] [reduce [a b c d e]]
 
 	;; vectors support
 	v: make vector! [1 2 3 4 5]
 	[1 2 3 4 5               ] = map-each       x    v [x]           
-	[[1 2] [3 4] [5 #[none]] ] = map-each/only [x y] v [reduce [x y]]
+	[[1 2] [3 4] [5 #(none)] ] = map-each/only [x y] v [reduce [x y]]
 	[1 2 6 4 5               ] = map-each      [(3)] v [6]			;-- vectors get appended as /only by default - need to ensure it's not the case
 	(make vector! [1 2 6 4 5]) = map-each/self [(3)] copy v [6]
 
 	;; any-block support
-	[[1 2] [3 4] [5 #[none]]] = map-each/only [x y] make hash!   [1 2 3 4 5] [reduce [x y]]
-	[[1 2] [3 4] [5 #[none]]] = map-each/only [x y] as paren!    [1 2 3 4 5] [reduce [x y]]
+	[[1 2] [3 4] [5 #(none)]] = map-each/only [x y] make hash!   [1 2 3 4 5] [reduce [x y]]
+	[[1 2] [3 4] [5 #(none)]] = map-each/only [x y] as paren!    [1 2 3 4 5] [reduce [x y]]
 	; [[1 2] [3 4] [5 #[none]]] = map-each/only [x y] as path!     [1 2 3 4 5] [reduce [x y]]		;@@ uncomment me when #4421 gets fixed
 	; [[1 2] [3 4] [5 #[none]]] = map-each/only [x y] as lit-path! [1 2 3 4 5] [reduce [x y]]		;@@ uncomment me when #4421 gets fixed
 	; [[1 2] [3 4] [5 #[none]]] = map-each/only [x y] as set-path! [1 2 3 4 5] [reduce [x y]]		;@@ uncomment me when #4421 gets fixed
@@ -866,8 +866,8 @@ context [
 	"c1d2"        = map-each/self/eval [/i x] skip "abcd" 2 [[x i]]			;-- retains original index
 	"abc1d2" = head map-each/self/eval [/i x] skip "abcd" 2 [[x i]]			;-- does not affect series before it's index
 	"abef"        = map-each/self x "abCDef" [either x < #"a" [][x]]		;-- unset should silently be formed into empty string
-	#(1 2 3 4   ) = map-each/self [k v]  #(1 2 3 4) [reduce [k v]]			;-- preserves map type
-	#(2 4       ) = map-each/self [k v]  #(1 2 3 4) [v]           
+	#[1 2 3 4   ] = map-each/self [k v]  #[1 2 3 4] [reduce [k v]]			;-- preserves map type
+	#[2 4       ] = map-each/self [k v]  #[1 2 3 4] [v]           
 
 	; ;; `advance` support (NOTE: without /drop - advance makes little sense and hard to think about)
 	; [[2 3] #[none]] = map-each/drop/only  x    [1 2 3    ] [        advance]
@@ -926,8 +926,8 @@ context [
 
 
 	;---------------------------- REMOVE-EACH -----------------------------
-	#(a b c d) = remove-each x #(a 1 b 2 c 3 d 4) [integer? x]
-	#(1 2 3 4) = remove-each x #(a 1 b 2 c 3 d 4) [word? x]
+	#[a b c d] = remove-each x #[a 1 b 2 c 3 d 4] [integer? x]
+	#[1 2 3 4] = remove-each x #[a 1 b 2 c 3 d 4] [word? x]
 	[2x1 3x1 1x2 3x2 1x3 2x3] = remove-each p 3x3 [p/x = p/y]
 	[1 2 3]    = remove-each x  3 [no]    
 	[2]        = remove-each x  3 [odd? x]

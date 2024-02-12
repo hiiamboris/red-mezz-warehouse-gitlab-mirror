@@ -314,10 +314,10 @@ if native? :function [
 	equal? body-of function [z [block!] /x a: 1 b: 2] []
 	[
 	    switch type? :b [
-	        #[none!] [b: 2] 
+	        #(none!) [b: 2] 
 	    ] 
 	    switch type? :a [
-	        #[none!] [a: 1]
+	        #(none!) [a: 1]
 	    ]
 	]
 ]

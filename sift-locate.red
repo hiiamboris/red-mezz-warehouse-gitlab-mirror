@@ -199,7 +199,7 @@ context [
 
 	[1 3 5      ] = sift [1 2 3 4 5] [x -]                                	;-- has to remove 2nd column
 	[1 3 5      ] = sift [1 2 3 4 5] [x - ..]                             
-	[2 4 #[none]] = sift [1 2 3 4 5] [- x]                                	;-- has to remove 1st column
+	[2 4 #(none)] = sift [1 2 3 4 5] [- x]                                	;-- has to remove 1st column
 	[2 4        ] = sift [1 2 3 4 5] [- x |]                              
 	[2 3 4 5    ] = sift [1 2 3 4 5] [- | x]                              
 	[3 5        ] = sift [1 2 3 4 5] [- | x .. odd? x]                    
@@ -229,9 +229,9 @@ context [
 	unset [o1 o2 o3]
 
 	"^/^/^/" = sift "ab^/cd^/ef^/gh" [x .. x = lf]					;-- should preserve input type
-	#(1 2)   = sift #(a 1 b 2)       [- x]        
+	#[1 2]   = sift #[a 1 b 2]       [- x]        
 	(s: sift s0: "ab^/cd^/ef^/gh" [x .. x = lf]  not s =? s0)		;-- should not modify original series
-	(m: sift m0: #(a 1 b 2) [- x] m <> m0)
+	(m: sift m0: #[a 1 b 2] [- x] m <> m0)
 
 	[1x1 2x2 3x3] = sift [1x1 a 2x2 b 3x3 c] [.. pair!           ] 	;-- type filter
 	[1x1 2x2 3x3] = sift [1x1 a 2x2 b 3x3 c] [x .. pair? x       ] 	;-- normal Red code as filter

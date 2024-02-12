@@ -794,9 +794,9 @@ context [
             parse-result
         ] 
         config: none 
-        default-config: #(
+        default-config: #[
             tool: "parsee"
-        ) 
+        ] 
         set 'inspect-dump function [
             "Inspect a parse dump file with PARSEE tool" 
             filename [file!]

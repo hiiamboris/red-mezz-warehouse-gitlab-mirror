@@ -49,7 +49,7 @@ bulk: function [
 
 #hide [#assert [
 	(ss: ["ab-c" "-def"] a: [1 2 3] b: [2 3 4])			;-- init test vars
-	ms: [#(a: 1 b: 2) #(a: 2 b: 3) #(b: 4)]
+	ms: [#[a: 1 b: 2] #[a: 2 b: 3] #[b: 4]]
 	[2 3 4 ] = bulk/all [b/*           ]
 	[3 5 7 ] = bulk/all [a/* + b/*     ]
 	[2 6 12] = bulk/all [a/* * b/*     ]				;-- should not override multiply operator

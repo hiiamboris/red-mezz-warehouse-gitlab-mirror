@@ -109,11 +109,11 @@ comment {	;-- two-pass version about 2x slower, but does not evaluate skipped su
 	[ 1           ] = reshape [@[1]]
 	[ []          ] = reshape [@[[]]]
 	( reduce [()] ) = reshape [@[()]]
-	[ #[none]     ] = reshape [@[none]]
+	[ #(none)     ] = reshape [@[none]]
 	[             ] = reshape [@([])]
 	[             ] = reshape [@(())]
 	[             ] = reshape [@(none)]
-	[ #[false]    ] = reshape [@(false)]
+	[ #(false)    ] = reshape [@(false)]
 
 	;; conditional inclusion
 	;; conditional inclusion

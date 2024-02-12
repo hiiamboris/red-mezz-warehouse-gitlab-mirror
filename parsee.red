@@ -184,7 +184,7 @@ context expand-directives [
 	]
 	
 	config: none
-	default-config: #(tool: "parsee")
+	default-config: #[tool: "parsee"]
 	
 	set 'inspect-dump function [
 		"Inspect a parse dump file with PARSEE tool"
