@@ -76,7 +76,9 @@ context [
 			appended   [f word (p: skip head target index) length? p yes no]
 			
 			;; change is buggy: 'change' event never happens
+			lowercase  uppercase										;-- omg silliest actions
 			change     [f word (skip head target index) part no  no]	;-- so this won't fire at all
+			lowercased uppercased
 			changed    [f word (skip head target index) part yes no]	;-- target for some reason is at change's tail
 			
 			clear      [if part > 0 [f word target part no  no]]	;-- user code should remember 'part' given (if needed)
