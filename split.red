@@ -37,14 +37,55 @@ Red [
 		4. Into parts of equal length (possibly decimal)
 		   - integer! or float! delimiter (> 0) specify length in chars
 		   - percent! delimiter (> 0) specifies length as share of the total
-		5. Into fixed number N of parts - use percent! delimiter, e.g.:
+		5. Into a fixed number N of parts - use percent! delimiter, e.g.:
 			>> split "123456" 100% / 3
 			== ["12" "34" "56"]
-		6. Into length as specified in a list - use /slices with a block, e.g.:
+		6. Into lengths as specified in a list - use /slices with a block, e.g.:
 			>> split/slices "123456" [1 2 3]
 			== ["1" "23" "456"]
 			>> split/slices "123456" [1 1x1 2x1]	;) integer = length, pair = skip x length
 			== ["1" "3" "6"]
+			
+			
+		Design notes:
+		
+		Based on the ideas developed by @greggirwin, @toomasv and me in the following work:
+			https://github.com/greggirwin/red-split
+		But I don't quite like:
+		- its ever-unfinished design state
+		- the complexity of the original implementation
+		- the lack of tests
+		- the dialectic approach which is a whole new world to memorize to do just a simple splitting
+		
+		This implementation chooses only a subset of proposed features, that are most orthogonal.
+		A better imaginable implementation would also leverage slices (not yet in the language).
+		
+		/last and /first modes can be added without breaking orthogonality, just weren't needed.
+		Unless performance is key, one can always use `first` or `last` natives after full splitting. 
+		
+		Another design would be to make `split` a unary function by default:
+			split find series delimiter
+			split at series index
+			(to make a single split only, akin to split/once design)
+		and then let refinements require a delimiter or rule or number argument:
+			split/by series delimiter
+			split/rule series rule
+			split/parts series count
+			(and so on, for specific splitting algorithms)
+		however this would require each refinement to have its own argument, leading to:
+		- a whole number of arguments to the function:
+			/before dlm1
+			/after  dlm2
+			/by     dlm3
+			/around dlm4
+			... which is not elegant
+		- a lot refinements that couldn't be combined with each other (mutually exclusive)
+		- refinements that don't make sense without the other refinements, e.g.:
+			split/rule series           <- doesn't make sense, should be:
+			split/by/rule series rule
+			split/case series           <- doesn't make sense, should be:
+			split/by/case series delimiter
+		So given the messiness of what emerges I decided against this design, in spite of its initial allure. 
 	}
 ]
 
