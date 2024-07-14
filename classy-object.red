@@ -307,7 +307,6 @@ Red [
 on-change-dispatch: function [
 	"General on-change function built for object validation"
 	class [word!]
-	obj   [object!]
 	word  [any-word!]
 	old   [any-type!]
 	new   [any-type!]
@@ -324,7 +323,7 @@ on-change-dispatch: function [
 					do make error! info/2 :new
 				]
 			]
-			info/3 obj word :new :old
+			info/3 context? word word :new :old
 		]
 	]
 ]
@@ -334,9 +333,16 @@ classify-object: function [
 	obj   [object!]
 	class [word!]
 ][
-	call: find body-of :obj/on-change* 'on-change-dispatch
-	unless call [ERROR "Object is unfit for classification: (mold/part obj 100)"]
-	change next call to lit-word! class
+	either equal?
+		body-of shared-on-change: :classes/:class/#on-change
+		body-of :obj/on-change*
+	[
+		set-quiet in obj 'on-change* :shared-on-change	;-- shared on-change* helps save RAM - REP #115
+	][
+		call: find body-of :obj/on-change* 'on-change-dispatch
+		unless call [ERROR "Object is unfit for classification: (mold/part obj 100)"]
+		change next call to lit-word! class
+	]
 ]
 
 class?: function [										;-- class-of is taken already
@@ -418,6 +424,10 @@ context [
 			make map! 20
 		]
 		spec: modify-class class spec
+		put classes/:class #on-change					;-- issue is used as a key to avoid conflict with possible object words
+			func [word [any-word!] old [any-type!] new [any-type!]] compose [
+				on-change-dispatch (to lit-word! class) word :old :new
+			]
 		unless manual [
 			insert spec compose [
 				classify-object self (to lit-word! class)
@@ -431,7 +441,7 @@ context [
 ;; simplest validated object prototype and basic class (needed for classes/:class to be valid)
 classy-object!: object declare-class/manual 'classy-object! [
 	on-change*: function [word [any-word!] old [any-type!] new [any-type!]] [
-		on-change-dispatch 'classy-object! self word :old :new
+		on-change-dispatch 'classy-object! word :old :new
 	]
 	classify-object self 'classy-object!
 ]
@@ -562,7 +572,7 @@ classy-object!: object declare-class/manual 'classy-object! [
 		clock/times [cobj/d: 1] 1e6						;-- overhead of condition
 		clock/times [cobj/e: random 99999] 1e6			;-- overhead of everything
 	]
-	
+
 	remove/key classes 'test-class-1					;-- cleanup
 	remove/key classes 'test-class-2
 	remove/key classes 'test-class-3
