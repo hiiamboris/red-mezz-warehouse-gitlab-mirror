@@ -333,11 +333,9 @@ classify-object: function [
 	obj   [object!]
 	class [word!]
 ][
-	either equal?
-		body-of shared-on-change: :classes/:class/#on-change
-		body-of :obj/on-change*
-	[
-		set-quiet in obj 'on-change* :shared-on-change	;-- shared on-change* helps save RAM - REP #115
+	;; using 'parse' because during object construction it can change its class many times
+	either parse body-of :obj/on-change* ['on-change-dispatch lit-word! 3 word!] [
+		set-quiet in obj 'on-change* :classes/:class/#on-change	;-- shared on-change* helps save RAM - REP #115
 	][
 		call: find body-of :obj/on-change* 'on-change-dispatch
 		unless call [ERROR "Object is unfit for classification: (mold/part obj 100)"]
