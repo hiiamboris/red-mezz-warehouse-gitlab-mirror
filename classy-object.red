@@ -335,7 +335,8 @@ classify-object: function [
 ][
 	;; using 'parse' because during object construction it can change its class many times
 	either parse body-of :obj/on-change* ['on-change-dispatch lit-word! 3 word!] [
-		set-quiet in obj 'on-change* :classes/:class/#on-change	;-- shared on-change* helps save RAM - REP #115
+		; set-quiet in obj 'on-change* :classes/:class/#on-change	;-- shared on-change* helps save RAM - REP #115
+		set-quiet in obj 'on-change* select classes/:class #on-change	;-- shared on-change* helps save RAM - REP #115; workaround for #5007 :(
 	][
 		call: find body-of :obj/on-change* 'on-change-dispatch
 		unless call [ERROR "Object is unfit for classification: (mold/part obj 100)"]
