@@ -29,6 +29,7 @@ Notes:
 | [reshape](reshape.red)                     | Advanced code construction dialect to replace `compose` and `build`. [Read more](reshape.md) |
 | [without-GC](without-gc.red)               | Evaluate code with GC temporarily turned off (brings massive speedup when used wisely) |
 | [scoping](scoping.red)                     | Primitive experimental support for scope-based resource lifetime management |
+| [timers](timers.red)                       | Fast general-purpose timers (independent from View) |
 
 ### Design extensions and fixes
 | Source file                                | Description |

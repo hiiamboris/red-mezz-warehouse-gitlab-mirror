@@ -63,6 +63,7 @@ Red [
 #include %print-macro.red
 #include %hide-macro.red
 #include %profiling.red
+#include %timers.red	
 
 #include %tree-hopping.red
 #include %glob.red
