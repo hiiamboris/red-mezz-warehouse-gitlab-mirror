@@ -123,7 +123,7 @@ table: context [
 
 		zoom-factor?: function [
 			"Determine the maximum zoom factor that allows to fit SRC-SIZE within DST-SIZE"
-			src-size [pair!] dst-size [pair!]
+			src-size [pair! point2D!] dst-size [pair! point2D!]
 		][
 			min 1.0 * dst-size/x / max 1 src-size/x			;-- use the narrowest dimension
 				1.0 * dst-size/y / max 1 src-size/y
@@ -411,12 +411,12 @@ table: context [
 		arrange: function [column [object!]] [
 			report "ARRANGING CELLS"
 			; do-unseen [								;@@ THIS DOESN'T WORK (even when do-unseen = do) - SEE #4549
-				pos: 0x2									;-- 2px upper margin
+				pos: (0,2)									;-- 2px upper margin
 				pane: column/pane
 				foreach cell pane [
-					maybe cell/offset: pos * 0x1
+					maybe cell/offset: pos * (0,1)
 					;; cell sets it's width automatically from column width (or doesn't, depends on renderer)
-					maybe cell/size/x: column/size/x
+					maybe cell/size: to point2D! column/size/x cell/size/y
 					pos/x: max pos/x cell/size/x
 					pos/y: pos/y + cell/size/y + 1			;-- 1 for spacing
 				]
@@ -442,7 +442,7 @@ table: context [
 				template: [
 					type:   'panel
 					pane:   []
-					; color:  !(any [~colors/panel black])
+					; color:  @[any [~colors/panel black]]
 					color:  @[any [~colors/text black]]
 					size:   100x400
 					text:   "Header"
@@ -451,7 +451,7 @@ table: context [
 					extent: 0x0
 					header: make-face/spec 'cell compose [
 						bold with [read-only?: yes]									;-- bold font for the header and always readonly
-						(color * 0.3 + !(0.7 * any [~colors/panel white]))			;-- give it's background a slight tint of the text color
+						(color * 0.3 + @[0.7 * any [~colors/panel white]])			;-- give it's background a slight tint of the text color
 						on-down :on-header-down
 					]
 					insert pane header												;-- insert preserves user-defined (in VID) pane
@@ -479,7 +479,7 @@ table: context [
 		;@@ TODO: should columns have control over read-only too?
 	]
 
-	resize: function [table [object!] size [pair!]] [
+	resize: function [table [object!] size [pair! point2D!]] [
 		; clock [		;@@ BUG: make-face allocates a lot of stuff, GC slows it all down by ~25%
 		; recycle/off
 		do-unseen [clock-each [
@@ -496,7 +496,7 @@ table: context [
 	arrange: function [table [object!]] [
 		report "SETTING UP COLUMNS & RESIZING TABLE"
 		do-unseen [clock [
-			pos: 1x0 * table/spacing
+			pos: (1,0) * table/spacing
 			if table/balance-rows? [balance-rows table]	;-- adjust cell heights
 			foreach column table/pane [
 				~column/arrange column					;-- recalculate column's extent (height only)
@@ -543,7 +543,7 @@ table: context [
 			foreach cell row [							;-- resize now
 				report ["RESIZING CELL AT ROW" y "TO" height]
 				; cell/size: cell/size/x by height
-				maybe cell/size/y: height
+				maybe cell/size: as-point2D cell/size/x height
 				; ?? cell/size
 			]
 		]
@@ -825,7 +825,7 @@ table: context [
 	]
 
 	unless find/same system/view/handlers :tab-handler [
-		insert-event-func :tab-handler
+		insert-event-func 'table-tab-handler :tab-handler
 	]
 ];; table: context [
 
