@@ -136,7 +136,6 @@ These functions mainly help one follow design-by-contract guidelines in one's co
 | [explore & image-explorer style](explore.red) | Show UI to explore an image in detail (TODO: support any Red value) |
 | [scrollpanel style](scrollpanel.red)     | Automatic scrolling capability to a panel, until such is available out of the box. [Read more](scrollpanel.md) |
 | [tabbing support](tabbing.red)           | Simpler and extensible replacement for native tabbing support (extended when using [Spaces](https://codeberg.org/hiiamboris/red-spaces/)) |
-| [table style](table.red)                 | Old experiment on VID-based table construction |
 
 ### Utilities
 | Source file                              | Description |
