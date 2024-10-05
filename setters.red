@@ -153,6 +153,15 @@ anonymize: function [
 	bind word o
 ]
 
+pretending: function [
+	"Evaluate CODE with WORD set to VALUE, then restore the old value"
+	word [any-word! any-path!] value [default!] code [block!]
+][
+	old: get word
+	set word :value
+	following2 code [set word :old]
+]
+
 
 ;-- there's a lot of ways this function can be written carelessly...
 #assert [
