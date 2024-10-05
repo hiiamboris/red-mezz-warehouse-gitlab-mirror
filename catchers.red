@@ -183,6 +183,17 @@ context [
 		do/trace code :cleaning-tracer
 	]
 	cleaning-tracer: func [[no-trace]] bind [[end] do cleanup] :following	;-- [end] filter minimizes interpreted slowdown
+
+	;@@ I hate the name, but find no better one
+	;; this version does not slow down the code and can be reentrant, but cannot pass 'break', 'continue', 'throw'
+	set 'following2 function [
+		"Guarantee evaluation of CLEANUP after leaving CODE"
+		code    [block!] "Code that can use break, continue, throw"
+		cleanup [block!] "Finalization code"
+	][
+		trap/all/keep/catch code [do cleanup do thrown]
+		do cleanup
+	]
 ]
 
 

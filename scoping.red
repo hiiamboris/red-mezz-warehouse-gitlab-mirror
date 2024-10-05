@@ -18,20 +18,29 @@ Red [
 ;; this is useful when errors/throws are not normally expected in the code and end of block is known to be reached
 ;; one strategy is to insert `also` before last token of the block, but this does not reverse the finalization order
 ;; another is to use `also do rest do finalizer` but `do` will prevent compilation
-;;   `also (rest) (finalizer)` - possible but dangerous (there have been many stack issues with parens)
-;;   so I'm using `also if true [rest] (finalizer)` - both compilable, safe, does not divert control flow (as loop 1 would do)
-#macro [#leaving block!] func [[manual] s e /local rest finalizer] [
+;; previously used `also if true [rest] (finalizer)` to avoid stack issues with parens
+;; using `also (rest) (finalizer)` now that stack issues have been fixed
+#macro [#leaving block!] func [[manual] s e /local rest cleanup] [
 	either tail? e [									;-- unlikely case, but have to secure against it
 		change s 'do
-		s
 	][
-		finalizer: s/2
-		rest: copy e
-		append/only
-			clear change/only change s [also if true] rest
-			to paren! finalizer
-		s
+		cleanup: to paren! s/2
+		rest:    to paren! e
+		clear change/only change/only change s 'also rest cleanup
 	]
+	new-line s on
+]
+
+;@@ need a better name, maybe #leaving/safe, but issues don't unstick refinements
+#macro [#leaving-safe block!] func [[manual] s e /local rest cleanup] [
+	either tail? e [									;-- unlikely case, but have to secure against it
+		change s 'do
+	][
+		cleanup: s/2
+		rest: copy e
+		clear change/only change/only change s 'following2 rest cleanup
+	]
+	new-line s on
 ]
 
 
