@@ -198,18 +198,21 @@ timers: context [
 		"Activate the timer (if inactive) so it fires a period from now and on"
 		timer   [map!]
 		return: [map!]
+		/now    "Make it fire ASAP (if inactive only)"
 		/extern count
 	][
 		unless timer/planned [
 			#assert [timer/period >= config/resolution]			;-- faster timers are not supported (will run at resolution anyway)
+			time: system/words/now/utc/precise
 			timer/period:  max timer/period config/resolution	;@@ this won't be restored if resolution gets better
-			timer/planned: now/utc/precise + timer/period
+			timer/planned: time + either now [0][timer/period]
 			slot: time->slot timer/planned
 			append timetable/:slot timer
-			if count = 0 [fast-forward]
+			if count = 0 [fast-forward/until time]				;-- provide 'time' to ensure it doesn't fast-forward over the current timer
 			count: count + 1
+			#assert [any [not now  slot > (fired % config/slots)]]	;-- /now should not be skipped
 		]
-		timer													;-- for chaining: arm create ...
+		timer													;-- for chaining: `my-timer: arm create ...`
 	]
 	
 	disarm: function [
@@ -228,13 +231,17 @@ timers: context [
 		timer													;-- for symmetry with `arm`
 	]
 	
-	fast-forward: function ["Skip all pending timer events"] [
-		self/fired: round/floor now/utc/precise/time / config/resolution
+	fast-forward: function [
+		"Skip all pending timer events"
+		/until time: now/utc/precise [time!] "Manually provide the moment to skip to"
+	][
+		self/fired: round/floor time/time / config/resolution
 	]
 
+	;@@ should it check for (UTC) time monotony?
 	fire: function ["Evaluate all pending timers" /extern spare fired time] [
 		time:   now/utc/precise
-		offset: round/floor time/time / config/resolution
+		offset: round/floor time/time / config/resolution		;-- if time is monotonic, /floor ensures arm/now success
 		if offset = fired [return false]
 		; ?? offset ?? fired ?? dayspan
 		
