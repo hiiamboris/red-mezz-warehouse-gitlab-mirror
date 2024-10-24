@@ -19,12 +19,13 @@ Red [
 #include %extrema.red
 #include %prettify.red
 #include %split.red
-#include %reshape.red
+#include %reshape.red									;-- included by delimit.red
 #include %match.red										;-- included by glob.red
 #include %morph.red
 #include %leak-check.red
 
 #include %count.red
+#include %delimit.red
 #include %collect-set-words.red
 #include %keep-type.red
 #include %typecheck.red
@@ -32,11 +33,11 @@ Red [
 #include %selective-catch.red							;-- included by forparse.red
 #include %forparse.red
 #include %mapparse.red
-#include %composite.red								;-- included by error-macro.red
+#include %composite.red									;-- included by error-macro.red
 #include %error-macro.red								;-- included by for-each.red
-#include %bind-only.red								;-- included by for-each.red
-#include %for-each.red								;-- included by map-each.red
-#include %map-each.red								;-- included by sift-locate.red
+#include %bind-only.red									;-- included by for-each.red
+#include %for-each.red									;-- included by map-each.red
+#include %map-each.red									;-- included by sift-locate.red
 #include %sift-locate.red
 #include %xyloop.red									;-- included by explore.red
 #include %relativity.red								;-- included by explore.red and tabbing.red
@@ -44,7 +45,7 @@ Red [
 #include %explore.red
 #include %bulk.red	
 
-#include %shallow-trace.red							;-- included by clock-each.red & show-trace.red & stepwise-func.red
+#include %shallow-trace.red								;-- included by clock-each.red & show-trace.red & stepwise-func.red
 #include %clock-each.red
 #include %show-trace.red								;-- unlikely needed given now available trace mezz
 #include %stepwise-func.red
