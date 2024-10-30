@@ -240,8 +240,10 @@ if native? :function [
 		][
 			if types [typeset: make typeset! types]
 			if default [
-				default: reduce [to set-word! word default]
-				logic?: either types [to logic! find typeset logic!][yes]
+				default: either paren? default
+					[compose      [(to set-word! word) (as block! default)]]
+					[compose/only [(to set-word! word) (default)]]
+				logic?:  either types [to logic! find typeset logic!][yes]
 			]
 			need-none-check?: all [ref? either types [not find typeset none!][no]]
 			check: case [
