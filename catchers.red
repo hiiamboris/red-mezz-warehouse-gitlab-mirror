@@ -158,7 +158,7 @@ context [
 		code [block!]
 		/all   "Catch also BREAK, CONTINUE, RETURN, EXIT and THROW exceptions"
 		/keep  "Capture and save the call stack in the error object"
-		/catch "If provided, called upon exceptiontion and handler's value is returned"
+		/catch "If provided, called upon exception and handler's value is returned"
 			handler [block! function!] "func [error][] or block that uses THROWN"
 			;@@ maybe also none! to mark a default handler that just prints the error?
 		/local result
