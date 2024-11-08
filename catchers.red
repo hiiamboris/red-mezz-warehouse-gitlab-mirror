@@ -174,26 +174,29 @@ context [
 		]
 	] :with-thrown
 	
-	;@@ of course this traps `return` because of #4416
 	set 'following function [
 		"Guarantee evaluation of CLEANUP after leaving CODE"
 		code    [block!] "Code that can use break, continue, throw"
 		cleanup [block!] "Finalization code"
+		/method method' [word!] "Preferred method: [trace (default) trap (faster) do (fastest, unsafe)]"
 	][
-		do/trace code :cleaning-tracer
+		switch/default method' [
+			trap [
+				;; trap doesn't slow down the code and can be reentrant, but cannot pass 'break', 'continue', 'throw' 
+				trap/all/keep/catch code [do cleanup do thrown]
+				do cleanup
+			]
+			do [
+				;; this version is only useful if underlying code handles exceptions already
+				do code
+				do cleanup
+			]
+		][
+			;@@ of course this traps `return` because of #4416
+			do/trace code :cleaning-tracer
+		]
 	]
 	cleaning-tracer: func [[no-trace]] bind [[end] do cleanup] :following	;-- [end] filter minimizes interpreted slowdown
-
-	;@@ I hate the name, but find no better one
-	;; this version does not slow down the code and can be reentrant, but cannot pass 'break', 'continue', 'throw'
-	set 'following2 function [
-		"Guarantee evaluation of CLEANUP after leaving CODE"
-		code    [block!] "Code that can use break, continue, throw"
-		cleanup [block!] "Finalization code"
-	][
-		trap/all/keep/catch code [do cleanup do thrown]
-		do cleanup
-	]
 ]
 
 

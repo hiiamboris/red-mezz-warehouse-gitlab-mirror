@@ -38,7 +38,7 @@ Red [
 	][
 		cleanup: s/2
 		rest: copy e
-		clear change/only change/only change s 'following2 rest cleanup
+		clear change change/only change/only change/only s 'following/method rest cleanup quote 'trap
 	]
 	new-line s on
 ]

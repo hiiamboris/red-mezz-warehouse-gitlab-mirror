@@ -156,10 +156,11 @@ anonymize: function [
 pretending: function [
 	"Evaluate CODE with WORD set to VALUE, then restore the old value"
 	word [any-word! any-path!] value [default!] code [block!]
+	/method method' [word!] "Preferred method: [trace (default) trap (faster) do (fastest, unsafe)]"
 ][
 	old: get word
 	set word :value
-	following2 code [set word :old]
+	following/:method code [set word :old] method'
 ]
 
 
