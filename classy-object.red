@@ -162,7 +162,7 @@ Red [
 		on-change* cannot be redefined or it will break validation
 		  use per-value #on-change markers instead
 		  if it is redefined, it must include the following call:
-			  on-change-dispatch 'class-name self word :old :new
+			  on-change-dispatch 'class-name word :old :new
 		  on-change-dispatch performs the validation
 		  classify-object function uses it's name as a marker to change the class-name
 		  and relies on the assumption that it's a single token
