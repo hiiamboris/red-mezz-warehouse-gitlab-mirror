@@ -197,8 +197,8 @@ timers: context [
 	arm: function [
 		"Activate the timer (if inactive) so it fires a period from now and on"
 		timer   [map!]
-		return: [map!]
 		/now    "Make it fire ASAP (if inactive only)"
+		return: [map!]
 		/extern count
 	][
 		unless timer/planned [
