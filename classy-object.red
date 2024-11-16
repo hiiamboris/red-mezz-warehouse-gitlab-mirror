@@ -344,16 +344,39 @@ classify-object: function [
 	]
 ]
 
+
+;; note: implementation of 'class?' is a choice of tradeoffs
+;; timings and RAM of try-based and all-based versions are as follows:
+;; _________________________________ 
+;; |     |  success  |  failure    | 
+;; | try | 1.10us 0B | 2.45us 700B | 
+;; | all | 1.70us 0B | 0.90us   0B | 
+;; |  %  |  ~64%     |  ~270%      | 
+;; |_____|___________|_____________| 
+;; I find that my code is significantly biased towards successful checks
+;; thus I have chosen the try-based implementation here
+
+; class?: function [										;-- class-of is taken already
+	; "Determine class of an object"
+	; obj     [object!]
+	; return: [word! none!] "NONE if not classified"
+; ][
+	; all [												;-- `try` approach is slower
+		; function? select obj 'on-change*				;-- may be unset, have to verify
+		; type: select body-of :obj/on-change* 'on-change-dispatch
+		; to word! :type
+	; ]
+; ]
+
+#assert [error? try [to word! none]]					;-- the following 'class?' implementation relies on it
+
 class?: function [										;-- class-of is taken already
 	"Determine class of an object"
 	obj     [object!]
-	; return: [word! none!] "NONE if not classified"
+	return: [word! none!] "NONE if not classified"
 ][
-	all [												;-- `try` approach is slower
-		function? select obj 'on-change*				;-- may be unset, have to verify
-		call: find body-of :obj/on-change* 'on-change-dispatch
-		to word! :call/2
-	]
+	try [return to word! select body-of :obj/on-change* 'on-change-dispatch]
+	none
 ]
 
 classes: make map! 20
@@ -447,6 +470,10 @@ classy-object!: object declare-class/manual 'classy-object! [
 
 
 #debug [#hide [#assert [								;-- checks are disabled without #debug, will fail tests
+	none? class? object []
+	none? class? object [on-change*: func [w o n] []]
+	none? object [on-change*: return class? self]
+	
 	msg?: func [error] [
 		parse error: form error [
 			remove thru ["Error: " opt [{"} | "{"]] to [opt ["}" | {"}] "^/"] remove to end
