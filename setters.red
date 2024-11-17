@@ -98,32 +98,31 @@ Red [
 
 
 once: func [
-	"Set value of WORD to VAL only if it's unset"
+	"Set value of WORD to VALUE only if it's unset"
 	'word [set-word!]
-	val   [default!] "New value"
+	value [default!] "New value"
 ][
-	if unset? get/any word [set word :val]
-	:val
+	if unset? get/any word [set word :value]
+	:value
 ]
 
 default: func [
-	"If SUBJ's value is none, set it to VAL"
-	'subj [set-word! set-path!]
-	val   [default!] "New value"
+	"If WORD's value is none, set it to VALUE"
+	'word [set-word! set-path!]
+	value [default!] "New value"
 ][
-	; if set-path? subj [subj: as path! subj]				;-- get does not work on set-paths
-	if none =? get/any subj [set subj :val]				;-- `=?` is like 5% faster than `=`, and 2x faster than `none?`
-	:val
+	switch get/any word [#(none) [set word :value]]		;-- 20% faster than `none =?` which is 5% faster than `none =` and 2x faster than `none?`
+	:value
 ]
 
 maybe: func [
-	"If SUBJ's value is not strictly equal to VAL, set it to VAL (for use in reactivity)"
-	'subj [set-word! set-path!]
-	val   [default!] "New value"
-	/same "Use =? as comparator"
+	"If WORDS's value is not strictly equal to VALUE, set it to VALUE (for use in reactivity)"
+	'word [set-word! set-path!]
+	value [default!] "New value"
+	/same "Use =? as comparator instead of =="
 ][
-	if either same [:val =? get/any subj][:val == get/any subj] [return :val]
-	set subj :val
+	if either same [:value =? get/any word][:value == get/any word] [return :value]
+	set word :value
 ]
 
 global: function [
