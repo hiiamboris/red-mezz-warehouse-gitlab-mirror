@@ -232,8 +232,8 @@ data-store: context [
 		"Load data file of given type; none if not found"
 		type    [word!] "One of: [data config state cache runtime]"
 		subpath [file!] "File name or path unique within the program"
-		/as "Specify the format of data; use NONE to load as code."
-			format [word! none!] "E.g. bmp, gif, jpeg, png, redbin, json, csv."
+		/as "Specify the format of data; use NONE to load as code"
+			format [word! none!] "E.g. bmp, gif, jpeg, png, redbin, json, csv"
 	][
 		if file: find-file type subpath [
 			result: load/all/:as file format			;-- make no sense without /all for files
@@ -260,8 +260,8 @@ data-store: context [
 		subpath [file!] "File name or path unique within the program"
 		data    [any-type!] "Value(s) to save"
 		/all "Save in serialized format"
-		/as  "Specify the format of data; use NONE to save as plain text."
-			format [word! none!] "E.g. bmp, gif, jpeg, png, redbin, json, csv."
+		/as  "Specify the format of data; use NONE to save as plain text"
+			format [word! none!] "E.g. bmp, gif, jpeg, png, redbin, json, csv"
 	][
 		file: make-path/create type subpath
 		save/:all/:as file :data format
