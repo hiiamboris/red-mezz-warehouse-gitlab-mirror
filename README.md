@@ -10,7 +10,7 @@ Official URL of this project: [https://codeberg.org/hiiamboris/red-common](https
 Some of these are trivial. Some may look simple in code, but are a result long design process. Some are only emerging experiments. **See headers** of each file for usage, info, design info!
 
 Notes:
-- I try to keep dependencies at minimum for simpler until it stops making sense  
+- I try to keep dependencies at minimum for simpler inclusion, until it stops making sense  
 - mostly untested for compileability so far; optimized for the interpreted use
 - use `#include %everything.red` to include all the scripts at once and play
 
@@ -19,7 +19,7 @@ Notes:
 ### General purpose
 | Source file                                | Description |
 | ---                                        | --- |
-| [setters](setters.red)                     | Contains ONCE, DEFAULT, MAYBE, QUIETLY, ANONYMIZE value assignment wrappers, and IMPORT/EXPORT to expose some object's words globally |
+| [setters](setters.red)                     | Contains ONCE, DEFAULT, MAYBE, QUIETLY, ANONYMIZE value assignment wrappers, and GLOBAL/EXPORT to expose some object's words globally |
 | [with](with.red)                           | A convenient/readable BIND variant |
 | [#hide macro](hide-macro.red)              | Automatic set-word and loop counter hiding |
 | [stepwise-macro](stepwise-macro.red) and [stepwise-func](stepwise-func.red) | Allows you write long compound expressions as a sequence of steps |
