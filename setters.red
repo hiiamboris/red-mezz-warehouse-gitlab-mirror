@@ -65,21 +65,22 @@ Red [
 			It's useful either to group multiple changes into one on-change signal,
 			or when on-change incurs too much overhead for no gain (e.g. setting of face facets is 25x faster this way).
 
-		IMPORT
-			Syntax:
-				import my-ctx
-			Import all words from a given context into the global namespace.
-
-			This is sometimes useful in debugging, when you have multiple internal functions in some context,
-			and you wanna play with those functions in console until you're satisfied with their results.
-
 		EXPORT
 			Syntax:
-				export [my-func1 my-func2 ...]
+				export [my-func1 my-func2 ...]					;) exports listed words
+				export my-ctx									;) exports all words in a context
 			Is similar to `import`, but should be called from inside a context, and takes a list of words.
 
+			This is handy when you want to makes a set of context words globally available.
+
+		GLOBAL
+			Syntax:
+				global my-func:     my-value
+				global ctx/my-func: my-value
+			Export word or last word in the path into the global namespace.
+
 			This is handy when you want to define a word in the context, but also want it globally available.
-			You can't write `set 'my-func my-func: ...` because 'my-func will be bound to the context itself.
+			Unlike `export`, this works on a single word/path.
 
 		ANONYMIZE
 			Syntax:
@@ -125,23 +126,21 @@ maybe: func [
 	set subj :val
 ]
 
-import: function [
-	"Import words from context CTX into the global namespace"
-	ctx [object!]
-	/only words [block!] "Not all, just chosen words"
+global: function [
+	"Export single word into the global namespace"
+	'word [set-word! set-path!]
+	value [default!]
 ][
-	either only [
-		foreach word words [set/any 'system/words/:word :ctx/:word]
-	][
-		set/any  bind words-of ctx system/words  values-of ctx
-	]
+	alias: either set-path? word [last word][word]
+	set bind alias system/words set word :value
 ]
 
 export: function [
 	"Export a set of bound words into the global namespace"
-	words [block!]
+	words [block! object!]
 ][
-	foreach w words [set/any 'system/words/:w get/any :w]
+	if object? words [words: words-of words]
+	foreach w words [set/any bind w system/words get/any :w]
 ]
 
 anonymize: function [
