@@ -99,7 +99,7 @@ Red [
 
 once: func [
 	"Set value of WORD to VALUE only if it's unset"
-	'word [set-word!]
+	'word [set-word! set-path!]
 	value [default!] "New value"
 ][
 	if unset? get/any word [set word :value]
