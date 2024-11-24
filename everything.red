@@ -10,6 +10,7 @@ Red [
 ; #assert off												;-- optionally uncomment this to disable assertions 
 #include %debug.red
 
+#include %charsets.red
 #include %bind-only.red
 #include %with.red										;-- included by split.red
 #include %without-gc.red
