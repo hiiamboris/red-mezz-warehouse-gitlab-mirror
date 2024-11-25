@@ -72,7 +72,7 @@ point->tuple: function [
 ]
 
 ;; https://en.wikipedia.org/wiki/HSL_and_HSV#Color_conversion_formulae
-RGB2HSL: function [
+RGB->HSL: RGB2HSL: function [
 	"Convert colors from RGB(1,1,1) into HSL(360,1,1) color model"
 	RGB [point3D! tuple!] "0-1 each if point"
 	/tuple "Return as a 3-tuple"
@@ -94,7 +94,8 @@ RGB2HSL: function [
 	if tuple [HSL: point->tuple HSL / (360,1,1)]
 	HSL
 ]
-HSL2RGB: function [
+
+HSL->RGB: HSL2RGB: function [
 	"Convert colors from HSL(360,1,1) into RGB(1,1,1) color model"
 	HSL [point3D! tuple!] "0-360 hue, 0-1 others if point"
 	/tuple "Return as a 3-tuple"
@@ -127,57 +128,57 @@ HSL2RGB: function [
 			0.3% >= absolute a/3 - b/3
 		]
 	]
-  	(  0, 0, 0.00) ~= RGB2HSL 0.0.0
-  	(  0, 0, 1.00) ~= RGB2HSL 255.255.255
-  	(  0, 1, 0.50) ~= RGB2HSL 255.0.0
-  	(120, 1, 0.50) ~= RGB2HSL 0.255.0
-  	(240, 1, 0.50) ~= RGB2HSL 0.0.255
-  	( 60, 1, 0.50) ~= RGB2HSL 255.255.0
-  	(180, 1, 0.50) ~= RGB2HSL 0.255.255
-  	(300, 1, 0.50) ~= RGB2HSL 255.0.255
-  	(  0, 0, 0.75) ~= RGB2HSL 191.191.191
-  	(  0, 0, 0.50) ~= RGB2HSL 127.127.127
-  	(  0, 1, 0.25) ~= RGB2HSL 127.0.0
-  	( 60, 1, 0.25) ~= RGB2HSL 127.127.0
-  	(120, 1, 0.25) ~= RGB2HSL 0.127.0
-  	(300, 1, 0.25) ~= RGB2HSL 127.0.127
-  	(180, 1, 0.25) ~= RGB2HSL 0.127.127
-  	(240, 1, 0.25) ~= RGB2HSL 0.0.127
+  	(  0, 0, 0.00) ~= RGB->HSL 0.0.0
+  	(  0, 0, 1.00) ~= RGB->HSL 255.255.255
+  	(  0, 1, 0.50) ~= RGB->HSL 255.0.0
+  	(120, 1, 0.50) ~= RGB->HSL 0.255.0
+  	(240, 1, 0.50) ~= RGB->HSL 0.0.255
+  	( 60, 1, 0.50) ~= RGB->HSL 255.255.0
+  	(180, 1, 0.50) ~= RGB->HSL 0.255.255
+  	(300, 1, 0.50) ~= RGB->HSL 255.0.255
+  	(  0, 0, 0.75) ~= RGB->HSL 191.191.191
+  	(  0, 0, 0.50) ~= RGB->HSL 127.127.127
+  	(  0, 1, 0.25) ~= RGB->HSL 127.0.0
+  	( 60, 1, 0.25) ~= RGB->HSL 127.127.0
+  	(120, 1, 0.25) ~= RGB->HSL 0.127.0
+  	(300, 1, 0.25) ~= RGB->HSL 127.0.127
+  	(180, 1, 0.25) ~= RGB->HSL 0.127.127
+  	(240, 1, 0.25) ~= RGB->HSL 0.0.127
 ]]
 #assert [
-  	(HSL2RGB/tuple (  0, 0, 0.00)) = 0.0.0
-  	(HSL2RGB/tuple (  0, 0, 1.00)) = 255.255.255
-  	(HSL2RGB/tuple (  0, 1, 0.50)) = 255.0.0
-  	(HSL2RGB/tuple (120, 1, 0.50)) = 0.255.0
-  	(HSL2RGB/tuple (240, 1, 0.50)) = 0.0.255
-  	(HSL2RGB/tuple ( 60, 1, 0.50)) = 255.255.0
-  	(HSL2RGB/tuple (180, 1, 0.50)) = 0.255.255
-  	(HSL2RGB/tuple (300, 1, 0.50)) = 255.0.255
-  	(HSL2RGB/tuple (  0, 0, 0.75)) = 191.191.191
-  	(HSL2RGB/tuple (  0, 0, 0.50)) = 127.127.127
-  	(HSL2RGB/tuple (  0, 1, 0.25)) = 127.0.0
-  	(HSL2RGB/tuple ( 60, 1, 0.25)) = 127.127.0
-  	(HSL2RGB/tuple (120, 1, 0.25)) = 0.127.0
-  	(HSL2RGB/tuple (300, 1, 0.25)) = 127.0.127
-  	(HSL2RGB/tuple (180, 1, 0.25)) = 0.127.127
-  	(HSL2RGB/tuple (240, 1, 0.25)) = 0.0.127
+  	(HSL->RGB/tuple (  0, 0, 0.00)) = 0.0.0
+  	(HSL->RGB/tuple (  0, 0, 1.00)) = 255.255.255
+  	(HSL->RGB/tuple (  0, 1, 0.50)) = 255.0.0
+  	(HSL->RGB/tuple (120, 1, 0.50)) = 0.255.0
+  	(HSL->RGB/tuple (240, 1, 0.50)) = 0.0.255
+  	(HSL->RGB/tuple ( 60, 1, 0.50)) = 255.255.0
+  	(HSL->RGB/tuple (180, 1, 0.50)) = 0.255.255
+  	(HSL->RGB/tuple (300, 1, 0.50)) = 255.0.255
+  	(HSL->RGB/tuple (  0, 0, 0.75)) = 191.191.191
+  	(HSL->RGB/tuple (  0, 0, 0.50)) = 127.127.127
+  	(HSL->RGB/tuple (  0, 1, 0.25)) = 127.0.0
+  	(HSL->RGB/tuple ( 60, 1, 0.25)) = 127.127.0
+  	(HSL->RGB/tuple (120, 1, 0.25)) = 0.127.0
+  	(HSL->RGB/tuple (300, 1, 0.25)) = 127.0.127
+  	(HSL->RGB/tuple (180, 1, 0.25)) = 0.127.127
+  	(HSL->RGB/tuple (240, 1, 0.25)) = 0.0.127
   	
-  	(HSL2RGB/tuple RGB2HSL 0.0.0      ) = 0.0.0      
-  	(HSL2RGB/tuple RGB2HSL 255.255.255) = 255.255.255
-  	(HSL2RGB/tuple RGB2HSL 255.0.0    ) = 255.0.0    
-  	(HSL2RGB/tuple RGB2HSL 0.255.0    ) = 0.255.0    
-  	(HSL2RGB/tuple RGB2HSL 0.0.255    ) = 0.0.255    
-  	(HSL2RGB/tuple RGB2HSL 255.255.0  ) = 255.255.0  
-  	(HSL2RGB/tuple RGB2HSL 0.255.255  ) = 0.255.255  
-  	(HSL2RGB/tuple RGB2HSL 255.0.255  ) = 255.0.255  
-  	(HSL2RGB/tuple RGB2HSL 191.191.191) = 191.191.191
-  	(HSL2RGB/tuple RGB2HSL 128.128.128) = 128.128.128
-  	(HSL2RGB/tuple RGB2HSL 128.0.0    ) = 128.0.0    
-  	(HSL2RGB/tuple RGB2HSL 128.128.0  ) = 128.128.0  
-  	(HSL2RGB/tuple RGB2HSL 0.128.0    ) = 0.128.0    
-  	(HSL2RGB/tuple RGB2HSL 128.0.128  ) = 128.0.128  
-  	(HSL2RGB/tuple RGB2HSL 0.128.128  ) = 0.128.128  
-  	(HSL2RGB/tuple RGB2HSL 0.0.128    ) = 0.0.128    
+  	(HSL->RGB/tuple RGB->HSL 0.0.0      ) = 0.0.0      
+  	(HSL->RGB/tuple RGB->HSL 255.255.255) = 255.255.255
+  	(HSL->RGB/tuple RGB->HSL 255.0.0    ) = 255.0.0    
+  	(HSL->RGB/tuple RGB->HSL 0.255.0    ) = 0.255.0    
+  	(HSL->RGB/tuple RGB->HSL 0.0.255    ) = 0.0.255    
+  	(HSL->RGB/tuple RGB->HSL 255.255.0  ) = 255.255.0  
+  	(HSL->RGB/tuple RGB->HSL 0.255.255  ) = 0.255.255  
+  	(HSL->RGB/tuple RGB->HSL 255.0.255  ) = 255.0.255  
+  	(HSL->RGB/tuple RGB->HSL 191.191.191) = 191.191.191
+  	(HSL->RGB/tuple RGB->HSL 128.128.128) = 128.128.128
+  	(HSL->RGB/tuple RGB->HSL 128.0.0    ) = 128.0.0    
+  	(HSL->RGB/tuple RGB->HSL 128.128.0  ) = 128.128.0  
+  	(HSL->RGB/tuple RGB->HSL 0.128.0    ) = 0.128.0    
+  	(HSL->RGB/tuple RGB->HSL 128.0.128  ) = 128.0.128  
+  	(HSL->RGB/tuple RGB->HSL 0.128.128  ) = 0.128.128  
+  	(HSL->RGB/tuple RGB->HSL 0.0.128    ) = 0.0.128    
 ]
 
 
