@@ -124,8 +124,8 @@ context [
 			]
 			vid [
 				styles: copy VID-styles
-				split:  [(new-line p yes)]
-				system/words/parse block layout: [p: split any [p:
+				split:  [(new-line split?: p yes)]
+				system/words/parse block layout: [any [p:
 					set word word! if (find styles word) split (style: word)
 				|	'at pair! opt set-word! set style word! split	;-- preferable split point
 				|	set-word! set style word! split					;-- ditto
@@ -141,6 +141,7 @@ context [
 					) 
 				|	skip
 				]]
+				if split? [new-line orig not split? =? orig]	;-- don't expand single-face VID
 			]
 			draw [
 				if limit > length? mold/part orig limit [return orig]
