@@ -36,117 +36,160 @@ Red [
 				]
 		... and so on
 	}
+	notes: {
+		VID considerations:
+		- for most words, we can't know if it's a style name, facet value or something else
+		- for some facets (like data, extra) we don't know the arity of expressions
+		  thus it makes more sense to be conservative and add new-lines only before:
+		  - standard style names
+		  - recognized style declarations
+		  (and even this will be unreliable, but better than nothing)
+		- blocks may mean:
+		  - data (only when prefixed with some keywords)
+		  - draw code (only after draw keyword)
+		  - sub-layout VID (for panels only)
+		  - default actor or do/react code (other cases)
+		- set-words are a good hint for new face or style start
+		- line start before `at` is better than before its style
+	}
 ]
 
 
-;@@ TODO: VID support
-prettify: function [
-	"Reformat BLOCK with new-lines to look readable"
-	block [block! paren! map!] "Modified in place, deeply"
-	/data  "Treat block as data (default: as code)"
-	/draw  "Treat block as Draw dialect"
-	/spec  "Treat block as function spec"
-	/parse "Treat block as Parse rule"
-	/local body word
-][
-	unless map? block [new-line/all orig: block no]		;-- start flat
-	if empty? orig [return orig]
-	limit: 80											;-- expansion margin
-	
-	; attempt [											;-- trap in case it recurses into itself ;)
-	; print [case [data ["DATA"] spec ["SPEC"] parse ["PARSE"] 'else ["CODE"]] mold block lf]
-	case [
-		map? block [
-			block: values-of block
-			while [block: find/tail block block!] [
-				prettify/data block
-			]
-		]
-		data [													;-- format data as key/value pairs, not expressions
-			while [block: find/tail block block!] [
-				prettify/data inner: block/-1					;-- descend recursively
-			]
-			if any [
-				inner											;-- has inner blocks?
-				limit <= length? mold/part orig limit			;-- longer than limit?
-			][
-				new-line/skip orig yes 2						;-- expand as key/value pairs
-			]
-		]
-		spec [
-			if limit > length? mold/part orig limit [return orig]
-			new-line orig yes
-			forall block [
-				if all-word? :block/1 [new-line block yes]		;-- new-lines before argument/refinement names
-				if /local == :block/1 [break]
-			]
-		]
-		parse [
-			if limit > length? mold/part orig limit [return orig]
-			new-line orig yes
-			forall block [
-				case [
-					'| == :block/1 [new-line block yes]			;-- new-lines before alt-rule
-					block? :block/1 [prettify/parse block/1]
-					paren? :block/1 [prettify block/1]
-				]
-			]
-		]
-		draw [
-			if limit > length? mold/part orig limit [return orig]
-			draw-commands: make hash! [
-				line curve box triangle polygon circle ellipse text arc spline image
-				matrix reset-matrix invert-matrix push clip rotate scale translate skew transform
-				pen fill-pen font line-width line-join line-cap anti-alias
-			]
-			shape-commands: make hash! [
-				move hline vline line curv curve qcurv qcurve arc
-			]
-			split: [p: (new-line back p yes)]
-			system/words/parse orig rule: [any [
-				ahead block! p: (new-line/all p/1 off) into rule
-			|	set word word! [
-					'shape any [
-						set word word! if (find shape-commands word) split
-					|	skip
-					]
-				|	if (find draw-commands word) split
-				]
-			|	skip
-			]]
-		]
-		'code [
-			code-hints!: make typeset! [any-word! any-path!]
-			until [
-				new-line block yes								;-- add newline before each independent expression
-				tail? block: preprocessor/fetch-next block
-			]
-			system/words/parse orig [any [p:
-				ahead word! ['function | 'func | 'has]			;-- do not mistake words for lit-/get-words
-				set spec block! (prettify/spec spec)
-				set body block! (prettify body)
-			|	ahead word! 'draw pair! set block block! (prettify/draw block)
-			|	set block block! (
-					unless empty? block [
-						part: min 50 length? block				;@@ workaround for #5003
-						case [
-							not find/part block code-hints! part [	;-- heuristic: data if no words nearby
-								prettify/data block
-							]
-							find/case/part block '| part [		;-- heuristic: parse rule if has alternatives
-								prettify/parse block
-							]
-							'else [prettify block]
-						]
-						if new-line? block [new-line p no]		;-- no newline before expanded block
-					]
-				)
-			|	set block paren! (prettify block)
-			|	skip
-			]]
-		]
+prettify: none
+context [
+	draw-commands: make hash! [
+		line curve box triangle polygon circle ellipse text arc spline image
+		matrix reset-matrix invert-matrix push clip rotate scale translate skew transform
+		pen fill-pen font line-width line-join line-cap anti-alias
 	]
-	orig
+	shape-commands: make hash! [
+		move hline vline line curv curve qcurv qcurve arc
+	]
+	
+	VID-styles: make hash! keys-of system/view/VID/styles
+	VID-panels: make hash! [panel group-box tab-panel]
+				
+	set 'prettify function [
+		"Reformat BLOCK with new-lines to look readable"
+		block [block! paren! map!] "Modified in place, deeply"
+		/data  "Treat block as data (default: as code)"
+		/draw  "Treat block as Draw dialect"
+		/spec  "Treat block as function spec"
+		/parse "Treat block as Parse rule"
+		/vid   "Treat block as VID layout"
+		/local body word
+	][
+		if empty? orig: block [return orig]
+		unless map? block [new-line/all block no]				;-- start flat
+		limit: 80												;-- expansion margin
+		
+		; attempt [											;-- trap in case it recurses into itself ;)
+		; print [case [data ["DATA"] spec ["SPEC"] parse ["PARSE"] 'else ["CODE"]] mold block lf]
+		case [
+			map? block [
+				block: values-of block
+				while [block: find/tail block block!] [
+					prettify/data block
+				]
+			]
+			data [												;-- format data as key/value pairs, not expressions
+				while [block: find/tail block block!] [
+					prettify/data inner: block/-1				;-- descend recursively
+				]
+				if any [
+					inner										;-- has inner blocks?
+					limit <= length? mold/part orig limit		;-- longer than limit?
+				][
+					new-line/skip orig yes 2					;-- expand as key/value pairs
+				]
+			]
+			spec [
+				if limit > length? mold/part orig limit [return orig]
+				new-line orig yes
+				forall block [
+					if all-word? :block/1 [new-line block yes]	;-- new-lines before argument/refinement names
+					if /local == :block/1 [break]
+				]
+			]
+			parse [
+				if limit > length? mold/part orig limit [return orig]
+				new-line orig yes
+				forall block [
+					case [
+						'| == :block/1 [new-line block yes]		;-- new-lines before alt-rule
+						block? :block/1 [prettify/parse block/1]
+						paren? :block/1 [prettify block/1]
+					]
+				]
+			]
+			vid [
+				styles: copy VID-styles
+				split:  [(new-line p yes)]
+				system/words/parse block layout: [p: split any [p:
+					set word word! if (find styles word) split (style: word)
+				|	'at pair! opt set-word! set style word! split	;-- preferable split point
+				|	set-word! set style word! split					;-- ditto
+				|	'style set word set-word! set style word! split
+					(append styles to word! word) 				;-- new styles are collected FWIW
+				|	'draw
+					change only set block block! (prettify/draw block)
+				|	['data | 'extra] 
+					change only set block block! (prettify/data block)
+				|	change only set block block! (
+						vid: to logic! find VID-panels style
+						prettify/:vid block
+					) 
+				|	skip
+				]]
+			]
+			draw [
+				if limit > length? mold/part orig limit [return orig]
+				split: [p: (new-line back p yes)]
+				system/words/parse orig rule: [any [
+					ahead block! p: (new-line/all p/1 off) into rule
+				|	set word word! [
+						'shape any [
+							set word word! if (find shape-commands word) split
+						|	skip
+						]
+					|	if (find draw-commands word) split
+					]
+				|	skip
+				]]
+			]
+			'code [
+				code-hints!: make typeset! [any-word! any-path!]
+				until [
+					new-line block yes							;-- add newline before each independent expression
+					tail? block: preprocessor/fetch-next block
+				]
+				system/words/parse orig [any [p:
+					ahead word! ['function | 'func | 'has]		;-- do not mistake words for lit-/get-words
+					set spec block! (prettify/spec spec)
+					set body block! (prettify body)
+				|	ahead word! 'draw pair! set block block! (prettify/draw block)
+				|	set block block! (
+						unless empty? block [
+							part: min 50 length? block			;@@ workaround for #5003
+							case [
+								not find/part block code-hints! part [	;-- heuristic: data if no words nearby
+									prettify/data block
+								]
+								find/case/part block '| part [	;-- heuristic: parse rule if has alternatives
+									prettify/parse block
+								]
+								'else [prettify block]
+							]
+							if new-line? block [new-line p no]	;-- no newline before expanded block
+						]                                       
+					)
+				|	set block paren! (prettify block)
+				|	skip
+				]]
+			]
+		]
+		orig
+	]
 ]
 
 ; probe prettify load mold/flat :prettify
