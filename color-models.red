@@ -101,7 +101,7 @@ HSL->RGB: HSL2RGB: function [
 	/tuple "Return as a 3-tuple"
 ][
 	if tuple? HSL [HSL: (360,1,1) * tuple->point HSL]
-	H: HSL/1  S: HSL/2  L: HSL/3
+	H: HSL/1 // 360  S: HSL/2  L: HSL/3
 	H': H / 60
 	C:  S * 2 * min L 1 - L								;-- chroma
 	D:  L - (C / 2)										;-- darkest channel
