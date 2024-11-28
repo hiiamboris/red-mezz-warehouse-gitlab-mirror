@@ -68,7 +68,10 @@ context [
 	
 	VID-styles: make hash! keys-of system/view/VID/styles
 	VID-panels: make hash! [panel group-box tab-panel]
-				
+	
+	stack: make hash! 16
+	head': func [s] [either map? s [s][head s]]
+
 	set 'prettify function [
 		"Reformat BLOCK with new-lines to look readable"
 		block [block! paren! map!] "Modified in place, deeply"
@@ -80,12 +83,14 @@ context [
 		/local body word
 	][
 		if empty? orig: block [return orig]
+		either find/only/same stack head' orig					;-- cycle protection
+			[return orig]
+			[append/only stack head' orig]
 		unless map? block [new-line/all block no]				;-- start flat
 		limit: 80												;-- expansion margin
 		
-		; attempt [											;-- trap in case it recurses into itself ;)
 		; print [case [data ["DATA"] spec ["SPEC"] parse ["PARSE"] 'else ["CODE"]] mold block lf]
-		case [
+		loop 1 [case [
 			map? block [
 				block: values-of block
 				while [block: find/tail block block!] [
@@ -104,7 +109,7 @@ context [
 				]
 			]
 			spec [
-				if limit > length? mold/part orig limit [return orig]
+				if limit > length? mold/part orig limit [break]
 				new-line orig yes
 				forall block [
 					if all-word? :block/1 [new-line block yes]	;-- new-lines before argument/refinement names
@@ -112,7 +117,7 @@ context [
 				]
 			]
 			parse [
-				if limit > length? mold/part orig limit [return orig]
+				if limit > length? mold/part orig limit [break]
 				new-line orig yes
 				forall block [
 					case [
@@ -144,7 +149,7 @@ context [
 				if split? [new-line orig not split? =? orig]	;-- don't expand single-face VID
 			]
 			draw [
-				if limit > length? mold/part orig limit [return orig]
+				if limit > length? mold/part orig limit [break]
 				split: [p: (new-line back p yes)]
 				system/words/parse orig rule: [any [
 					ahead block! p: (new-line/all p/1 off) into rule
@@ -188,7 +193,8 @@ context [
 				|	skip
 				]]
 			]
-		]
+		]]
+		take/last stack
 		orig
 	]
 ]
