@@ -80,6 +80,8 @@ context [
 		/spec  "Treat block as function spec"
 		/parse "Treat block as Parse rule"
 		/vid   "Treat block as VID layout"
+		/from  "Keep block flat if it molds in less chars than limit"
+			limit "Default = 80, to always expand use 0" 
 		/local body word
 	][
 		if empty? orig: block [return orig]
@@ -87,19 +89,19 @@ context [
 			[return orig]
 			[append/only stack head' orig]
 		unless map? block [new-line/all block no]				;-- start flat
-		limit: 80												;-- expansion margin
+		default limit: 80										;-- expansion margin
 		
 		; print [case [data ["DATA"] spec ["SPEC"] parse ["PARSE"] 'else ["CODE"]] mold block lf]
 		loop 1 [case [
 			map? block [
 				block: values-of block
 				while [block: find/tail block block!] [
-					prettify/data block
+					prettify/data/from block limit
 				]
 			]
 			data [												;-- format data as key/value pairs, not expressions
 				while [block: find/tail block block!] [
-					prettify/data inner: block/-1				;-- descend recursively
+					prettify/data/from inner: block/-1 limit	;-- descend recursively
 				]
 				if any [
 					inner										;-- has inner blocks?
@@ -122,8 +124,8 @@ context [
 				forall block [
 					case [
 						'| == :block/1 [new-line block yes]		;-- new-lines before alt-rule
-						block? :block/1 [prettify/parse block/1]
-						paren? :block/1 [prettify block/1]
+						block? :block/1 [prettify/parse/from block/1 limit]
+						paren? :block/1 [prettify/from       block/1 limit]
 					]
 				]
 			]
@@ -137,12 +139,12 @@ context [
 				|	'style set word set-word! set style word! split
 					(append styles to word! word) 				;-- new styles are collected FWIW
 				|	'draw
-					change only set block block! (prettify/draw block)
+					change only set block block! (prettify/draw/from block limit)
 				|	['data | 'extra] 
-					change only set block block! (prettify/data block)
+					change only set block block! (prettify/data/from block limit)
 				|	change only set block block! (
 						vid: to logic! find VID-panels style
-						prettify/:vid block
+						prettify/:vid/from block limit
 					) 
 				|	skip
 				]]
@@ -171,25 +173,25 @@ context [
 				]
 				system/words/parse orig [any [p:
 					ahead word! ['function | 'func | 'has]		;-- do not mistake words for lit-/get-words
-					set spec block! (prettify/spec spec)
-					set body block! (prettify body)
-				|	ahead word! 'draw pair! set block block! (prettify/draw block)
+					set spec block! (prettify/spec/from spec limit)
+					set body block! (prettify/from      body limit)
+				|	ahead word! 'draw pair! set block block! (prettify/draw/from block limit)
 				|	set block block! (
 						unless empty? block [
 							part: min 50 length? block			;@@ workaround for #5003
 							case [
 								not find/part block code-hints! part [	;-- heuristic: data if no words nearby
-									prettify/data block
+									prettify/data/from block limit
 								]
 								find/case/part block '| part [	;-- heuristic: parse rule if has alternatives
-									prettify/parse block
+									prettify/parse/from block limit
 								]
-								'else [prettify block]
+								'else [prettify/from block limit]
 							]
 							if new-line? block [new-line p no]	;-- no newline before expanded block
 						]                                       
 					)
-				|	set block paren! (prettify block)
+				|	set block paren! (prettify/from block limit)
 				|	skip
 				]]
 			]
