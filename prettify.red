@@ -66,7 +66,7 @@ context [
 		move hline vline line curv curve qcurv qcurve arc
 	]
 	
-	VID-styles: make hash! keys-of system/view/VID/styles
+	VID-styles: make hash! any [attempt [keys-of :system/view/VID/styles] 0]
 	VID-panels: make hash! [panel group-box tab-panel]
 	
 	stack: make hash! 16
