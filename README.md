@@ -60,7 +60,7 @@ Notes:
 | ---                                        | --- |
 | [split](split.red)                         | Generalized series splitter |
 | [join](join.red)                           | Join a list as a string |
-| [delimit](delimit.red)                     | Insert a delimiter between all list items |
+| [delimit](delimit.red)                     | Insert a delimiter between all list items or interleave two lists |
 | [match](match.red)                         | Mask based pattern matching for strings (used by GLOB) |
 | [keep-type](keep-type.red)                 | Filter list using accepted type or typeset |
 | [sift & locate](sift-locate.red)           | High level dialected series filter and finder [Read more](sift-locate.md) |
