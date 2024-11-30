@@ -22,6 +22,7 @@ context [
 		"Insert delimiter between all items in the list"
 		list  [any-list!]										;@@ `reduce` and `set` don't work on strings... hence the type limitation
 		delim [any-type!]
+		/evenly "Also add a trailing delimiter"
 		/into result [any-list!]
 		; /into result: (make block! 2 * length? list) [any-list!]
 	] reshape [
@@ -36,16 +37,21 @@ context [
 		foreach @[in-list] skip list 1 + trail [
 			reduce/into @[out-list] tail result					;@@ lists are inlined so the func is easy to copy, but it hurts readability
 		]
+		if evenly [append/only result :delim]
 		result
 	]
 ]
 
 #assert [
-	[         ] =  delimit [     ] '-
-	[1        ] =  delimit [1    ] '-
-	[1 - 2    ] =  delimit [1 2  ] '-
-	[1 - 2 - 3] =  delimit [1 2 3] '-
-	[1 - 2 - 3] == delimit to hash! [1 2 3] '-
+	[           ] =  delimit [     ] '-
+	[1          ] =  delimit [1    ] '-
+	[1 - 2      ] =  delimit [1 2  ] '-
+	[1 - 2 - 3  ] =  delimit [1 2 3] '-
+	[1 - 2 - 3  ] == delimit to hash! [1 2 3] '-
+	[           ] =  delimit/evenly [     ] '-
+	[1 -        ] =  delimit/evenly [1    ] '-
+	[1 - 2 -    ] =  delimit/evenly [1 2  ] '-
+	[1 - 2 - 3 -] =  delimit/evenly [1 2 3] '-
 ]
 
 context [												;-- this is a similar design, just uses list items instead of the delimiter
