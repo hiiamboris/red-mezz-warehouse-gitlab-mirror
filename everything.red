@@ -29,7 +29,7 @@ Red [
 #include %count.red
 #include %delimit.red
 #include %collect-set-words.red
-#include %keep-type.red
+#include %keep-type.red									;-- included by in-out-func.red
 #include %typecheck.red
 
 #include %selective-catch.red							;-- included by forparse.red
@@ -46,6 +46,7 @@ Red [
 #include %tabbing.red
 #include %explore.red
 #include %bulk.red	
+#include %in-out-func.red	
 
 #include %shallow-trace.red								;-- included by clock-each.red & show-trace.red & stepwise-func.red
 #include %clock-each.red

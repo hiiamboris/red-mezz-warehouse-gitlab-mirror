@@ -38,6 +38,7 @@ Notes:
 | [\#\# macro](load-anything.red)            | Macro for arbitrary load-time evaluation, to be able to save and load any kind of value |
 | [bind-only](bind-only.red)                 | Selectively bind a word or a few only |
 | [catchers](catchers.red)                   | TRAP - enhanced TRY, FCATCH - Filtered catch, PCATCH - Pattern-matched catch, FOLLOWING - guaranteed cleanup |
+| [in-out-func](in-out-func.red)             | Make functions more readable by allowing lit-arg access as if it was a normal argument |
 | [classy object](classy-object.red)         | Object 'class' support that adds type checks and per-word on-change functions to objects |
 | [typed object](typed-object.red)           | Simple per-object type checks support |
 | [advanced function](advanced-function.red) | Support for value checks and defaults in FUNCTION's spec argument |

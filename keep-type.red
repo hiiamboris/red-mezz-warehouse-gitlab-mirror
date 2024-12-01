@@ -6,7 +6,11 @@ Red [
 	notes: {
 		Examples:
 	        msgs: keep-type message-log string!
-	        objs: keep-type message-log object!		
+	        objs: keep-type message-log object!
+	        
+	    Note that this is just a temporary (but required) kludge until a proper design.
+	    SIFT includes the same functionality as `sift list [.. type]`.
+	    REP #168 has a solution: `filter list :type?`.
 	}
 ]
 
