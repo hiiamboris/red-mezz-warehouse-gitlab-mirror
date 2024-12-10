@@ -67,15 +67,16 @@ Red [
 
 #include %assert.red
 #include %exponent-of.red
+#include %charsets.red
 ; #include %show-trace.red
 
 format-readable: none
 context [
-	digit:   charset [#"0" - #"9"]
+	; digit:   charset [#"0" - #"9"]
 	; dig19:   charset [#"1" - #"9"]
 	; nonzero: charset [not #"0"]
 
-	insert-separators: function [formed] [				;-- does not expect separators to be already inserted
+	insert-separators: function [formed] bind [			;-- does not expect separators to be already inserted
 		parse formed [
 			to [digit | #"."]										;-- skip optional sign, but not leading dot
 			s: any digit e: (len: offset? s e)						;-- count digits until suffix/dot/end
@@ -83,7 +84,7 @@ context [
 			(grps: max 0 len - lead / 3) grps [insert #"'" 3 skip]	;-- insert separators
 		]
 		formed
-	]
+	] charsets
 
 	#assert [
 		"999'999'999'999"   = insert-separators "999999999999"  
