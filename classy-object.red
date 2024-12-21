@@ -61,6 +61,9 @@ Red [
 		then descending class may define equality type or on-change handler.
 		Of course, the same feature (type check, value check, equality, on-change) gets replaced when it's specified again.
 		
+		CLASSY-OBJECT function serves as a shortcut to create a *unique* object with type/value checking in it.
+		It's a rare need, and the declared class is only used for this single object, but sometimes it comes in handy.
+		
 		CLASSIFY-OBJECT function assigns an object to a given class, enabling validation specific to that class.
 		It can be called at any time, but for more safety should be before any assignments are made.
 		The above MY-SPEC once evaluated will classify itself first, then assign values,
@@ -381,16 +384,14 @@ class?: function [										;-- class-of is taken already
 
 classes: make map! 20
 
-modify-class: declare-class: none 
-
-context [
+modify-class: context [
 	;; used as default equality test, which always fails and allows to trigger on-change even if value is the same
 	falsey-compare: func [x [any-type!] y [any-type!]] [no]
 	
 	;; used as default value check (that always fails) - this simplifies and speeds up the check
 	falsey-test: func [x [any-type!]] [no]
 
-	set 'modify-class function [
+	return function [
 		"Modify a named class"
 		class [word!]  "Class name (word)"
 		spec  [block!] "Spec block with validity directives"
@@ -427,36 +428,45 @@ context [
 		]]
 		spec
 	]
+]
 	
-	set 'declare-class function [
-		"Declare a named class (overrides if already exists), return preprocessed spec"
-		class       [word! path!]  "Class name (word) or class-name/prototype-name (path)"
-		spec        [block!]       "Spec block with validity directives"
-		/manual                    "Don't insert classify-object call automatically"
-	][
-		; if classes/:class [ERROR "Class (class) is already declared"]
-		if path? class [
-			#assert [parse class [2 word! end]]
-			set [class: proto:] class
-		]
-		classes/:class: either proto [
-			unless pmap: classes/:proto [ERROR "Unknown class: (proto)"]
-			copy/deep pmap
-		][
-			make map! 20
-		]
-		spec: modify-class class spec
-		put classes/:class #on-change					;-- issue is used as a key to avoid conflict with possible object words
-			func [word [any-word!] old [any-type!] new [any-type!]] compose [
-				on-change-dispatch (to lit-word! class) word :old :new
-			]
-		unless manual [
-			insert spec compose [
-				classify-object self (to lit-word! class)
-			]
-		]
-		spec											;-- spec can be passed to `make` now
+declare-class: function [
+	"Declare a named class (overrides if already exists), return preprocessed spec"
+	class       [word! path!]  "Class name (word) or class-name/prototype-name (path)"
+	spec        [block!]       "Spec block with validity directives"
+	/manual                    "Don't insert classify-object call automatically"
+][
+	; if classes/:class [ERROR "Class (class) is already declared"]
+	if path? class [
+		#assert [parse class [2 word! end]]
+		set [class: proto:] class
 	]
+	classes/:class: either proto [
+		unless pmap: classes/:proto [ERROR "Unknown class: (proto)"]
+		copy/deep pmap
+	][
+		make map! 20
+	]
+	spec: modify-class class spec
+	put classes/:class #on-change						;-- issue is used as a key to avoid conflict with possible object words
+		func [word [any-word!] old [any-type!] new [any-type!]] compose [
+			on-change-dispatch (to lit-word! class) word :old :new
+		]
+	unless manual [
+		insert spec compose [
+			classify-object self (to lit-word! class)
+		]
+	]
+	spec												;-- spec can be passed to `make` now
+]
+
+classy-object: function [
+	"Create a unique object with type/value checking in it"
+	spec [block!]
+][
+	name: ["unnamed-classy-object-" 0]
+	name/2: name/2 + 1
+	make classy-object! declare-class to word! to string! name spec
 ]
 
 
