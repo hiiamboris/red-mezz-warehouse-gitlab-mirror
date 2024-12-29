@@ -40,15 +40,33 @@ Red [
 		
 		It's not possible to compile using this approach, because Red code is not usually loadable in R2
 		For compiling, see https://codeberg.org/hiiamboris/red-cli/src/master/mockups/inline
+		
+		
+		Addendum.
+		
+		It now has rudimentary dependency specification.
+		File header may contain the following recognized fields:
+		- 'provides' [block! word!] - name(s) of the dependencies provided by this file
+		- 'depends'  [block! word!] - name(s) of the dependencies required to load this file
+		  (this does not include dependencies needed to run this file's functions)
+		
+		Currently, just a warning will be issued if a dependency is not present.
+		Proper dependency resolution needs modules design, as otherwise it will be just a kludge in the current include system.
+		Besides, this file does not affect compiled or inlined code, so such resolution is far out of its scope.
 	}
 ]
 ;@@ TODO: instead of printing, use `try/all` and report the file where the error happens
 
 #if all [
 	not object? :rebol									;-- do nothing when compiling
-	not block? :included-scripts						;-- do not reinclude itself
+	not block? :included-scripts						;-- do not reinclude itself (does not shield from double evaluation though)
 ][
 	; #do [verbose-inclusion?: yes]						;-- comment this out to disable file names dump
+	#do [	
+		system/words/included-scripts: reduce [			;@@ no /extern support - #5386
+			append what-dir %include-once.red			;-- add itself to avoid double evaluation
+		]
+	]
 	
 	;; since it's now running in Red, we don't need R2 compatibility
 	#macro [#include] function [[manual] s e] [
@@ -59,9 +77,6 @@ Red [
 			]
 		]
 		
-		unless block? :included-scripts [
-			system/words/included-scripts: copy []		;@@ no /extern support - #5386
-		]
 		file: clean-path to-red-file :s/2				;-- use absolute paths to ensure uniqueness
 		if find included-scripts file [					;-- if already included, skip it
 			return remove/part s 2
@@ -76,8 +91,19 @@ Red [
 		]
 		
 		old-path: what-dir
-		set [path: _:] split-path file
-		if 'Red == :data/1 [data: skip data 2]			;-- skip the header in case Red word is defined to smth else
+		set [path: name:] split-path file
+		if 'Red == :data/1 [							;-- skip the header in case Red word is defined to smth else
+			header: construct data/2
+			if provides: select header 'provides [append included-scripts provides]
+			if depends:  select header 'depends [
+				foreach token compose [(depends)] [
+					unless find/only included-scripts token [
+						print rejoin ["^/*** WARNING: File " mold name " requires '" mold token "' dependency^/"]
+					]
+				] 
+			]
+			data: skip data 2
+		]
 		
 		prelude:  compose [change-dir (path)]			;-- evaluate inside script's path
 		postlude: compose [change-dir (old-path)]		;-- restore path after evaluation (unless errors out or halts..)
