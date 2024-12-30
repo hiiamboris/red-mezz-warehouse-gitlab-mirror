@@ -1,8 +1,10 @@
 Red [
-	title:   "#composite macro & mezz"
-	purpose: "String interpolation"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "#composite macro & mezz"
+	purpose:  "String interpolation"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: composite
+	depends:  [with trap]
 	notes: {
 		It supports only parens as expression designators.
 		To escape opening paren, add a backslash after it: `(\`
@@ -31,9 +33,9 @@ Red [
 ]
 
 
-#include %assert.red
-#include %with.red			;-- used by composite func to bind exprs
-#include %catchers.red		;-- used by composite func to trap errors
+; #include %assert.red
+; #include %with.red			;-- used by composite func to bind exprs
+; #include %catchers.red		;-- used by composite func to trap errors
 
 
 composite: none

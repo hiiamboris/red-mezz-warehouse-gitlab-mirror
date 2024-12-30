@@ -1,8 +1,10 @@
 Red [
-	title:   "Inline profiling macros and functions"
-	purpose: "Profile any runtime piece of code with ease"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "Inline profiling macros and functions"
+	purpose:  "Profile any runtime piece of code with ease"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: profiling
+	depends:  [trace without-gc format-readable]
 	usage: {
 		Memo: (* *), ***, PROF/EACH, PROF/SHOW, PROF/RESET, PROF/MANUAL
 

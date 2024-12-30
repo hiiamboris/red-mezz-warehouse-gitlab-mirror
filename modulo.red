@@ -1,8 +1,9 @@
 Red [
-	title:   "Proper MODULO function"
-	purpose: "Tired of waiting for it to be fixed in Red"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "Proper MODULO function"
+	purpose:  "Tired of waiting for it to be fixed in Red"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: modulo
 	notes: {
 		Info about various definitions:
 			https://en.wikipedia.org/wiki/Modulo_operation#Variants_of_the_definition
@@ -27,8 +28,8 @@ Red [
 ]
 
 
-#include %hide-macro.red
-#include %assert.red
+; #include %hide-macro.red
+; #include %assert.red
 
 modulo: //: mod: none
 context [

@@ -1,8 +1,10 @@
 Red [
-	title:   "BMATCH mezzanine"
-	purpose: "Detect possibly mismatched brackets positions from indentation"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "BMATCH mezzanine"
+	purpose:  "Detect possibly mismatched brackets positions from indentation"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: bmatch
+	depends:  [detab composite]
 	notes: {
 		Ever had an error about unclosed bracket in a 1000+ line file?
 		This script turns the challenge of finding it into a triviality.
@@ -12,8 +14,8 @@ Red [
 ]
 
 
-#include %tabs.red
-#include %composite.red
+; #include %tabs.red
+; #include %composite.red
 
 ; #include https://gitlab.com/hiiamboris/red-mezz-warehouse/-/raw/master/tabs.red
 ; #include https://gitlab.com/hiiamboris/red-mezz-warehouse/-/raw/master/composite.red

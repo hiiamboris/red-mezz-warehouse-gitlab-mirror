@@ -1,8 +1,9 @@
 Red [
-	title:   "Leak checker"
-	purpose: "Find words leaking from complex code"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "Leak checker"
+	purpose:  "Find words leaking from complex code"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: leak-check
 	usage: {
 		do %leak-check.red
 		leak-check [code...] -- will eval `code...` and print what's leaking

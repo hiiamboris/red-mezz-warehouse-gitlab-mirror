@@ -1,7 +1,8 @@
 Red [
-	title:   "Face coordinate systems translation mezzanines"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "Face coordinate systems translation mezzanines"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: relativity
 	usage: {
 		Scaling between DPI-aware logical coordinates (units) and real screen pixels:
 			units-to-pixels 100

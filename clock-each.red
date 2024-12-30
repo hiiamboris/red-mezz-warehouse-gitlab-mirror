@@ -1,8 +1,8 @@
 Red [
-	title:   "CLOCK-EACH mezzanine with baseline support"
-	purpose: "Allows you to profile each expression in a block of code"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "CLOCK-EACH mezzanine with baseline support"
+	purpose:  "Allows you to profile each expression in a block of code"
+	author:   @hiiamboris
+	license:  BSD-3
 	notes: {
 		Obsoleted by PROF/EACH (profiling.red)
 		Left for backward compatibility

@@ -1,8 +1,9 @@
 Red [
-	title:       "TYPED-OBJECT! prototype"
-	description: "A per-object implementation of object field's type checking"
-	author:      @hiiamboris
-	license:     'BSD-3
+	title:    "TYPED-OBJECT! prototype"
+	purpose:  "A per-object implementation of object field's type checking"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: typed-object
 	usage: {
 		my-object: make typed-object! [
 			x: "normal unrestricted object field"

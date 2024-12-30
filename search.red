@@ -1,8 +1,10 @@
 Red [
-	title:   "Dichotomic search function"
-	purpose: "Find root of a function with better than linear complexity"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "Dichotomic search function"
+	purpose:  "Find root of a function with better than linear complexity"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: search
+	depends:  advanced-function
 	usage: {
 		*** SYNTAX ***
 		
@@ -145,9 +147,9 @@ Red [
 ]
 
 
-#include %hide-macro.red	
-#include %assert.red	
-#include %advanced-function.red	
+; #include %hide-macro.red	
+; #include %assert.red	
+; #include %advanced-function.red	
 	
 array-search: search: none
 context [

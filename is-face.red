@@ -2,7 +2,8 @@ Red [
 	title:   "IS-FACE? mezzanine"
 	purpose: "Reliable replacement for FACE? which doesn't work on user-defined faces"
 	author:  [@hiiamboris @qtxie]
-	license: 'BSD-3
+	license: BSD-3
+	depends: map-each
 	notes:   {Mostly obsoleted by current 'face?' implementation in runtime}
 ]
 

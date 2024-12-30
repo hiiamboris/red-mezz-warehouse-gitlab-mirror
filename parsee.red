@@ -3,20 +3,22 @@ Red [
 	purpose: "Visualize parsing progress using PARSEE command-line tool"
 	author:  @hiiamboris
 	license: 'BSD-3
+	provides: parsee
+	depends:  [advanced-function composite following timestamp reactor92 tree-hopping data-store]
 	usage: {
 		See https://codeberg.org/hiiamboris/red-spaces/src/branch/master/programs/README.md#parsee-parsing-flow-visual-analysis-tool-parsee-tool-red
 	}
 ]
 
-#include %assert.red
+; #include %assert.red
 ; #include %setters.red									;-- `anonymize`
-#include %advanced-function.red							;-- `function` (defaults)
-#include %composite.red									;-- interpolation in print/call
-#include %catchers.red									;-- `following`
-#include %timestamp.red									;-- for dump file name
-#include %reactor92.red									;-- for changes tracking
-#include %tree-hopping.red								;-- for cloning data
-#include %data-store.red								;-- for config load/save
+; #include %advanced-function.red							;-- `function` (defaults)
+; #include %composite.red									;-- interpolation in print/call
+; #include %catchers.red									;-- `following`
+; #include %timestamp.red									;-- for dump file name
+; #include %reactor92.red									;-- for changes tracking
+; #include %tree-hopping.red								;-- for cloning data
+; #include %data-store.red								;-- for config load/save
 
 parsee: inspect-dump: parse-dump: none
 context expand-directives [

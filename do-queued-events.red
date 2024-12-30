@@ -1,8 +1,9 @@
 Red [
-	title:   "DO-QUEUED-EVENTS mezzanine"
-	purpose: "Flush the View event queue"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "DO-QUEUED-EVENTS mezzanine"
+	purpose:  "Flush the View event queue"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: do-queued-events
 	notes: {
 		Sometimes there's a need to force View subsystem to process all events that may be pending.
 		One use is in event loops: process user input, then sleep a bit, then again...

@@ -1,8 +1,10 @@
 Red [
-	title:   "EXPLORE mezzanine"
-	purpose: "Provides UI to interactively inspect a Red value in detail"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "EXPLORE mezzanine"
+	purpose:  "Provides UI to interactively inspect a Red value in detail"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: explore
+	depends:  [maybe with xyloop relativity]
 	notes: {
 		Plan is to make it accept any complex Red value and let it find the best layout to display it.
 		Throw something onto it and don't care.
@@ -139,16 +141,15 @@ Red [
 ]
 
 
-#include %assert.red
-#include %setters.red
-#include %with.red
-#include %xyloop.red
-#include %relativity.red
-#include %contrast-with.red
+; #include %assert.red
+; #include %setters.red
+; #include %with.red
+; #include %xyloop.red
+; #include %relativity.red
+; #include %contrast-with.red
 
-#include %clock.red
-#include %clock-each.red
-#include %do-queued-events.red
+; #include %clock-each.red
+; #include %do-queued-events.red
 ; do https://gitlab.com/hiiamboris/red-elastic-ui/-/raw/master/elasticity.red
 ; #include %..\red-elasticity\elasticity.red
 ; recycle/off

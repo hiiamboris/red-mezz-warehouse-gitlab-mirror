@@ -1,8 +1,10 @@
 Red [
-	title:   "FORMAT-NUMBER mezzanine"
-	purpose: "Simple number formatter with the ability to control integer & fractional parts size"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "FORMAT-NUMBER mezzanine"
+	purpose:  "Simple number formatter with the ability to control integer & fractional parts size"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: format-number
+	depends:  exponent-of
 	notes: {
 		Use case: timestamps and other sort-friendly output
 			For more advanced output see FORMAT-READABLE or Gregg's formatting repository
@@ -14,7 +16,7 @@ Red [
 ]
 
 ; #include %assert.red
-#include %exponent-of.red
+; #include %exponent-of.red
 
 
 format-number: function [

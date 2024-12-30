@@ -1,9 +1,10 @@
 Red [
-	title:   "DETAB & ENTAB mezzanines"
-	purpose: "Tabs to spaces conversion and back"
-	author:  @hiiamboris
-	license: 'BSD-3
-	notes:   {Supports multi-line text}
+	title:    "DETAB & ENTAB mezzanines"
+	purpose:  "Tabs to spaces conversion and back"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: [detab entab]
+	notes:    {Supports multi-line text}
 ]
 
 ; #include %clock.red

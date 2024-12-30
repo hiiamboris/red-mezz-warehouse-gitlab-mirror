@@ -1,8 +1,9 @@
 Red [
-	title:   "Data and state file management"
-	purpose: {Standardized zero-fuss loading and saving of data, config and other state}
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "Data and state file management"
+	purpose:  {Standardized zero-fuss loading and saving of data, config and other state}
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: data-store
 	usage: {
 		DATA-STORE context is initialized at boot time and contains /PATHS map with platform-specific paths.
 		There are five data types: data, config, state, cache, runtime (see 'design' section).

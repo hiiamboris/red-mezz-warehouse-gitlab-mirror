@@ -53,6 +53,63 @@ context [
             exit
         ]
     ] 
+    once: func [
+        "Set value of WORD to VALUE only if it's unset" 
+        'word [set-word! set-path!] 
+        value [default!] "New value"
+    ] [
+        if unset? get/any word [set word :value] 
+        :value
+    ] 
+    default: func [
+        "If WORD's value is none, set it to VALUE" 
+        'word [set-word! set-path!] 
+        value [default!] "New value"
+    ] [
+        switch get/any word [#(none) [set word :value]] 
+        :value
+    ] 
+    maybe: func [
+        {If WORDS's value is not strictly equal to VALUE, set it to VALUE (for use in reactivity)} 
+        'word [set-word! set-path!] 
+        value [default!] "New value" 
+        /same "Use =? as comparator instead of =="
+    ] [
+        if either same [:value =? get/any word] [:value == get/any word] [return :value] 
+        set word :value
+    ] 
+    global: function [
+        "Export single word into the global namespace" 
+        'word [set-word! set-path!] 
+        value [default!]
+    ] [
+        alias: either set-path? word [last word] [word] 
+        set bind alias system/words set word :value
+    ] 
+    export: function [
+        {Export a set of bound words into the global namespace} 
+        words [block! object!]
+    ] [
+        if object? words [words: words-of words] 
+        foreach w words [set/any bind w system/words get/any :w]
+    ] 
+    anonymize: function [
+        {Return WORD bound in an anonymous context and set to VALUE} 
+        word [any-word!] value [any-type!]
+    ] [
+        o: construct change [] to set-word! word 
+        set/any/only o :value 
+        bind word o
+    ] 
+    pretending: function [
+        {Evaluate CODE with WORD set to VALUE, then restore the old value} 
+        word [any-word! any-path!] value [default!] code [block!] 
+        /method method' [word!] {Preferred method: [trace (default) trap (faster) do (fastest, unsafe)]}
+    ] [
+        old: get word 
+        set word :value 
+        following/:method code [set word :old] method'
+    ] 
     with: func [
         "Bind CODE to a given context CTX" 
         ctx [any-object! function! any-word! block!] 
@@ -64,7 +121,8 @@ context [
             set-word? :ctx/1 [bind code context ctx] 
             'otherwise [foreach ctx ctx [bind code do :ctx] code]
         ]
-    ] do reduce [function [] []] 
+    ] 
+    #hide [] 
     thrown: pcatch: fcatch: trap: following: none 
     context [
         with-thrown: func [code [block!] /thrown] [
@@ -101,7 +159,7 @@ context [
             code [block!] 
             /all {Catch also BREAK, CONTINUE, RETURN, EXIT and THROW exceptions} 
             /keep {Capture and save the call stack in the error object} 
-            /catch {If provided, called upon exceptiontion and handler's value is returned} 
+            /catch {If provided, called upon exception and handler's value is returned} 
             handler [block! function!] "func [error][] or block that uses THROWN" 
             /local result
         ] bind [
@@ -118,9 +176,21 @@ context [
         set 'following function [
             {Guarantee evaluation of CLEANUP after leaving CODE} 
             code [block!] "Code that can use break, continue, throw" 
-            cleanup [block!] "Finalization code"
+            cleanup [block!] "Finalization code" 
+            /method method' [word!] {Preferred method: [trace (default) trap (faster) do (fastest, unsafe)]}
         ] [
-            do/trace code :cleaning-tracer
+            switch/default method' [
+                trap [
+                    trap/all/keep/catch code [do cleanup do thrown] 
+                    do cleanup
+                ] 
+                do [
+                    do code 
+                    do cleanup
+                ]
+            ] [
+                do/trace code :cleaning-tracer
+            ]
         ] 
         cleaning-tracer: func [[no-trace]] bind [[end] do cleanup] :following
     ] do reduce [function [] []] 
@@ -207,7 +277,9 @@ context [
             ] [
                 if types [typeset: make typeset! types] 
                 if default [
-                    default: reduce [to set-word! word default] 
+                    default: either paren? default 
+                    [compose [(to set-word! word) (as block! default)]] 
+                    [compose/only [(to set-word! word) (default)]] 
                     logic?: either types [to logic! find typeset logic!] [yes]
                 ] 
                 need-none-check?: all [ref? either types [not find typeset none!] [no]] 
@@ -337,7 +409,9 @@ context [
                 inserted [f word target part yes no] 
                 append [] 
                 appended [f word (p: skip head target index) length? p yes no] 
+                lowercase uppercase 
                 change [f word (skip head target index) part no no] 
+                lowercased uppercased 
                 changed [f word (skip head target index) part yes no] 
                 clear [if part > 0 [f word target part no no]] 
                 cleared [f word target part no no] 
@@ -569,8 +643,8 @@ context [
             "Load data file of given type; none if not found" 
             type [word!] "One of: [data config state cache runtime]" 
             subpath [file!] "File name or path unique within the program" 
-            /as {Specify the format of data; use NONE to load as code.} 
-            format [word! none!] "E.g. bmp, gif, jpeg, png, redbin, json, csv."
+            /as {Specify the format of data; use NONE to load as code} 
+            format [word! none!] "E.g. bmp, gif, jpeg, png, redbin, json, csv"
         ] [
             if file: find-file type subpath [
                 result: load/all/:as file format 
@@ -595,8 +669,8 @@ context [
             subpath [file!] "File name or path unique within the program" 
             data [any-type!] "Value(s) to save" 
             /all "Save in serialized format" 
-            /as {Specify the format of data; use NONE to save as plain text.} 
-            format [word! none!] "E.g. bmp, gif, jpeg, png, redbin, json, csv."
+            /as {Specify the format of data; use NONE to save as plain text} 
+            format [word! none!] "E.g. bmp, gif, jpeg, png, redbin, json, csv"
         ] [
             file: make-path/create type subpath 
             save/:all/:as file :data format

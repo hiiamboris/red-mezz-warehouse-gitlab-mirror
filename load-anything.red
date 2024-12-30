@@ -1,8 +1,9 @@
 Red [
-	title:   "## macro"
-	purpose: "Load any value using load-time evaluation"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "## macro"
+	purpose:  "Load any value using load-time evaluation"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: load-anything
 	notes: {
 		I often need to MOLD a draw block so I can both visually inspect it
 		and draw it on a separate image (to isolate the influence of a bigger codebase).

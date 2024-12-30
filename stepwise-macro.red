@@ -1,8 +1,9 @@
 Red [
-	title:   "STEPWISE (macro variant)"
-	purpose: "Allows you write long compound expressions as a sequence of steps"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "STEPWISE (macro variant)"
+	purpose:  "Allows you write long compound expressions as a sequence of steps"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: stepwise-macro
 	usage: {
 		#stepwise [
 			2							;== 2

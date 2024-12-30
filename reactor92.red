@@ -1,8 +1,9 @@
 Red [
-	title:   "Reactor 92"
-	purpose: "Experimental implementation of REP#92's reduced deep-reactor model"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "Reactor 92"
+	purpose:  "Experimental implementation of REP#92's reduced deep-reactor model"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: reactor92
 	usage: {
 		!! BEWARE ON-DEEP-CHANGE IS FULL OF BUGS !! (see #4788)
 		so this should not be relied upon and used only for experimentation

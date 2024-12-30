@@ -1,8 +1,10 @@
 Red [
-	title:   "FORMAT-READABLE mezzanine"
-	purpose: "Advanced number formatter targeted at human reader"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "FORMAT-READABLE mezzanine"
+	purpose:  "Advanced number formatter targeted at human reader"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: format-readable
+	depends:  [exponent-of charsets]
 	notes: {
 		For simple and dumb format see FORMAT-NUMBER mezz
 		For mask based formatters see Gregg's formatting repository
@@ -65,9 +67,9 @@ Red [
 	}
 ]
 
-#include %assert.red
-#include %exponent-of.red
-#include %charsets.red
+; #include %assert.red
+; #include %exponent-of.red
+; #include %charsets.red
 ; #include %show-trace.red
 
 format-readable: none

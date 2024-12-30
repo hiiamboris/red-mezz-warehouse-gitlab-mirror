@@ -1,8 +1,10 @@
 Red [
-	title:       "CLASSY-OBJECT! prototype"
-	description: "A per-class implementation of object field's type/value checking"
-	author:      @hiiamboris
-	license:     'BSD-3
+	title:    "CLASSY-OBJECT! prototype"
+	purpose:  "A per-class implementation of object field's type/value checking"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: classy-object
+	depends:  [error count typecheck maybe]				;@@ 'maybe' is only a debug dependency
 	notes: {
 		This implements objects with automatic:
 		- type and value validity checking
@@ -301,10 +303,14 @@ Red [
 	}
 ]
 
-#include %debug.red
-#include %error-macro.red
-#include %count.red
-#include %typecheck.red
+; #include %debug.red
+; #include %assert.red
+; #include %with.red
+; #include %setters.red
+; #include %catchers.red
+; #include %error-macro.red
+; #include %count.red
+; #include %typecheck.red
 
 
 on-change-dispatch: function [

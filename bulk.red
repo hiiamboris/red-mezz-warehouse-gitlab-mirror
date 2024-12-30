@@ -1,18 +1,20 @@
 Red [
-	title:   "BULK mezzanine"
-	purpose: "Evaluate an expression for multiple items at once"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "BULK mezzanine"
+	purpose:  "Evaluate an expression for multiple items at once"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: bulk
+	depends:  [error map-each]
 	notes: {
 		See https://github.com/greggirwin/red-hof/tree/master/code-analysis#bulk-syntax for design notes
 	}
 ]
 
 
-#include %hide-macro.red
-#include %assert.red
-#include %error-macro.red
-#include %new-each.red									;-- we want map-each
+; #include %hide-macro.red
+; #include %assert.red
+; #include %error-macro.red
+; #include %new-each.red									;-- we want map-each
 
 
 bulk: function [

@@ -1,8 +1,9 @@
 Red [
-	title:   "Extrema-related mezzanines"
-	purpose: "Find minimum and maximum points over a series"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "Extrema-related mezzanines"
+	purpose:  "Find minimum and maximum points over a series"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: extrema
 	notes: {
 		There's a subtle distinction between "brute" versions and sort-based:
 		- former will evaluate literal functions and use their result values, while latter won't

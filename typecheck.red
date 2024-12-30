@@ -1,8 +1,10 @@
 Red [
-	title:   "TYPECHECK function"
-	purpose: "Mini-DSL for type checking and constraint validity insurance"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "TYPECHECK function"
+	purpose:  "Mini-DSL for type checking and constraint validity insurance"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: typecheck
+	depends:  [anonymize trap]
 	notes: {
 		TIP: wrap it into #debug [] macro so it doesn't affect release code performance
 		
@@ -18,10 +20,10 @@ Red [
 	}
 ]
 
-#include %assert.red
-#include %setters.red									;-- uses 'anonymize'
-#include %catchers.red
-#include %hide-macro.red
+; #include %assert.red
+; #include %setters.red									;-- uses 'anonymize'
+; #include %catchers.red
+; #include %hide-macro.red
 
 
 typecheck: none

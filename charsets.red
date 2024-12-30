@@ -1,7 +1,8 @@
 Red [
-	title:   "Common charsets"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "Common charsets"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: charsets
 ]
 
 charsets: context [

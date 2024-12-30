@@ -1,8 +1,10 @@
 Red [
-	title:   "DO-UNSEEN mezzanine"
-	purpose: "Disable View redraws from triggering during given code evaluation"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "DO-UNSEEN mezzanine"
+	purpose:  "Disable View redraws from triggering during given code evaluation"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: do-unseen
+	depends:  trap
 	notes: {
 		I'm using this in a *lot* of places, so it finally deserves a mezz status.
 
@@ -15,7 +17,7 @@ Red [
 	}
 ]
 
-#include %catchers.red
+; #include %catchers.red
 
 if object? :system/view [								;-- CLI programs skip this
 	do-unseen: function [

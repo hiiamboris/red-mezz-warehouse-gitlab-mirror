@@ -1,8 +1,10 @@
 Red [
-	title:   "General purpose timers"
-	purpose: "Provide an efficient and decoupled from View timer implementation"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "General purpose timers"
+	purpose:  "Provide an efficient and decoupled from View timer implementation"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: timers
+	depends:  advanced-function
 	notes: {
 
 		Rationale:
@@ -126,8 +128,8 @@ Red [
 ]
 
 
-#include %assert.red
-#include %advanced-function.red
+; #include %assert.red
+; #include %advanced-function.red
 
 
 timers: context [

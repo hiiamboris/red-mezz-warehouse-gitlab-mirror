@@ -1,8 +1,9 @@
 Red [
-	title:   "PRETTIFY mezzanine"
-	purpose: "Automatically fill some (possibly flat) code/data with new-line markers for readability"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "PRETTIFY mezzanine"
+	purpose:  "Automatically fill some (possibly flat) code/data with new-line markers for readability"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: prettify
 	usage: {
 		Example (flatten prettify's own code then restore it):
 		

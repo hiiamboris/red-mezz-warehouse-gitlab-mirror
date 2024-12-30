@@ -1,9 +1,10 @@
 Red [
-	title:   "MEDIAN mezzanine"
-	purpose: "Simple sample median function"
-	author:  @hiiamboris
-	license: 'BSD-3
-	notes: {https://en.wikipedia.org/wiki/Median}
+	title:    "MEDIAN mezzanine"
+	purpose:  "Simple sample median function"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: median
+	notes:    {https://en.wikipedia.org/wiki/Median}
 ]
 
 

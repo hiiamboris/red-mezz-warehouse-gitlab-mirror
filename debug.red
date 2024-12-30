@@ -1,7 +1,8 @@
 Red [
-	title:   "#debug macros"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "#debug macros"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: debug
 	usage: {
 		#debug off          - ignore all debug statements
 		#debug on           - include unnamed debug statements only

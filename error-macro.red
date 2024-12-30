@@ -1,8 +1,10 @@
 Red [
-	title:   "ERROR macro"
-	purpose: "Shortcut for raising an error using string interpolation"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "ERROR macro"
+	purpose:  "Shortcut for raising an error using string interpolation"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: error
+	depends:  composite
 	notes: {
 		`ERROR msg` gets expanded into `do make error! #composite msg`, so all composite's quirks apply
 		Examples:

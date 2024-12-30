@@ -1,14 +1,19 @@
 Red [
-	title:   "REPLACE function rewrite"
-	purpose: "Simplify and empower it, move parse functionality into mapparse"
-	author:  @hiiamboris
-	license: 'BSD-3
-	notes: {See https://github.com/red/REP/issues/146}
+	title:    "REPLACE function rewrite"
+	purpose:  "Simplify and empower it, move parse functionality into mapparse"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: replace
+	notes:    {
+		See https://github.com/red/REP/issues/146
+		
+		This does NOT override REPLACE currently, to avoid compatibility issues!
+	}
 ]
 
 
 ; #include %assert.red
-#include %hide-macro.red
+; #include %hide-macro.red
 
 
 context [

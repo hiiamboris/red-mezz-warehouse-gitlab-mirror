@@ -1,6 +1,9 @@
 Red [
-	title:   "Primitive MATCH function"
-	purpose: "Determine if string matches a given pattern (evolution of find/match)"
+	title:    "Primitive MATCH function"
+	purpose:  "Determine if string matches a given pattern (evolution of find/match)"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: match
 	notes: {
 		Only supports wildcards for now (not implemented find/any syntax), and find/match.
 		Matching is done via naive recursive algorithm (but Parse-backed).
@@ -9,7 +12,7 @@ Red [
 ]
 
 
-#include %assert.red
+; #include %assert.red
 
 ;@@ what should the default mode be?
 ;@@ should regex be supported? I don't wanna open this can ov worms... also regex's greediness is controlled within it

@@ -1,8 +1,10 @@
 Red [
-	title:   "STEPWISE (function variant)"
-	purpose: "Allows you write long compound expressions as a sequence of steps"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "STEPWISE (function variant)"
+	purpose:  "Allows you write long compound expressions as a sequence of steps"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: stepwise
+	depends:  trace
 	usage: {
 		stepwise [
 			2							;== 2
@@ -19,7 +21,7 @@ Red [
 	}
 ]
 
-#include %shallow-trace.red
+; #include %shallow-trace.red
 
 
 ;; shallow-trace based approach wins so far

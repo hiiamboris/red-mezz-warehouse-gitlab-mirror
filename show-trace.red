@@ -1,8 +1,10 @@
 Red [
-	title:   "SHOW-TRACE mezzanine and ??? macro"
-	purpose: "Example TRACE wrapper that just prints the evaluation log to console"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "SHOW-TRACE mezzanine and ??? macro"
+	purpose:  "Example TRACE wrapper that just prints the evaluation log to console"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: show-trace
+	depends:  trace
 	usage: {
 		>> show-trace [1 + 2  3 * 4  5 ** 6]
 		1 + 2                                    => 3
@@ -30,7 +32,7 @@ Red [
 ]
 
 
-#include %shallow-trace.red
+; #include %shallow-trace.red
 
 ; #macro [ahead word! '??? copy code to end] func [[manual] s e] [	ahead is not known to R2, can't compile
 #macro [p: word! :p '??? copy code to end] func [[manual] s e] [	;-- has to support inner `???`s inside the `???` block

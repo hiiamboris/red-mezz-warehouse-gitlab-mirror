@@ -1,8 +1,9 @@
 Red [
-	title:   "QUANTIZE function"
-	purpose: "Quantize a float sequence into rounded bits"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "QUANTIZE function"
+	purpose:  "Quantize a float sequence into rounded bits"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: quantize
 ]
 
 

@@ -1,9 +1,11 @@
 Red [
-	title:   "HSL/RGB conversions"
-	purpose: "Reliable statistically neutral conversion between common color models"
-	author:  @hiiamboris
-	license: 'BSD-3
-	TODO:    {HSV, HSI does anyone use these?}
+	title:    "HSL/RGB conversions"
+	purpose:  "Reliable statistically neutral conversion between common color models"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: color-models
+	depends:  map-each									;@@ testing-only dependency
+	TODO:     {HSV, HSI does anyone using these?}
 ]
 
 ; #include %assert.red
@@ -35,7 +37,7 @@ from-byte: function [
 #hide [
 	#assert [
 		do [
-			#include %map-each.red
+			#include %new-each.red
 			; sample: map-each i 10000 [i / 10000]				;-- slow test
 			sample: map-each i 100 [i / 100]
 			sum1:  sum sample

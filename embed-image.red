@@ -1,8 +1,9 @@
 Red [
-	title:   "#embed-image macro"
-	purpose: "Embed images into the script when compiling them"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "#embed-image macro"
+	purpose:  "Embed images into the script when compiling them"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: embed-image
 	usage: {
 		img: #embed-image %my-image.png
 		view [image img]

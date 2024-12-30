@@ -1,11 +1,13 @@
 Red [
-	title:   "DELIMIT & INTERLEAVE functions"
-	purpose: "Insert a delimiter between all items in a list or interleave two lists"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "DELIMIT & INTERLEAVE functions"
+	purpose:  "Insert a delimiter between all items in a list or interleave two lists"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: [delimit interleave]
+	depends:  reshape
 ]
 
-#include %reshape.red
+; #include %reshape.red
 
 interleave: delimit: none
 context [

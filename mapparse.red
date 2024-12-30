@@ -1,8 +1,10 @@
 Red [
-	title:   "MAPPARSE loop"
-	purpose: "Leverage parse power to replace stuff in series"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "MAPPARSE loop"
+	purpose:  "Leverage parse power to replace stuff in series"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: mapparse
+	depends:  selective-catch
 	notes: {
 		See also: forparse.red
 

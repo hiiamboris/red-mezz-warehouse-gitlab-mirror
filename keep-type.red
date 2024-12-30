@@ -1,8 +1,9 @@
 Red [
-	title:   "KEEP-TYPE mezzanine"
-	purpose: "Filter list using accepted type or typeset"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "KEEP-TYPE mezzanine"
+	purpose:  "Filter list using accepted type or typeset"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: keep-type
 	notes: {
 		Examples:
 	        msgs: keep-type message-log string!

@@ -1,8 +1,9 @@
 Red [
-	title:   "SELECTIVE-CATCH mezz & wrappers"
-	purpose: "For use in building custom loops"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "SELECTIVE-CATCH mezz & wrappers"
+	purpose:  "For use in building custom loops"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: selective-catch
 	usage: {
 		See FORPARSE for an example
 

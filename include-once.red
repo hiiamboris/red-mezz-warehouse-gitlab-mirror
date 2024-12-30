@@ -96,11 +96,14 @@ Red [
 			header: construct data/2
 			if provides: select header 'provides [append included-scripts provides]
 			if depends:  select header 'depends [
+				missing: clear []
 				foreach token compose [(depends)] [
-					unless find/only included-scripts token [
-						print rejoin ["^/*** WARNING: File " mold name " requires '" mold token "' dependency^/"]
-					]
-				] 
+					unless find/only included-scripts token [append missing token]
+				]
+				unless empty? missing [
+					sfx: either single? missing ["y"]["ies"]
+					print rejoin ["^/*** WARNING: File " mold name " requires '" mold/only missing "' dependenc" sfx "^/"]
+				]
 			]
 			data: skip data 2
 		]

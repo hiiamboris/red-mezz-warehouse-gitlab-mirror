@@ -1,8 +1,9 @@
 Red [
-	title:   "DO-ATOMIC mezzanine"
-	purpose: "Atomically execute a piece of code that triggers reactions"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "DO-ATOMIC mezzanine"
+	purpose:  "Atomically execute a piece of code that triggers reactions"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: do-atomic
 	notes: {
 		Usually the code you evaluate triggers reactions instantly.
 		Let's call it "sync" code.

@@ -1,8 +1,10 @@
 Red [
-	title:   "GLOB mezzanine"
-	purpose: "Recursively list all files"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "GLOB mezzanine"
+	purpose:  "Recursively list all files"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: glob
+	depends:  [match tree-hopping]
 	notes: {
 		In Windows some masks have special meaning (8.3 filenames legacy)
 		     these special cases are not replicated in `glob`:
@@ -20,8 +22,8 @@ Red [
 ;@@ asynchronous/concurrent listing (esp. of different physical devices)
 
 
-#include %match.red
-#include %tree-hopping.red
+; #include %match.red
+; #include %tree-hopping.red
 
 foreach-file: glob: none
 context [

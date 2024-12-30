@@ -1,8 +1,9 @@
 Red [
-	title:   "#ASSERT macro and ASSERT mezzanine"
-	purpose: "Allow embedding sanity checks into the code, to limit error propagation and simplify debugging"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "#ASSERT macro and ASSERT mezzanine"
+	purpose:  "Allow embedding sanity checks into the code, to limit error propagation and simplify debugging"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: assert
 	notes: {
 		Usage:
 			#assert [expression]

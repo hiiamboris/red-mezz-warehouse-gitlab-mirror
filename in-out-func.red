@@ -1,11 +1,13 @@
 Red [
-	title:   "IN-OUT-FUNC function constructor"
-	purpose: "Make functions more readable by allowing lit-arg access as if it was a normal argument"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "IN-OUT-FUNC function constructor"
+	purpose:  "Make functions more readable by allowing lit-arg access as if it was a normal argument"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: in-out-func
+	depends:  keep-type
 ]
 
-#include %keep-type.red
+; #include %keep-type.red
 
 in-out-func: function [
 	"Make a function, automatically adding set/get to all lit-args access"

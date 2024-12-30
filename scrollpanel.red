@@ -1,8 +1,10 @@
 Red [
-	title:   "SCROLLPANEL style"
-	purpose: "Provides automatic scrolling capability to a panel, until such is available out of the box"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "SCROLLPANEL style"
+	purpose:  "Provides automatic scrolling capability to a panel, until such is available out of the box"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: scrollpanel
+	depends:  [relativity do-atomic do-unseen maybe quietly]
 	notes: {
 		Use in place of PANEL. Scrollers will be shown automatically when it's contents grows big.
 		Should be ElasticUI-friendly ;)
@@ -108,7 +110,7 @@ context [
 	]
 
 	;; offset inner faces according to scroller data and panel/total
-	#include %show-trace.red
+	; #include %show-trace.red
 	scroll: function [panel [object!]] [
 		hsc: panel/hsc  vsc: panel/vsc
 		hidden: max 0x0 panel/total - panel/size + (vsc/size/x by hsc/size/y)

@@ -1,8 +1,9 @@
 Red [
-	title:   "TRAP, FCATCH & PCATCH mezzanines"
-	purpose: "Reimagined TRY & CATCH design variants, fixed ATTEMPT"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "TRAP, FCATCH & PCATCH mezzanines"
+	purpose:  "Reimagined TRY & CATCH design variants, fixed ATTEMPT"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: [trap pcatch fcatch following]
 	notes: {
 		TRAP - Enhances native TRY with /CATCH refinement
 

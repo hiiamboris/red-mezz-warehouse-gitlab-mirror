@@ -1,8 +1,11 @@
 Red [
-	title:   "Simple CLOCK mezz for benchmarking"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "Simple CLOCK mezz for benchmarking"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: clock
 	notes: {
+		OBSOLETE (included in runtime now)
+		
 		On units:
 		No nanoseconds here, as it takes a lot of execution time to reach 1 ns precision.
 		No seconds either as it makes sense to make long times as stand out, e.g. `10000 ms` vs `10 ms`.

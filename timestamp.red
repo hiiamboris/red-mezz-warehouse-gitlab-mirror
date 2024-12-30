@@ -1,8 +1,10 @@
 Red [
-	title:   "TIMESTAMP mezzanine"
-	purpose: "Ready-to-use and simple timestamp formatter for naming files"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "TIMESTAMP mezzanine"
+	purpose:  "Ready-to-use and simple timestamp formatter for naming files"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: timestamp
+	depends:  [format-number stepwise-macro]
 ]
 
 

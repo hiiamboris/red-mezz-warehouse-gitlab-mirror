@@ -1,8 +1,9 @@
 Red [
-	title:   "CLIP function"
-	purpose: "Contain a value within given range"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "CLIP function"
+	purpose:  "Contain a value within given range"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: clip
 	notes: {
 		See https://github.com/red/red/pull/5194
 		

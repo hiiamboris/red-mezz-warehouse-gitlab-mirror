@@ -1,8 +1,10 @@
 Red [
-	title:       "Advanced function constructor"
-	description: "Adds support for value checks and defaults into FUNCTION's spec argument"
-	author:      @hiiamboris
-	license:     'BSD-3
+	title:    "Advanced function constructor"
+	purpose:  "Adds support for value checks and defaults into FUNCTION's spec argument"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: advanced-function
+	depends:  error
 	usage: {
 		Function argument specification is extended with the following:
 		- per-type value checks (as parenthesis following the type or typeset name(s))
@@ -182,7 +184,7 @@ Red [
 ]
 
 #include %debug.red
-#include %error-macro.red
+; #include %error-macro.red
 ; #debug off
 
 

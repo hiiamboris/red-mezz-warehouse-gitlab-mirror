@@ -1,8 +1,9 @@
 Red [
-	title:   "TRACE-DEEP mezzanine"
-	purpose: "Step-by-step evaluation of each sub-expression with a callback"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "TRACE-DEEP mezzanine"
+	purpose:  "Step-by-step evaluation of each sub-expression with a callback"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: trace-deep
 	usage: {
 		It evaluates every sub-expression of every expression in a separate step, feeding it to the callback.
 		See SHOW-DEEP-TRACE and EXPECT for an examples.

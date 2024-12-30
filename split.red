@@ -1,8 +1,10 @@
 Red [
-	title:   "SPLIT function"
-	purpose: "Generalized series splitting"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "SPLIT function"
+	purpose:  "Generalized series splitting"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: split
+	depends:  [with error]
 	notes: {
 		Backward-compatible with native 170 LOC split implementation.
 		Funny, but it's also twice faster than the native one
@@ -90,8 +92,8 @@ Red [
 ]
 
 ; #include %assert.red
-#include %error-macro.red
-#include %with.red
+; #include %error-macro.red
+; #include %with.red
 
 split: :system/words/split
 splitting: context [

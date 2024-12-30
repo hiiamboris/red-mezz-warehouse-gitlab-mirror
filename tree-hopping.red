@@ -1,8 +1,10 @@
 Red [
-	title:   "Tree visitor pattern"
-	purpose: "Generalize recursive data collection and tree replication"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "Tree visitor pattern"
+	purpose:  "Generalize recursive data collection and tree replication"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: tree-hopping
+	depends:  [with without-gc xyloop]
 	notes: {
 		This is a scaffolding for building tree iterators without the need for recursing.
 	
@@ -134,9 +136,9 @@ Red [
 ]
 
 
-#include %with.red										;-- used in series-walker
-#include %without-gc.red								;-- gives massive speedup
-#include %xyloop.red									;-- for image iteration
+; #include %with.red										;-- used in series-walker
+; #include %without-gc.red								;-- gives massive speedup
+; #include %xyloop.red									;-- for image iteration
 
 walker!: object [										;-- minimal tree walker template
 	plan:   []

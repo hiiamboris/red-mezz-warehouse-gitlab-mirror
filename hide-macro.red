@@ -1,8 +1,9 @@
 Red [
-	title:   "#HIDE macro"								;-- #local is already used by the preprocessor, #localize is l10n-related
-	purpose: "Collect and hide set-words and loop counters"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "#HIDE macro"								;-- #local is already used by the preprocessor, #localize is l10n-related
+	purpose:  "Collect and hide set-words and loop counters"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: hide
 	notes: {
 		This is most useful when working in the global context, esp. for unit tests.
 		Use WITH when you want minimum overhead. #HIDE is slower, but fully automated collector.

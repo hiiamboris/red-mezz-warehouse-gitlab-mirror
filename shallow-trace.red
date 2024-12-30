@@ -1,8 +1,9 @@
 Red [
-	title:   "SHALLOW-TRACE mezzanine"
-	purpose: "Step-by-step evaluation of a block of expressions with a callback"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "SHALLOW-TRACE mezzanine"
+	purpose:  "Step-by-step evaluation of a block of expressions with a callback"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: trace
 	usage: {
 		SHALLOW-TRACE is a basis function to build upon.
 		See CLOCK-EACH, STEPWISE and SHOW-TRACE for example usage

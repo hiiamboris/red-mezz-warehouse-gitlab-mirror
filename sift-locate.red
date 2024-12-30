@@ -1,8 +1,10 @@
 Red [
-	title:   "SIFT & LOCATE mezzanines"
-	purpose: "High-level series items locator & filter"
-	author:  @hiiamboris
-	license: BSD-3
+	title:    "SIFT & LOCATE mezzanines"
+	purpose:  "High-level series items locator & filter"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: [sift locate]
+	depends:  [anonymize for-each map-each]
 	notes: {
 		See sift-locate.md for usage details
 		
@@ -31,12 +33,12 @@ Red [
 	}
 ]
 
-#include %include-once.red
-#include %hide-macro.red
-#include %assert.red
+; #include %include-once.red
+; #include %hide-macro.red
+; #include %assert.red
 
-#include %setters.red									;-- we need `anonymize`
-#include %new-each.red									;-- based on extended foreach/map-each capabilities
+; #include %setters.red									;-- we need `anonymize`
+; #include %new-each.red									;-- based on extended foreach/map-each capabilities
 ; #include %new-apply.red									;-- need `apply` to dispatch refinements
 
 

@@ -1,8 +1,10 @@
 Red [
-	title:   "#print macro"
-	purpose: "Shortcut for print #composite"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "#print macro"
+	purpose:  "Shortcut for print #composite"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: print
+	depends:  composite
 	notes: {
 		More readable than the usual print:
 
@@ -13,7 +15,7 @@ Red [
 ]
 
 
-#include %composite.red									;-- doesn't make sense to include this file without #composite also
+; #include %composite.red									;-- doesn't make sense to include this file without #composite also
 
 #macro [#print skip] func [[manual] s e] [
 	unless string? s/2 [

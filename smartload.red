@@ -1,11 +1,13 @@
 Red [
-	title:   "Smarter LOAD experiment"
-	purpose: "Report possible bracket mismatches in loaded data"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "Smarter LOAD experiment"
+	purpose:  "Report possible bracket mismatches in loaded data"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: smart-load
+	depends:  bmatch
 ]
 
-#include %bmatch.red
+; #include %bmatch.red
 ; #include https://gitlab.com/hiiamboris/red-mezz-warehouse/-/raw/master/bmatch.red
 
 context [

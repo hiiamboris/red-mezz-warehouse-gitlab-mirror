@@ -1,8 +1,10 @@
 Red [
-	title:   "APPLY mezzanine"
-	purpose: "Experimental APPLY implementation for inclusion into Red runtime"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "APPLY mezzanine"
+	purpose:  "Experimental APPLY implementation for inclusion into Red runtime"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: apply
+	depends:  error
 	notes: {
 		See https://github.com/greggirwin/red-hof/blob/master/apply.md for some background
 
@@ -62,9 +64,9 @@ Red [
 ]
 
 
-#include %assert.red
-#include %error-macro.red
-#include %hide-macro.red
+; #include %assert.red
+; #include %error-macro.red
+; #include %hide-macro.red
 
 ;@@ NOTE: this impelementation is intentionally not optimized as Red code, but written in R/S style for easier transition!
 ;@@ TODO: automatically set refinement to true if any of it's arguments are provided?

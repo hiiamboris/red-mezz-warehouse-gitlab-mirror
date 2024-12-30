@@ -1,8 +1,9 @@
 Red [
-	title:   "Value setters"
-	purpose: "Varies... ;)"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "Value setters"
+	purpose:  "Simple convenience shortcuts for words assignment"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: [once default maybe global export quietly anonymize pretending]
 	notes: {
 		Why set-words/set-paths?
 			Set-words because this gets words automatically collected by `function`, and just reads better.

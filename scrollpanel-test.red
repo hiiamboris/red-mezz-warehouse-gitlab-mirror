@@ -2,7 +2,7 @@ Red [
 	title:   "SCROLLPANEL style demo"
 	purpose: "Shows how to use the style"
 	author:  @hiiamboris
-	license: 'BSD-3
+	license: BSD-3
 ]
 
 #include %assert.red

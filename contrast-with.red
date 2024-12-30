@@ -1,8 +1,10 @@
 Red [
-	title:   "CONTRAST-WITH function"
-	purpose: "Pick a color that would contrast with the given one"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "CONTRAST-WITH function"
+	purpose:  "Pick a color that would contrast with the given one"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: contrast-with
+	depends:  color-models
 	notes: {
 		This is useful e.g. if you have a background color and want to pick a text color that will be visible on it.
 		

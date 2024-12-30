@@ -1,8 +1,10 @@
 Red [
-	title:   "SHOW-DEEP-TRACE mezzanine"
-	purpose: "Example TRACE-DEEP wrapper that just prints the evaluation log to console"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "SHOW-DEEP-TRACE mezzanine"
+	purpose:  "Example TRACE-DEEP wrapper that just prints the evaluation log to console"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: show-deep-trace
+	depends:  trace-deep
 	usage: {
 		>> show-deep-trace [1 + 2 * 3 ** 4]
 		1 + 2                => 3

@@ -1,8 +1,9 @@
 Red [
-	title:   "Function argument overloading"
-	purpose: "Experiment with an alternative way of defining functions"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "Function argument overloading"
+	purpose:  "Experiment with an alternative way of defining functions"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: overload
 ]
 
 

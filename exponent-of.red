@@ -1,8 +1,9 @@
 Red [
-	title:   "EXPONENT-OF helper function"
-	purpose: "Used in number formatters"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "EXPONENT-OF helper function"
+	purpose:  "Used in number formatters"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: exponent-of
 ]
 
 ;; returns none for: zero (undefined exponent), +/-inf (overflow), NaN (undefined)

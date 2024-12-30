@@ -1,8 +1,9 @@
 Red [
-	title:   "Scoping support"
-	purpose: "Basis for scope-based resource management"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "Scoping support"
+	purpose:  "Basis for scope-based resource management"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: scoping
 	notes: {
 		See https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization for background
 

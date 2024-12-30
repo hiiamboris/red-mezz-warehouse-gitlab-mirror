@@ -1,8 +1,9 @@
 Red [
-	title:   "MORPH DSL"
-	purpose: "Dialect for persistent local series mapping"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "MORPH DSL"
+	purpose:  "Dialect for persistent local series mapping"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: morph
 	usage: {
 		See https://codeberg.org/hiiamboris/red-common/src/master/morph.md
 	}

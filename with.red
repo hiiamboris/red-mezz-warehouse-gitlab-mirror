@@ -1,7 +1,8 @@
 Red [
-	title:   "WITH function - a convenient/readable BIND variant"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "WITH function - a convenient/readable BIND variant"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: with
 	usage: {
 		USAGE SUMMARY
 			with x  [..]          == bind [..] x
@@ -134,8 +135,8 @@ Red [
 ]
 
 
-#include %hide-macro.red
-#include %assert.red
+; #include %hide-macro.red
+; #include %assert.red
 
 
 with: func [

@@ -1,14 +1,14 @@
 Red [
-	title:   "RESHAPE mezzanine"
-	purpose: "Build a block of code using expressions and conditions"
-	author:  @hiiamboris
-	license: 'BSD-3
-	usage:   {See in the reshape.md, and in the tests below}
+	title:    "RESHAPE mezzanine"
+	purpose:  "Build a block of code using expressions and conditions"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: reshape
+	usage:    {See in the reshape.md, and in the tests below}
 ]
 
 #include %hide-macro.red
 #include %assert.red
-; #include %parsee-standalone.red
 
 ;@@ TODO: implement it in R/S to be more useful, also see REP #133
 reshape: none

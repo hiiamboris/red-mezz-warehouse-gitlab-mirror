@@ -1,8 +1,10 @@
 Red [
-	title:   "EXPECT mezzanine"
-	purpose: "Test a condition, showing full backtrace when it fails"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "EXPECT mezzanine"
+	purpose:  "Test a condition, showing full backtrace when it fails"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: expect
+	depends:  trace-deep
 	notes: {
 		This function originated from the Red View Test System: https://codeberg.org/hiiamboris/red-view-test-system
 		Since the whole system is pretty big, when some test fails I didn't want to poke around in search of a broken element.
@@ -13,7 +15,7 @@ Red [
 ]
 
 
-#include %trace-deep.red
+; #include %trace-deep.red
 
 expect: function [
 	"Test a condition, showing full backtrace when it fails; return true/false"

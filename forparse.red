@@ -1,8 +1,10 @@
 Red [
-	title:   "FORPARSE loop"
-	purpose: "Leverage parse power to filter series"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "FORPARSE loop"
+	purpose:  "Leverage parse power to filter series"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: forparse
+	depends:  selective-catch
 	notes: {
 		What is this:
 			`forparse spec series code`
@@ -61,7 +63,7 @@ Red [
 ]
 
 
-#include %selective-catch.red
+; #include %selective-catch.red
 ; #include %new-apply.red
 
 ;@@ BUG: this traps exit & return - can't use them inside forparse

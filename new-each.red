@@ -1,21 +1,20 @@
 Red [
-	title:   "*EACH loops"
-	purpose: "Experimental new design of extended FOREACH, MAP-EACH, REMOVE-EACH"
-	author:  @hiiamboris
-	license: 'BSD-3
-	notes: {
-		See foreach-design.md for info
-	}
+	title:    "*EACH loops"
+	purpose:  "Experimental new design of extended FOREACH, MAP-EACH, REMOVE-EACH"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: [for-each map-each remove-each]
+	depends:  [error anonymize selective-catch reshape] 
+	notes:    {See foreach-design.md for info}
 ]
 
 ; recycle/off
 #include %hide-macro.red
 #include %assert.red
-#include %error-macro.red
-; #include %bind-only.red
-#include %setters.red
-#include %selective-catch.red
-#include %reshape.red
+; #include %error-macro.red
+; #include %setters.red
+; #include %selective-catch.red
+; #include %reshape.red
 
 ; #include %show-trace.red
 

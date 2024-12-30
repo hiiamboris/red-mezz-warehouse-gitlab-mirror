@@ -1,8 +1,13 @@
 Red [
-	title:   "TAB navigation support for View"
-	author:  @hiiamboris
-	license: 'BSD-3
-	usage:   {Just include it}
+	title:    "TAB navigation support for View"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: tabbing
+	depends:  tree-hopping
+	usage:    {Just include it}
+	notes: {
+		Unlike the one now natively supported by View, this one is built for extensibility (required by Spaces)
+	}
 ]
 
 #include %tree-hopping.red

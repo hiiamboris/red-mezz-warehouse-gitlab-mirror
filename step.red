@@ -2,7 +2,8 @@ Red [
 	title:   "STEP function"
 	purpose: "Increment/decrement long paths and values within a series"
 	author:  @hiiamboris
-	license: 'BSD-3
+	license: BSD-3
+	provies: step
 	notes: {
 		Summary...
 		
@@ -22,7 +23,7 @@ Red [
 	}
 ]
 
-#include %hide-macro.red
+; #include %hide-macro.red
 
 step: none
 context [

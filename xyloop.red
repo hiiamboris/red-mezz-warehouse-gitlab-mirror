@@ -1,8 +1,9 @@
 Red [
-	title:   "XYLOOP loop"
-	purpose: "Iterate over 2D area - image or just size"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "XYLOOP loop"
+	purpose:  "Iterate over 2D area - image or just size"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: xyloop
 	notes: {
 		It's very similar to REPEAT, just 2-dimensional.
 		Which makes me wonder if we should just extend REPEAT native?

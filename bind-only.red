@@ -1,8 +1,9 @@
 Red [
-	title:   "BIND-ONLY mezzanine"
-	purpose: "Selectively bind a word or a few only (until we have a native)"
-	author:  @hiiamboris
-	license: 'BSD-3
+	title:    "BIND-ONLY mezzanine"
+	purpose:  "Selectively bind a word or a few only (until we have a native)"
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: bind-only
 	usage: {
 		Bind single word in a block:
 			>> bind-only code 'my-word  

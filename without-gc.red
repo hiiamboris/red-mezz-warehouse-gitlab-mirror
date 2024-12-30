@@ -1,8 +1,9 @@
 Red [
-	title:       "WITHOUT-GC function"
-	description: {Evaluate code with GC temporarily turned off, but restore GC's original state upon exit}
-	author:      @hiiamboris
-	license:     'BSD-3
+	title:    "WITHOUT-GC function"
+	purpose:  {Evaluate code with GC temporarily turned off, but restore GC's original state upon exit}
+	author:   @hiiamboris
+	license:  BSD-3
+	provides: without-gc
 	notes: {
 		Relies on internals of sort at the moment.
 		To be revised once we have a way to read GC state - REP #130.
