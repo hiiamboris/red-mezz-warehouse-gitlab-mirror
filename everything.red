@@ -40,7 +40,7 @@ do/expand [												;-- without this trick, inclusion of this file from anoth
 #include %split.red
 #include %reshape.red
 #include %match.red
-#include %delimit.red
+#include %interleave.red
 #include %quantize.red
 #include %collect-set-words.red
 

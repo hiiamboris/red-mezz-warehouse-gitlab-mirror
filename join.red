@@ -4,7 +4,7 @@ Red [
 	author:   @hiiamboris
 	license:  BSD-3
 	provides: join
-	depends:  delimit
+	depends:  interleave
 ]
 
 ; #include %delimit.red
