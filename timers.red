@@ -288,6 +288,8 @@ timers: context [
 		fired: offset
 		true
 	]
+	
+	fast-forward												;-- initial time skip is always a good idea
 ]
 
 
