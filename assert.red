@@ -79,6 +79,7 @@ context [
 				expr':   mold/flat/part :expr   half
 				print ["  Check" expr' "failed with" result' "^/  Reduction log:"]
 				trace/all expr
+				print find append form try [do make error! ""] "^/" "* Stack:"
 				;; no error thrown, to run other assertions
 			]
 		]
