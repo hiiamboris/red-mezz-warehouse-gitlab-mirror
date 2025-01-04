@@ -13,11 +13,11 @@ Red [
 		Spaces' MOLD/ALL now can output values that are loadable using this macro.
 		
 		Format:
-			##[..arbitrary code..]
+			##(..arbitrary code..)
 		Which gets replaced by the evaluation result.
 		
 		Note: cannot be used inside literal maps, since they are not expanded by the preprocessor!
-		Use ##[make map! [...]] format. 
+		Use ##(make map! [...]) format. 
 	}
 ]
 
@@ -25,7 +25,7 @@ Red [
 ;@@ ugly because includes workarounds for #5462,3
 #if rebol [
 	expand-directives [#do keep [load {
-		#macro [## block!] func [[manual] s e] [
+		#macro [## any-list!] func [[manual] s e] [
 			change/only remove s do expand-directives s/1
 		]
 	}]]
@@ -33,13 +33,13 @@ Red [
 #if all [value? 'inlining? get 'inlining?] [
 	;; this needs to skip #macro while inlining, but use it when compiling
 	expand-directives [#do keep [[#do keep]] [load {
-		#macro [## block!] func [[manual] s e] [
+		#macro [## any-list!] func [[manual] s e] [
 			change/only remove s do expand-directives s/1
 		]
 	}]]
 ]
 
-#macro [## block!] func [[manual] s e] [
+#macro [## any-list!] func [[manual] s e] [
 	change/only remove s do expand-directives s/1
 ]
 
