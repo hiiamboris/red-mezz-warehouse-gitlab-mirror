@@ -422,9 +422,9 @@ modify-class: context [
 		|	set next-field [set-word! | end] (
 				if any [op types fallback name args body] [		;-- don't include untyped words (for speed)
 					field: to get-word! field
-					info: any [cmap/:field cmap/:field: reduce [:falsey-compare :falsey-test none]]
+					info: any [cmap/:field cmap/:field: reduce [:falsey-compare :falsey-test none none none none]]
 					if op     [info/1: switch op [= [:equal?] == [:strict-equal?] =? [:same?]]]
-					if any [types fallback] [info/2: typechecking/make-check-func field types fallback]
+					if any [types fallback] [info/2: typechecking/make-check-func field info/4: types info/5: fallback]
 					if any [body name] [info/3: either name [get name][function args body]]
 					set [op: types: fallback: args: body: name:] none
 				]
@@ -482,6 +482,67 @@ classy-object!: object declare-class/manual 'classy-object! [
 		on-change-dispatch 'classy-object! word :old :new
 	]
 	classify-object self 'classy-object!
+]
+
+
+if function? :source [									;-- only exists if help is included
+	context [
+		class-info: function [							;@@ need a general purpose columnar data formatter
+			"Get class information as formatted string"
+			class   [word!]         "Class name"
+			return: [string! none!] "None if class is not registered"
+		][
+			unless cmap: classes/:class [return none]
+			clear skip cols: [
+				"FIELD" "EQ" "TYPES" "ON-CHANGE"
+			] ncols: 4
+			lens: copy [0 0 0 0]
+			foreach [word info] cmap [
+				if issue? word [continue]
+				set [eq: _: on-change: types: fallback:] info
+				eq: case [
+					:eq =? :equal?        ["="]
+					:eq =? :strict-equal? ["=="]
+					:eq =? :same?         ["=?"]
+				]
+				if types [
+					types: mold/flat types
+					if fallback [repend types [" " mold/flat fallback]]
+				]
+				on-change: either :on-change [mold/flat/part :on-change 70][""] 
+				repend base: tail cols [
+					mold word
+					any [eq ""]
+					any [types ""]
+					on-change
+				]
+				repeat i ncols [lens/:i: max lens/:i length? base/:i]	;@@ use 'accumulate'
+			]
+			repeat i ncols [cols/:i: pad/with cols/:i lens/:i #"."]
+			append output: clear {} "[^/"
+			forall cols [
+				append output "   "
+				repeat i ncols [repend output [" " pad cols/:i lens/:i]]
+				append output "^/"
+				cols: skip cols ncols - 1
+			]
+			copy append output "]"
+		]
+
+		body: copy/deep body-of :source
+		insert body/case [
+			object? :val [
+				either all [class: class? val info: class-info class]
+					[[uppercase mold word "is an object of class" rejoin ["'" class "'"] "with the following template:" info]]
+					[[uppercase mold word "is an unclassified object, so no template info is available."]]
+			]
+		]
+		set 'source function [
+			"Print the source of a function or class of an object"
+			'word [word! path!] "The name of the function or object"
+			/local val
+		] body 
+	]
 ]
 
 
