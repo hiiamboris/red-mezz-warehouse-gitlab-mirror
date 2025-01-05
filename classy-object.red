@@ -408,11 +408,12 @@ modify-class: context [
 		]
 		field?: [(unless field [ERROR "A set-word expected before (mold/flat/part p 50)"])]
 		parse spec: copy spec [any [
-			remove [p: #type (field?) 0 4 [
+			remove [p: #type (field?) 0 5 [
 				set types block!
 			|	set fallback paren!
 			|	ahead word! set op ['== | '= | '=?]
 			|	set name [get-word! | get-path!]
+			|	set doc string!
 			]] p: (new-line p on)
 		|	remove [p: #on-change (field?) [
 				set args block! if (find [3 4] count args any-word!) set body block!
@@ -420,13 +421,14 @@ modify-class: context [
 			|	(ERROR "Invalid #on-change handler at (mold/flat/part p 50)")
 			]]
 		|	set next-field [set-word! | end] (
-				if any [op types fallback name args body] [		;-- don't include untyped words (for speed)
+				if any [op types fallback name args body doc] [	;-- don't include untyped words (for speed)
 					field: to get-word! field
 					info: any [cmap/:field cmap/:field: reduce [:falsey-compare :falsey-test none none none none]]
 					if op     [info/1: switch op [= [:equal?] == [:strict-equal?] =? [:same?]]]
 					if any [types fallback] [info/2: typechecking/make-check-func field info/4: types info/5: fallback]
 					if any [body name] [info/3: either name [get name][function args body]]
-					set [op: types: fallback: args: body: name:] none
+					info/6: doc
+					set [op: types: fallback: args: body: name: doc:] none
 				]
 				field: next-field
 			)
@@ -494,12 +496,13 @@ if function? :source [									;-- only exists if help is included
 		][
 			unless cmap: classes/:class [return none]
 			clear skip cols: [
-				"FIELD" "EQ" "TYPES" "ON-CHANGE"
-			] ncols: 4
-			lens: copy [0 0 0 0]
+				"FIELD" "DESCRIPTION" "EQ" "TYPES" "ON-CHANGE"
+			] ncols: 5
+			lens: clear []
+			repeat i ncols [append lens length? cols/:i]		;@@ use map-each
 			foreach [word info] cmap [
 				if issue? word [continue]
-				set [eq: _: on-change: types: fallback:] info
+				set [eq: _: on-change: types: fallback: doc:] info
 				eq: case [
 					:eq =? :equal?        ["="]
 					:eq =? :strict-equal? ["=="]
@@ -509,12 +512,13 @@ if function? :source [									;-- only exists if help is included
 					types: mold/flat types
 					if fallback [repend types [" " mold/flat fallback]]
 				]
-				on-change: either :on-change [mold/flat/part :on-change 70][""] 
+				if :on-change [on-change: rejoin [mold/flat/part :on-change 70]]
 				repend base: tail cols [
-					mold word
+					append mold word ":"
+					any [doc ""]
 					any [eq ""]
 					any [types ""]
-					on-change
+					any [on-change ""]
 				]
 				repeat i ncols [lens/:i: max lens/:i length? base/:i]	;@@ use 'accumulate'
 			]
