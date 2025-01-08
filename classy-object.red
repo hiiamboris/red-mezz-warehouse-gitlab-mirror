@@ -532,21 +532,25 @@ if function? :source [									;-- only exists if help is included
 		][
 			if object? class [unless class: class? obj: class [return none]]
 			unless cmap: classes/:class [return none]
-			cols: copy/deep [["``FIELD" "DESCRIPTION" "EQ" "TYPES" "ON-CHANGE"]]
 			
-			if obj [											;-- align words and description columns
+			if obj [											;-- align words column
 				funcs: exclude words-of obj [on-change* on-deep-change*]
 				remove-each word funcs [not any-function? get/any word]	;@@ use map-each or sift
-				either empty? funcs [
-					funcs: none
-				][
-					longest: 0
-					foreach word funcs [longest: max longest 5 + length? form word]	;@@ use map-each
-					align: reduce [longest]
-				]
+				
+				ctxs: words-of obj
+				remove-each word ctxs  [not object? get/any word]	;@@ use map-each
+				
+				longest: 0
+				foreach word compose [(funcs) (ctxs)] [longest: max longest length? form word]	;@@ use map-each
+				align: reduce [longest + 3]						;-- "  " prefix and ":" word suffix
+				
+				if empty? funcs [funcs: none]
+				if empty? ctxs  [ctxs: none]
 			]
+			
+			cols: copy/deep [["``FIELD" "DESCRIPTION" "EQ" "TYPES" "ON-CHANGE"]]
 			foreach [word info] cmap [							;-- list class fields
-				if issue? word [continue]
+				if issue? word [continue]						;@@ remove funcs & objects from this list?
 				set [eq: _: on-change: types: fallback: doc:] info
 				eq: case [
 					:eq =? :equal?        ["="]
@@ -577,6 +581,20 @@ if function? :source [									;-- only exists if help is included
 						rejoin ["  " mold word ":"]
 						any [doc ""]
 						mold/only/flat spec
+					]
+				]
+				funcs: format-columns/header/:align cols align
+			] 
+			
+			if ctxs [											;-- list also contexts
+				cols: copy/deep [["``CONTEXT" "DESCRIPTION" "WORDS"]]
+				foreach word ctxs [
+					desc': select select classes class? get word #description
+					words: exclude words-of get word [on-change* on-deep-change*]
+					repend/only cols [
+						rejoin ["  " mold word ":"]
+						any [desc' ""]
+						mold/only/flat/part words 70
 					]
 				]
 				funcs: format-columns/header/:align cols align
