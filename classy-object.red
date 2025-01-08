@@ -597,7 +597,7 @@ if function? :source [									;-- only exists if help is included
 						mold/only/flat/part words 70
 					]
 				]
-				funcs: format-columns/header/:align cols align
+				ctxs: format-columns/header/:align cols align
 			] 
 			
 			all [
@@ -612,6 +612,7 @@ if function? :source [									;-- only exists if help is included
 				desc   [repend output ["^/  " desc "^/^/"]]
 				fields [repend output [fields "^/"]]
 				funcs  [repend output [funcs "^/"]]
+				ctxs   [repend output [ctxs "^/"]]
 			]
 			output
 		]
