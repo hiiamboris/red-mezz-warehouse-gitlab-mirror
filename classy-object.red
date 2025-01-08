@@ -518,7 +518,7 @@ if function? :source [									;-- only exists if help is included
 			foreach row rows [									;@@ use map-each
 				repeat i ncols [
 					pads: widths/:i + 2 - length? row/:i
-					append/dup append output row/:i #" " pads + 1
+					append/dup append output row/:i #" " pads
 				]
 				change back tail output #"^/"
 			]
