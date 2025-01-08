@@ -533,6 +533,7 @@ if function? :source [									;-- only exists if help is included
 			if object? class [unless class: class? obj: class [return none]]
 			unless cmap: classes/:class [return none]
 			
+			align: copy [0]
 			if obj [											;-- align words column
 				funcs: exclude words-of obj [on-change* on-deep-change*]
 				remove-each word funcs [not any-function? get/any word]	;@@ use map-each or sift
@@ -570,7 +571,7 @@ if function? :source [									;-- only exists if help is included
 					any [on-change ""]
 				]
 			]
-			fields: unless single? cols [format-columns/header/:align cols align]
+			fields: unless single? cols [format-columns/header/align cols align]
 			
 			if funcs [											;-- list also funcs
 				cols: copy/deep [["``FUNCTION" "DESCRIPTION" "ARGS"]]
@@ -583,7 +584,7 @@ if function? :source [									;-- only exists if help is included
 						mold/only/flat spec
 					]
 				]
-				funcs: format-columns/header/:align cols align
+				funcs: format-columns/header/align cols reduce [align/1]
 			] 
 			
 			if ctxs [											;-- list also contexts
@@ -597,7 +598,7 @@ if function? :source [									;-- only exists if help is included
 						mold/only/flat/part words 70
 					]
 				]
-				ctxs: format-columns/header/:align cols align
+				ctxs: format-columns/header/align cols reduce [align/1]
 			] 
 			
 			all [
