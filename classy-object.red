@@ -407,33 +407,36 @@ modify-class: context [
 			ERROR "Unknown class (class), defined are: (mold/flat words-of classes)"
 		]
 		field?: [(unless field [ERROR "A set-word expected before (mold/flat/part p 50)"])]
-		parse spec: copy spec [any [
-			remove [p: #type (field?) 0 5 [
-				set types block!
-			|	set fallback paren!
-			|	ahead word! set op ['== | '= | '=?]
-			|	set name [get-word! | get-path!]
-			|	set doc string!
-			]] p: (new-line p on)
-		|	remove [p: #on-change (field?) [
-				set args block! if (find [3 4] count args any-word!) set body block!
-			|	set name [get-word! | get-path!]
-			|	(ERROR "Invalid #on-change handler at (mold/flat/part p 50)")
-			]]
-		|	set next-field [set-word! | end] (
-				if any [op types fallback name args body doc] [	;-- don't include untyped words (for speed)
-					field: to get-word! field
-					info: any [cmap/:field cmap/:field: reduce [:falsey-compare :falsey-test none none none none]]
-					if op     [info/1: switch op [= [:equal?] == [:strict-equal?] =? [:same?]]]
-					if any [types fallback] [info/2: typechecking/make-check-func field info/4: types info/5: fallback]
-					if any [body name] [info/3: either name [get name][function args body]]
-					info/6: doc
-					set [op: types: fallback: args: body: name: doc:] none
-				]
-				field: next-field
-			)
-		|	skip 
-		]]
+		parse spec: copy spec [
+			opt [remove set desc string! (put cmap #description desc)]
+			any [
+				remove [p: #type (field?) 0 5 [
+					set types block!
+				|	set fallback paren!
+				|	ahead word! set op ['== | '= | '=?]
+				|	set name [get-word! | get-path!]
+				|	set doc string!
+				]] p: (new-line p on)
+			|	remove [p: #on-change (field?) [
+					set args block! if (find [3 4] count args any-word!) set body block!
+				|	set name [get-word! | get-path!]
+				|	(ERROR "Invalid #on-change handler at (mold/flat/part p 50)")
+				]]
+			|	set next-field [set-word! | end] (
+					if any [op types fallback name args body doc] [	;-- don't include untyped words (for speed)
+						field: to get-word! field
+						info: any [cmap/:field cmap/:field: reduce [:falsey-compare :falsey-test none none none none]]
+						if op     [info/1: switch op [= [:equal?] == [:strict-equal?] =? [:same?]]]
+						if any [types fallback] [info/2: typechecking/make-check-func field info/4: types info/5: fallback]
+						if any [body name] [info/3: either name [get name][function args body]]
+						info/6: doc
+						set [op: types: fallback: args: body: name: doc:] none
+					]
+					field: next-field
+				)
+			|	skip 
+			]
+		]
 		spec
 	]
 ]
@@ -514,8 +517,8 @@ if function? :source [									;-- only exists if help is included
 			output: clear {}
 			foreach row rows [									;@@ use map-each
 				repeat i ncols [
-					pads: widths/:i + 1 - length? row/:i
-					append/dup append output row/:i #" " pads
+					pads: widths/:i + 2 - length? row/:i
+					append/dup append output row/:i #" " pads + 1
 				]
 				change back tail output #"^/"
 			]
@@ -529,12 +532,14 @@ if function? :source [									;-- only exists if help is included
 		][
 			if object? class [unless class: class? obj: class [return none]]
 			unless cmap: classes/:class [return none]
-			cols: copy/deep [["    FIELD" "DESCRIPTION" "EQ" "TYPES" "ON-CHANGE"]]
+			cols: copy/deep [["``FIELD" "DESCRIPTION" "EQ" "TYPES" "ON-CHANGE"]]
 			
-			if obj [
+			if obj [											;-- align words and description columns
 				funcs: exclude words-of obj [on-change* on-deep-change*]
 				remove-each word funcs [not any-function? get/any word]	;@@ use map-each or sift
-				unless empty? funcs [
+				either empty? funcs [
+					funcs: none
+				][
 					longest: 0
 					foreach word funcs [longest: max longest 5 + length? form word]	;@@ use map-each
 					align: reduce [longest]
@@ -554,37 +559,50 @@ if function? :source [									;-- only exists if help is included
 				]
 				if :on-change [on-change: rejoin [mold/flat/part :on-change 70]]
 				repend/only cols [
-					rejoin ["    " mold word ":"]
+					rejoin ["  " mold word ":"]
 					any [doc ""]
 					any [eq ""]
 					any [types ""]
 					any [on-change ""]
 				]
 			]
-			text: format-columns/header/:align cols align
+			fields: unless single? cols [format-columns/header/:align cols align]
 			
-			unless empty? funcs [								;-- list also funcs
-				cols: copy/deep [["    FUNCTION" "DESCRIPTION" "ARGS"]]
+			if funcs [											;-- list also funcs
+				cols: copy/deep [["``FUNCTION" "DESCRIPTION" "ARGS"]]
 				foreach word funcs [
 					parse spec: copy spec-of get word [opt block! set doc opt string! spec:]
 					parse spec [any [remove [string! | [refinement! to end]] | skip]]
 					repend/only cols [
-						rejoin ["    " mold word ":"]
+						rejoin ["  " mold word ":"]
 						any [doc ""]
 						mold/only/flat spec
 					]
 				]
-				append text format-columns/header/:align cols align
+				funcs: format-columns/header/:align cols align
 			] 
 			
-			rejoin ["[^/" text "]"]
+			all [
+				desc: select cmap #description
+				not find desc #"^/"
+				#"." <> last desc
+				append desc #"."
+			]
+			
+			output: copy {}
+			case/all [
+				desc   [repend output ["^/  " desc "^/^/"]]
+				fields [repend output [fields "^/"]]
+				funcs  [repend output [funcs "^/"]]
+			]
+			output
 		]
 
 		body: copy/deep body-of :source
 		insert body/case [
 			object? :val [
 				either all [class: class? val info: class-info val]		;-- pass object to also get info about functions
-					[[uppercase mold word "is an object of class" rejoin ["'" class "'"] "with the following template:" info]]
+					[[uppercase mold word "is an object of class" rejoin ["'" class "':^/"] info]]
 					[[uppercase mold word "is an unclassified object, so no template info is available."]]
 			]
 		]
