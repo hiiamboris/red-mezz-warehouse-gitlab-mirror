@@ -489,18 +489,58 @@ classy-object!: object declare-class/manual 'classy-object! [
 
 if function? :source [									;-- only exists if help is included
 	context [
-		class-info: function [							;@@ need a general purpose columnar data formatter
+		format-columns: function [								;@@ export this?
+			"Format text as columns"
+			rows    [block!] "Block of blocks, each representing a row"
+			/header "Format first row as header"
+			/align widths [block!] "Column widths (omit to auto-estimate)"
+			return: [string!]
+		][
+			if empty? rows [return copy {}]
+			ncols: length? rows/1
+			unless widths [widths: copy []]
+			append/dup widths 0 ncols - length? widths
+			repeat i ncols [unless integer? widths/:i [widths/:i: 0]]
+			foreach row rows [									;-- calculate column widths
+				#assert [string? row/:i]
+				#assert [ncols = length? row]
+				repeat i ncols [widths/:i: max widths/:i length? row/:i]	;@@ use maximum-of with sift
+			]
+			if header [											;-- format the header
+				repeat i ncols [
+					rows/1/:i: pad/with uppercase copy rows/1/:i widths/:i #"`"
+				]
+			]
+			output: clear {}
+			foreach row rows [									;@@ use map-each
+				repeat i ncols [
+					pads: widths/:i + 1 - length? row/:i
+					append/dup append output row/:i #" " pads
+				]
+				change back tail output #"^/"
+			]
+			copy output
+		]
+		
+		class-info: function [
 			"Get class information as formatted string"
-			class   [word!]         "Class name"
+			class   [word! object!] "Class name or object of that class"
 			return: [string! none!] "None if class is not registered"
 		][
+			if object? class [unless class: class? obj: class [return none]]
 			unless cmap: classes/:class [return none]
-			clear skip cols: [
-				"FIELD" "DESCRIPTION" "EQ" "TYPES" "ON-CHANGE"
-			] ncols: 5
-			lens: clear []
-			repeat i ncols [append lens length? cols/:i]		;@@ use map-each
-			foreach [word info] cmap [
+			cols: copy/deep [["    FIELD" "DESCRIPTION" "EQ" "TYPES" "ON-CHANGE"]]
+			
+			if obj [
+				funcs: exclude words-of obj [on-change* on-deep-change*]
+				remove-each word funcs [not any-function? get/any word]	;@@ use map-each or sift
+				unless empty? funcs [
+					longest: 0
+					foreach word funcs [longest: max longest 5 + length? form word]	;@@ use map-each
+					align: reduce [longest]
+				]
+			]
+			foreach [word info] cmap [							;-- list class fields
 				if issue? word [continue]
 				set [eq: _: on-change: types: fallback: doc:] info
 				eq: case [
@@ -513,30 +553,37 @@ if function? :source [									;-- only exists if help is included
 					if fallback [repend types [" " mold/flat fallback]]
 				]
 				if :on-change [on-change: rejoin [mold/flat/part :on-change 70]]
-				repend base: tail cols [
-					append mold word ":"
+				repend/only cols [
+					rejoin ["    " mold word ":"]
 					any [doc ""]
 					any [eq ""]
 					any [types ""]
 					any [on-change ""]
 				]
-				repeat i ncols [lens/:i: max lens/:i length? base/:i]	;@@ use 'accumulate'
 			]
-			repeat i ncols [cols/:i: pad/with cols/:i lens/:i #"."]
-			append output: clear {} "[^/"
-			forall cols [
-				append output "   "
-				repeat i ncols [repend output [" " pad cols/:i lens/:i]]
-				append output "^/"
-				cols: skip cols ncols - 1
-			]
-			copy append output "]"
+			text: format-columns/header/:align cols align
+			
+			unless empty? funcs [								;-- list also funcs
+				cols: copy/deep [["    FUNCTION" "DESCRIPTION" "ARGS"]]
+				foreach word funcs [
+					parse spec: copy spec-of get word [opt block! set doc opt string! spec:]
+					parse spec [any [remove [string! | [refinement! to end]] | skip]]
+					repend/only cols [
+						rejoin ["    " mold word ":"]
+						any [doc ""]
+						mold/only/flat spec
+					]
+				]
+				append text format-columns/header/:align cols align
+			] 
+			
+			rejoin ["[^/" text "]"]
 		]
 
 		body: copy/deep body-of :source
 		insert body/case [
 			object? :val [
-				either all [class: class? val info: class-info class]
+				either all [class: class? val info: class-info val]		;-- pass object to also get info about functions
 					[[uppercase mold word "is an object of class" rejoin ["'" class "'"] "with the following template:" info]]
 					[[uppercase mold word "is an unclassified object, so no template info is available."]]
 			]
