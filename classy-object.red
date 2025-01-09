@@ -14,6 +14,7 @@ Red [
 		  this allows to avoid doing extra work when new value equals old
 		- separate on-change actor for every word
 		  this is meant to simplify on-change and reduce the number of bugs in it
+		- embedded documentation and object reflection
 		
 		Validation patterns are defined once per class and shared between objects of the same class.
 		This is done to have the minimum overhead:
@@ -21,8 +22,13 @@ Red [
 		- reduce CPU load by avoiding recreation of validation data on each object creation
 	}
 	usage: {
-		Class is declared with DECLARE-CLASS function.
-		It takes an object spec block with specifiers and returns a make-able spec block without them:
+	  * Typical usage workflow:
+	  
+		1. Declare a new named class using DECLARE-CLASS function.
+		   It takes an object spec block with class specifiers and returns a MAKE-able spec block without them.
+		2. Create as many objects of that class as needed using the obtained MAKE-able spec block.
+		
+		To demonstrate class declaration:
 			my-spec: declare-class 'my-class [
 				x: 1   #type [integer!]					;) just type restriction for X
 				y: 0%  #type [number!] (y >= 0)			;) type+value restriction for Y
@@ -38,48 +44,6 @@ Red [
 				]
 				#type == [string!]						;) change tolerance and type restriction for S
 			]											;) my-spec is a block!
-			
-		Supported specifiers are:
-		  #type which accepts in any order (all are optional):
-			- [block with type/typeset names]
-			  by default any-type! is allowed
-			  may contain (parens with expressions to test value's validity for ALL preceding types)
-			  i.e. x [integer! float! (x >= 0) none!] tests both integer and float
-			- (paren with an expression to test the value's validity)
-			  by default all values are accepted
-			  applies to all accepted types that do NOT have a type-specific value check (in type block)
-			- equality type: one of [= == =?]
-			  by default no equality test is performed and on-change always gets called
-			  tip: `==` is good for scalars and strings, `=?` for blocks
-			- :existing-func-name for on-change handler
-			  alias for #on-change :existing-func-name for declaration brevity
-		  #on-change [obj word new-value] [function body], or
-		  #on-change [obj word new-value old-value] [function body], or
-		  #on-change :existing-func-name
-			which creates a `function` that reacts to word's changes
-		Specifiers apply to the first set-word that precedes them.
-		
-		Multiple specifiers complement each other, so e.g. upper class may define allowed types,
-		then descending class may define equality type or on-change handler.
-		Of course, the same feature (type check, value check, equality, on-change) gets replaced when it's specified again.
-		
-		CLASSY-OBJECT function serves as a shortcut to create a *unique* object with type/value checking in it.
-		It's a rare need, and the declared class is only used for this single object, but sometimes it comes in handy.
-		
-		CLASSIFY-OBJECT function assigns an object to a given class, enabling validation specific to that class.
-		It can be called at any time, but for more safety should be before any assignments are made.
-		The above MY-SPEC once evaluated will classify itself first, then assign values,
-		because `classify-object` call is inserted automatically into the spec produced by declare-class.
-		
-		DECLARE-CLASS <class-name> <spec> can take a path of two words as it's <class-name>: 'new-class/other-class.
-		It will copy validation from already declared other-class to the new-class.
-		
-		MODIFY-CLASS <class-name> <spec> is used to make adjustments to an existing class
-		Uses same syntax as DECLARE-CLASS, though set-words do not need any values in it.
-		Use cases:
-		- add on-change handler to a word that's not in the object's spec
-		- (in some addon) adjust a class that was declared elsewhere
-		
 		After class is declared, objects can be instantiated:
 			my-object1: make classy-object! my-spec
 			my-object2: make classy-object! my-spec
@@ -89,7 +53,72 @@ Red [
 			]
 			my-object3: make my-object2 my-other-spec
 		
-		Let's do some tests now:
+		
+	  * Supported class specifiers are:
+	  
+		1. Per-field #type which accepts in any order (all are optional):
+		   - [block with type/typeset names]
+		     by default any-type! is allowed
+		     may contain (parens with expressions to test value's validity for ALL preceding types)
+		     i.e. x [integer! float! (x >= 0) none!] tests both integer and float
+		   - (paren with an expression to test the value's validity)
+		     by default all values are accepted
+		     applies to all accepted types that do NOT have a type-specific value check (in type block)
+		   - equality type: one of [= == =?], which influences whether to call or skip the on-change 
+		     by default no equality test is performed and on-change always gets called
+		     has no effect if no on-change is assigned to this field
+		     tip: `==` is good for scalars and strings, `=?` for blocks
+		   - :existing-func-name for on-change handler
+		     alias for #on-change :existing-func-name for declaration brevity
+		   - "field description string", used only for run-time reflection
+		2. Per-field #on-change in one of the forms:
+		   - #on-change [obj word new-value] [function body]
+		   - #on-change [obj word new-value old-value] [function body]
+		   - #on-change :existing-func-name
+		   It creates a (or uses an existing) `function` that is called after word's value is changed.
+		3. Per-class "description string" may elaborate what this object is used for.
+		   Similarly to the functions DSL, description must be the first value in the class spec. 
+		   
+		Per-field specifiers apply to the first set-word that precedes them.
+		
+		Multiple specifiers complement each other, so e.g. upper class may define allowed types,
+		then descending class may define equality type or on-change handler.
+		When the same feature (type check, value check, equality, on-change, docstring) is re-declared, it replaces the old declaration.
+		
+		
+	  * Functions defined in this file are:
+		
+		- CLASSY-OBJECT function serves as a shortcut to create a *unique* object with type/value checking in it.
+		  It's useful (as a replacement of CONTEXT) to type and document unique named objects in the system.
+		  Such objects can then be inspected by the users with the SOURCE function.
+		
+		- CLASSIFY-OBJECT function assigns an object to a given class, enabling validation specific to that class.
+		  It can be called at any time, but for more safety should be called before any assignments are made.
+		  Normally, CLASSIFY-OBJECT is called automatically from the spec produced by DECLARE-CLASS,
+		  so the above MY-SPEC once evaluated will classify itself first, then assign values.
+		
+		- DECLARE-CLASS <class-name> <spec> function registers a new named object class.
+		  A class must be registered before it can be used to instantiate objects.
+		  <class-name> can take one of the two forms:
+		  1. A path of two words: 'new-class/base-class
+		     will copy validation from already declared base-class to the new-class, then process the <spec>.
+		  2. A single word: 'new-class
+		     will collect validation data from the <spec>, without any inheritance.
+		
+		- MODIFY-CLASS <class-name> <spec> function is used to make adjustments to an existing class
+		  Uses same syntax as DECLARE-CLASS, though set-words do not need any values or expressions in it.
+		  Use cases:
+		  1. Add on-change handler to a word that's not in the object's spec.
+		  2. Adjust a class that was declared elsewhere in another file.
+		  
+		- CLASS? <object> function returns class name of an object, or `none` if it has no class.
+		  It's similar to Red's CLASS-OF, and good for object identification purposes.
+		  
+		- SOURCE <name> is hijacked (only when it is included from the console help) to add object support.
+		  Now <name> accepts objects as well and prints out info about object's class, specifiers, functions and sub-objects. 
+		
+		
+	  * Let's do some tests with the objects declared in the examples above:
 			>> my-object1/x: 2
 			== 2
 			>> my-object1/x: 'oops
@@ -144,7 +173,46 @@ Red [
 			    w: 'some-word
 			]
 			
-		See also %typed-object.red which is a different (and incompatible) approach
+	  * Example of documenting a unique object:
+	  
+			my-object4: classy-object [
+				"A simple object for demonstration purposes"
+				
+				i: 1		#type [integer!] (i > 0) "Some demo counter"
+				s: "abc"	#type [string!]          "Some demo string"
+					#on-change [obj word new] [
+						print [word "changes to" mold :new]
+					]
+				f: func [
+					"Increase the counter"
+					n [integer!] "increase amount"
+				][
+					i: i + n
+				]
+				
+				self-reference: self
+				c: classy-object ["Another demo object"]
+			]
+		
+		Reflection can now be used on it: 
+		
+			>> source my-object4
+			MY-OBJECT4 is an object of class 'unnamed-classy-object-1':
+			
+			  A simple object for demonstration purposes.
+			
+			``FIELD``````````  DESCRIPTION``````  EQ  TYPES`````````````  ON-CHANGE``````````````````````````````````````````````` 
+			  i:               Some demo counter      [integer!] (i > 0)
+			  s:               Some demo string       [string!]           func [obj word new][print [word "changes to" mold :new]] 
+			
+			``FUNCTION```````  DESCRIPTION`````````  ARGS```````` 
+			  f:               Increase the counter  n [integer!] 
+			
+			``CONTEXT````````  DESCRIPTION```````````````````````````````  WORDS````````````````` 
+			  self-reference:  A simple object for demonstration purposes  i s f self-reference c 
+			  c:               Another demo object
+			
+		See also %typed-object.red which is a different (and incompatible) approach to typing an object
 	}
 	benchmarks: {
 		baseline:
@@ -169,10 +237,10 @@ Red [
 		  if it is redefined, it must include the following call:
 			  on-change-dispatch 'class-name word :old :new
 		  on-change-dispatch performs the validation
-		  classify-object function uses it's name as a marker to change the class-name
-		  and relies on the assumption that it's a single token
+		  classify-object function just changes this <class-name> inside on-change*
+		  and relies on the assumption that it's a single token, not an expression
 		  
-		error are always reported in on-change-dispatch, can't do nothing about that :(
+		errors are always reported in on-change-dispatch, can't do nothing about that :(
 		  need rebol's [catch] function attribute for that
 	}
 	design: {
@@ -205,6 +273,12 @@ Red [
 			needless to say this brings about unnecessary load to each assignment.
 			Single carefully crafted on-change keeps the overhead from growing with inheritance depth.
 			Also single controlled on-change is easy to use for object to class pairing.
+			
+		Why is there a unique name assigned to every class?
+			It helps to support inheritance. How else to reference the base class if not by name?
+			Original class spec could have been used for that, but it's not nearly as convenient.
+			Names are also used to test if object belongs to a class of interest.
+			On the other hand, names create a possibility of class name clashes, so I may consider the other approach one day. 
 			
 		Why is class name held inside on-change*?
 			If it's held within the object itself, it's much harder to validate /class field itself:
@@ -271,6 +345,10 @@ Red [
 				x: 1 + y: 2  #type [integer!]  			;) type applies to y, not x
 			But overall it's worth it. Just don't multiple set-words in the same expression, or it will become a mess. 
 			 
+		Why embed documentation?
+			Same reasons we use that in function specs: to shorten the learning curve and help our own memory.
+			In projects as big as Spaces this is supposed to be of significant help to developers learning it.
+			
 		Make safety.
 			Implementation was designed so that `make` on classy-object creates another *valid* classy-object.
 			For that, validity data has to be kept outside, because it's a map and maps are not copied by `make`.
@@ -292,9 +370,9 @@ Red [
 			Besides, that would need a way to override these, some additional syntax. 
 	}
 	TODO: {
-		- friendlier reflection, esp. how final on-change maps to words
 		- maybe #constant or #lock/#locked keyword as alias for #type [] ? (will be set internally by set-quiet)
 		  problem is how to initialize smth that supports no assignment, probably it should allow unset->value only
+		  currently the main blocker is that this would slow down the whole implementation
 		- #type [block! [subtype!]] kind of check (deep, e.g. block of words)?
 		- expose classes by their names so their on-change handlers could be called from inherited handlers
 		  useful when overriding one handler with another, and problem arises of keeping them in sync
