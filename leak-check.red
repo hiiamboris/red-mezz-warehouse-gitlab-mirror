@@ -29,10 +29,6 @@ leak-check: function [
 					i > length? old
 					unset? :new/:i
 				]
-				all [									;@@ workaround for #5065
-					any-function? :old/:i
-					:old/:i = :new/:i
-				]
 			][
 				w: pad words/:i 15
 				s1: mold/flat/part :old/:i 30
