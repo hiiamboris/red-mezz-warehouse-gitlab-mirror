@@ -41,9 +41,9 @@ overload: context [
 				]
 			]
 		]		
-		parse spec [set word spec-arg! set types block!]
+		parse spec [set word spec-arg! set types block! spec:]
 		types: to block! make typeset! types					;-- list all datatypes individually
-		sub-fun: function [] code								;-- localize all set-words in the code
+		sub-fun: function spec code								;-- localize all set-words in the code
 		bind body-of :sub-fun :fun								;-- prioritize words from the original fun's spec
  		foreach type types [table/:type: :sub-fun] 
 		:fun
