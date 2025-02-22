@@ -184,13 +184,13 @@ context [
 		switch/default method' [
 			trap [
 				;; trap doesn't slow down the code and can be reentrant, but cannot pass 'break', 'continue', 'throw' 
-				trap/all/keep/catch code [do cleanup do thrown]
-				do cleanup
+				also trap/all/keep/catch code [do cleanup do thrown]
+					 do cleanup
 			]
 			do [
 				;; this version is only useful if underlying code handles exceptions already
-				do code
-				do cleanup
+				also do code
+					 do cleanup
 			]
 		][
 			;@@ of course this traps `return` because of #4416
