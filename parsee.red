@@ -173,15 +173,18 @@ context expand-directives [
 	][
 		path: to-red-file to-file any [get-env 'TEMP get-env 'TMP %.]
 		file: make-dump-name
-		parse-result: apply 'parse-dump [
-			input rules
-			/case    case
-			/part    part    length
-			/timeout timeout maxtime
-			/into    on      path/:file 
-		]
-		unless all [auto parse-result] [inspect-dump path/:file]
-		unless keep [delete path/:file]
+		following/method [
+			parse-result: apply 'parse-dump [
+				input rules
+				/case    case
+				/part    part    length
+				/timeout timeout maxtime
+				/into    on      path/:file 
+			]
+		][
+			unless all [auto parse-result] [inspect-dump path/:file]
+			unless keep [delete path/:file]
+		] 'trap
 		parse-result
 	]
 	
@@ -246,7 +249,7 @@ context expand-directives [
 			tracked: input
 			on-deep-change-92*: :logger
 		]
-		following [parse/:case/:part/trace input rules length :tracer] [
+		following/method [parse/:case/:part/trace input rules length :tracer] [
 			events:  new-line/all/skip events  on 6
 			changes: new-line/all/skip changes on 5
 			names: to hash! collect-rule-names visited-rules
@@ -254,7 +257,7 @@ context expand-directives [
 			append data sanitize reduce [events changes names] dict
 			; check data
 			save/as filename data 'redbin
-		]
+		] 'trap
 	]
 	
 	tracer: function [event [word!] match? [logic!] rule [block!] input [series!] stack [block!] /extern age] with :parse-dump [
