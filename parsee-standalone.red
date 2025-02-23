@@ -182,11 +182,11 @@ context [
         ] [
             switch/default method' [
                 trap [
-                    trap/all/keep/catch code [do cleanup do thrown] 
+                    also trap/all/keep/catch code [do cleanup do thrown] 
                     do cleanup
                 ] 
                 do [
-                    do code 
+                    also do code 
                     do cleanup
                 ]
             ] [
@@ -928,14 +928,14 @@ context [
                 tracked: input 
                 on-deep-change-92*: :logger
             ] 
-            following/method [parse/:case/:part/trace input rules length :tracer] [
+            following [parse/:case/:part/trace input rules length :tracer] [
                 events: new-line/all/skip events on 6 
                 changes: new-line/all/skip changes on 5 
                 names: to hash! collect-rule-names visited-rules 
                 data: reduce [cloned] 
                 append data sanitize reduce [events changes names] dict 
                 save/as filename data 'redbin
-            ] 'trap
+            ]
         ] 
         tracer: function [event [word!] match? [logic!] rule [block!] input [series!] stack [block!] /extern age] with :parse-dump [
             any [find/only/same visited-rules head rule append/only visited-rules head rule] 
