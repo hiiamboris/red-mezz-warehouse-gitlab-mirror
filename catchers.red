@@ -193,7 +193,7 @@ context [
 					 do cleanup
 			]
 		][
-			;@@ of course this traps `return` because of #4416
+			;@@ of course this traps `return` because of #4416; and unfortunately it's not reentrant!
 			do/trace code :cleaning-tracer
 		]
 	]
@@ -248,6 +248,11 @@ context [
 	4 = i
 	error? try     [following [0 / 0] [i: i + 1]]
 	5 = i
+	1 = following/method [1] [i: i + 1] 'do
+	6 = i
+	7 = following/method [i: i + 1] [2] 'trap
+	error? try/all [following/method [continue] [i: i + 1] 'trap]
+	8 = i
 	;@@ add return test if #4416 gets fixed
 ]]
 
