@@ -140,6 +140,17 @@ Red [
 ; #include %without-gc.red								;-- gives massive speedup
 ; #include %xyloop.red									;-- for image iteration
 
+;; by default tree walker branches only into any-block, object and map
+;@@ make a REP with this typeset? seems useful, also defined in Spaces
+;@@ container is defined as a type that we use to hold (unlike error) any kind of values (unlike strings)
+container!: make typeset! [any-block! map! object!]
+container?: function [
+	"Test if value is a container"
+	value [any-type!]
+][
+	find container! type? :value
+]
+	
 walker!: object [										;-- minimal tree walker template
 	plan:   []
 	init:   does [clear plan]							;-- ensures clean slate (esp. when iteration doesn't finish correctly)
@@ -158,11 +169,6 @@ batched-walker!: make walker! [							;-- GC-smarter basic template
 
 series-walker!: make batched-walker! [					;-- template that visits all values in all series
 	;; NOTE: given a container, visitor MUST return new (or old) container to branch into it
-	
-	;@@ make a REP with this typeset? seems useful, also defined in Spaces
-	;; by default branches only into any-block, object and map
-	container!: make typeset! [any-block! map! object!]
-	container?: func [value [any-type!]] [find container! type? :value]
 	
 	;; avoids deadlocks and double visiting by keeping track of visits
 	history: make hash! 128
