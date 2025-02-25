@@ -159,6 +159,7 @@ batched-walker!: make walker! [							;-- GC-smarter basic template
 series-walker!: make batched-walker! [					;-- template that visits all values in all series
 	;; NOTE: given a container, visitor MUST return new (or old) container to branch into it
 	
+	;@@ make a REP with this typeset? seems useful, also defined in Spaces
 	;; by default branches only into any-block, object and map
 	container!: make typeset! [any-block! map! object!]
 	container?: func [value [any-type!]] [find container! type? :value]
