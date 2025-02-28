@@ -36,7 +36,7 @@ interleave: context [											;-- this is a similar design, just uses list ite
 		"Interleave the items of two series"
 		series1 [any-list!]										;@@ `reduce` and `set` don't work on strings... hence the type limitation
 		series2 [any-type!] "When not a list, repeated as a single value"
-		/between "Treat  series2 as a single value and omit it at the tail"
+		/between "Treat series2 as a single value and omit it at the tail"
 		/into result [any-list!] "Provide an output buffer"
 		; /into result: (make block! 2 * length? series1) [series!]
 	] reshape [
