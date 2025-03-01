@@ -4,7 +4,7 @@ Red [
 	author:   @hiiamboris
 	license:  BSD-3
 	provides: scrollpanel
-	depends:  [relativity do-atomic do-unseen maybe quietly]
+	depends:  [relativity do-atomic do-unseen maybe quietly trap]
 	notes: {
 		Use in place of PANEL. Scrollers will be shown automatically when it's contents grows big.
 		Should be ElasticUI-friendly ;)
@@ -17,6 +17,7 @@ Red [
 #include %do-atomic.red
 #include %do-unseen.red
 #include %relativity.red
+#include %catchers.red
 ; #include %show-trace.red
 
 if object? :system/view [								;-- CLI programs skip this
