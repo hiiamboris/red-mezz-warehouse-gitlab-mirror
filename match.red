@@ -8,6 +8,18 @@ Red [
 		Only supports wildcards for now (not implemented find/any syntax), and find/match.
 		Matching is done via naive recursive algorithm (but Parse-backed).
 		Discussion: https://matrix.to/#/%23red_sandbox%3Agitter.im/%24v_tat02NPmSF_PCj_0qAHJZOEHMO0Nwg4I6I_VGYD1A
+
+		End goal ideas for considering further design and implementation:		
+		- match "string" "str" (instead of find/match)
+		- match value typeset (as it currently is in Ren-C)
+		- match object spec (data validation using some DSL)
+		- match/prefix "string" "strong" (longest prefix length = 3)
+		- match/suffix "string" "strong" (longest suffix length = 2)
+		- match/substring "string" "bearings" (longest common substring = "ring")
+		- match/parse input rule (instead of parse-match)
+		- match/glob %path/file.ext "f*.ext" (wildcard-based globbing filter)
+		- match/regex "string" "s.*g" (regexps)
+		- match/fuzzy "string" "sting" 'levenshtein 3 (matching using chosen algorithm and an edit distance limit)		
 	}
 ]
 
