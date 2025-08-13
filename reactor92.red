@@ -76,7 +76,7 @@ context [
 			append     []								;-- no removal phase
 			appended   [f word (p: skip head target index) length? p yes no]
 			
-			;; change is buggy: 'change' event never happens
+			;; change is buggy: 'change' event never happens for strings
 			lowercase  uppercase										;-- omg silliest actions
 			change     [f word (skip head target index) part no  no]	;-- so this won't fire at all
 			lowercased uppercased
