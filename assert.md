@@ -62,6 +62,12 @@ Note:
 - multiple expressions per line are not allowed
 - single expression can span as many lines as required
 
+Assertions can be turned on and off on demand using one of these directives:
+- `#assert on`  (during development)
+- `#assert off` (for production)
+
+My [inline tool](https://codeberg.org/hiiamboris/red-cli/src/branch/master/mockups/inline) supports stripping off or leaving assertions as well.
+
 ### Example
 
 ```
