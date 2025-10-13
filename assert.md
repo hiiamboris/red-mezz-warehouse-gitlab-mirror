@@ -68,6 +68,8 @@ Assertions can be turned on and off on demand using one of these directives:
 
 My [inline tool](https://codeberg.org/hiiamboris/red-cli/src/branch/master/mockups/inline) supports stripping off or leaving assertions as well.
 
+Use `assert` function directly where you want unconditional testing, not affected by the `#assert on/off` switch.
+
 ### Example
 
 ```
