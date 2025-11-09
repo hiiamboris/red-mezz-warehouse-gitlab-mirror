@@ -100,8 +100,9 @@ Red [
 
 once: func [
 	"Set value of WORD to VALUE only if it's unset"
-	'word [set-word! set-path!]
-	value [default!] "New value"
+	'word   [set-word! set-path!]
+	value   [default!] "New value"
+	return: [default!] "VALUE is always returned"
 ][
 	if unset? get/any word [set word :value]
 	:value
@@ -109,8 +110,9 @@ once: func [
 
 default: func [
 	"If WORD's value is none, set it to VALUE"
-	'word [set-word! set-path!]
-	value [default!] "New value"
+	'word   [set-word! set-path!]
+	value   [default!] "New value"
+	return: [default!] "VALUE is always returned"
 ][
 	switch get/any word [#(none) [set word :value]]		;-- 20% faster than `none =?` which is 5% faster than `none =` and 2x faster than `none?`
 	:value
@@ -118,9 +120,10 @@ default: func [
 
 maybe: func [
 	"If WORDS's value is not strictly equal to VALUE, set it to VALUE (for use in reactivity)"
-	'word [set-word! set-path!]
-	value [default!] "New value"
+	'word   [set-word! set-path!]
+	value   [default!] "New value"
 	/same "Use =? as comparator instead of =="
+	return: [default!] "VALUE is always returned"
 ][
 	if either same [:value =? get/any word][:value == get/any word] [return :value]
 	set word :value
@@ -128,8 +131,9 @@ maybe: func [
 
 global: function [
 	"Export single word into the global namespace"
-	'word [set-word! set-path!]
-	value [default!]
+	'word   [set-word! set-path!]
+	value   [default!]
+	return: [default!] "VALUE is always returned"
 ][
 	alias: either set-path? word [last word][word]
 	set bind alias system/words set word :value
@@ -145,7 +149,9 @@ export: function [
 
 anonymize: function [
 	"Return WORD bound in an anonymous context and set to VALUE"
-	word [any-word!] value [any-type!]
+	word    [any-word!]
+	value   [any-type!]
+	return: [any-word!]
 ][
 	o: construct change [] to set-word! word
 	set/any/only o :value
