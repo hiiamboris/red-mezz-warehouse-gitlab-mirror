@@ -27,6 +27,7 @@ do/expand [												;-- without this trick, inclusion of this file from anoth
 
 #include %charsets.red
 #include %setters.red
+#include %constructors.red
 #include %bind-only.red
 #include %without-gc.red
 #include %median.red

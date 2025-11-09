@@ -20,6 +20,7 @@ Notes:
 | Source file                                | Description |
 | ---                                        | --- |
 | [setters](setters.red)                     | Contains ONCE, DEFAULT, MAYBE, QUIETLY, ANONYMIZE value assignment wrappers, and GLOBAL/EXPORT to expose some object's words globally |
+| [constructors](constructors.red)           | Handy map/object constructors: AS-MAP and AS-OBJECT |
 | [with](with.red)                           | A convenient/readable BIND variant |
 | [#hide macro](hide-macro.red)              | Automatic set-word and loop counter hiding |
 | [stepwise-macro](stepwise-macro.red) and [stepwise-func](stepwise-func.red) | Allows you write long compound expressions as a sequence of steps |
