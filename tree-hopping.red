@@ -19,7 +19,7 @@ Red [
 		   
 		   A walker! object must define:
 		   - a `plan` block! which will contain blocks of code to evaluate at each step
-		   - `init` and `stop` functions that will be evaluated before and after the loop
+		   - `init` and `reset` functions that will be evaluated before and after the loop
 		     they may do nothing, but are meant to take care of walker state cleanup
 		   - `branch` function! of single argument that will receive the root node
 		     this function fully controls the iteration order by receiving branch nodes,
@@ -154,14 +154,14 @@ container?: function [
 walker!: object [										;-- minimal tree walker template
 	plan:   []
 	init:   does [clear plan]							;-- ensures clean slate (esp. when iteration doesn't finish correctly)
-	stop:   does [plan: make [] 128]					;-- used to free (possibly big) series
+	reset:  does [plan: make [] 128]					;-- used to free (possibly big) series
 	branch: func [:node] []
 	visit:  func [:node :key] []
 ]
 
 batched-walker!: make walker! [							;-- GC-smarter basic template
 	batch:  []											;-- 'batch' can be used to hold 'plan' changes before insertion
-	stop:   does [
+	reset:  does [
 		plan:  make [] 128
 		batch: make [] 128
 	]
@@ -173,19 +173,21 @@ series-walker!: make batched-walker! [					;-- template that visits all values i
 	walkable: make typeset! [any-block! any-object! any-string! vector! binary! map! image! event!]
 	
 	;; avoids deadlocks and double visiting by keeping track of visits
-	history: make hash! 128
-	filter: unique-filter: func [value [any-type!]] [
+	history: make hash! []
+	unique-filter: func [value [any-type!]] [
 		all [
 			not find/only/same history :value
 			append/only history :value
 		]
 	]
+	no-filter: func [value [any-type!]] [true]
+	filter: :unique-filter
 	
 	init: does [
 		clear plan
 		clear history
 	]
-	stop: does [
+	reset: does [
 		plan:    make block! 128
 		history: make hash!  128
 		batch:   make block! 128
@@ -220,11 +222,18 @@ series-walker!: make batched-walker! [					;-- template that visits all values i
 	]
 ]
 
-make-series-walker: function [types [block! typeset!] /unordered] [
+make-series-walker: function [
+	"Make a series-walker! that branches into TYPES only"
+	types [block! typeset!] "Any subset of series-walker!/walkable"
+	/unordered "Unordered branching (faster)"
+	/unsafe    "Assume all branches are unique (faster)"
+][
 	make series-walker! [
 		walkable: make typeset! types
 		if unordered [schedule: :append]
+		if unsafe    [filter: :no-filter]
 		bind body-of :push :branch'
+		reset											;-- this recreates all walker's buffers
 	]
 ]
 
@@ -239,6 +248,6 @@ foreach-node: function [
 	walker/init
 	repend/only walker/plan [in walker 'branch :root]	;@@ to visit root will need its address somehow
 	also without-gc bind/copy [forall plan [do plan/1]] walker	;-- without copy can't be reentrant
-		walker/stop
+		walker/reset
 ]
 	
