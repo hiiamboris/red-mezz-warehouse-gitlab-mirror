@@ -170,6 +170,8 @@ batched-walker!: make walker! [							;-- GC-smarter basic template
 series-walker!: make batched-walker! [					;-- template that visits all values in all series
 	;; NOTE: given a container, visitor MUST return new (or old) container to branch into it
 	
+	walkable: make typeset! [any-block! any-object! any-string! vector! binary! map! image! event!]
+	
 	;; avoids deadlocks and double visiting by keeping track of visits
 	history: make hash! 128
 	filter: unique-filter: func [value [any-type!]] [
@@ -212,7 +214,7 @@ series-walker!: make batched-walker! [					;-- template that visits all values i
 	
 	push: func [value [any-type!]] with :branch' [
 		repend/only batch
-			either all [container? :value filter :value]
+			either all [find walkable type? :value  filter :value]
 				[['branch' 'visit node key]]
 				[['visit node key]]
 	]
@@ -220,7 +222,7 @@ series-walker!: make batched-walker! [					;-- template that visits all values i
 
 make-series-walker: function [types [block! typeset!] /unordered] [
 	make series-walker! [
-		container!: make typeset! types
+		walkable: make typeset! types
 		if unordered [schedule: :append]
 		bind body-of :push :branch'
 	]
