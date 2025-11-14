@@ -7,8 +7,51 @@ Red [
 	depends:  [with without-gc xyloop]
 	notes: {
 		This is a scaffolding for building tree iterators without the need for recursing.
+		
+		
+		Usage for simple cases when you just need to walk a tree:
+		========================================================
+		
+		1. Let's say we have a loaded JSON:
+		
+		 >> root: #[a: [b c] d: #[e: #[f: "g"]]]
+			
+		2. We create a walker object:
+		
+		 >> json-walker: make-series-walker [block! map!]
+		
+		3. Then we use it to iterate over the tree:
+		
+		 >> foreach-node root json-walker [
+				print [mold/flat key "in" mold/flat node]		;) key/value processing
+				:node/:key										;) yield the value to branch into it
+			]
+		
+		 outputs:
+		    a in #[a: [b c] d: #[e: #[f: "g"]]]					;) for maps 'key' is obvious 
+			1 in [b c]											;) for blocks 'key' is the index
+			2 in [b c]
+			d in #[a: [b c] d: #[e: #[f: "g"]]]
+			e in #[e: #[f: "g"]]
+			f in #[f: "g"]
+
+		4. The value returned by the visitor block is used to branch into it.
+		   If it yields a scalar (or any value that it can't branch into), that branch will be skipped:
+
+		 >>	foreach-node root json-walker [
+				print [mold/flat key "in" mold/flat node]
+				if key <> 'd [:node/:key]
+			]
+			
+		 outputs:
+			a in #[a: [b c] d: #[e: #[f: "g"]]]
+			1 in [b c]
+			2 in [b c]
+			d in #[a: [b c] d: #[e: #[f: "g"]]]					;) no 'e' or 'f' - branch skipped
+
 	
-		Usage:
+		Custom usage:
+		============
 		
 		1. Define iteration order over your data by creating a `walker!` object
 		
@@ -33,6 +76,7 @@ Red [
 		     for blocks this may be block and index in it, for objects - object and word, for faces - parent and child
 		     reason behind separate `key` is to allow `visit` to modify original values where desired
 		     this function is given as argument to `foreach-node`, which assigns it to the walker object
+		     'visit' must return the value to branch into (or a scalar to skip the branch)
 		     
 		2. Call `foreach-node` with given walker as argument and with a visit function or block
 		
@@ -72,6 +116,7 @@ Red [
 
 		
 		On control flow:
+		===============
 		
 		- return is trapped inside visitor - will have no effect :/
 		- break and break/return work as expected
@@ -80,6 +125,7 @@ Red [
 		
 		
 		On design:
+		=========
 		
 		The concept has two structural notions:
 		- branch node, which represents a source of inner nodes, but not necessarily has to be visited
@@ -129,6 +175,7 @@ Red [
 		   
 		   
 		On performance:
+		==============
 		
 		My study shows that a lightweight ad-hoc recursion takes about 70% of the time unordered `foreach-node` takes.
 		So `foreach-node` should be good for most use cases.
@@ -207,7 +254,7 @@ series-walker!: make batched-walker! [					;-- template that visits all values i
 					[foreach key keys-of node [push :node/:key]]
 			;; while map can be iterated without keys-of, keys will become set-words, which isn't great
 			;; also maps are case-sensitive, so without iteration select/case has to be used
-			map!	[foreach key keys-of node [push select/case node :key]]
+			map!	[foreach [key value] node [push select/case node :key]]
 			image!	[xyloop key node [push node/:key]]			;@@ use for-each
 			event!	[foreach key system/catalog/accessors/event! [push node/:key]]
 		]
@@ -250,4 +297,15 @@ foreach-node: function [
 	also without-gc bind/copy [forall plan [do plan/1]] walker	;-- without copy can't be reentrant
 		walker/reset
 ]
-	
+
+
+#hide [#assert [
+	walker: make-series-walker [block! map!]
+	root: #[a: [b c] d: #[e: #[f: ("g")]]]
+	res: copy []
+	foreach-node root walker [
+		append res key
+		:node/:key
+	]
+	res = [a 1 2 d e f]
+]]
