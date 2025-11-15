@@ -254,7 +254,8 @@ series-walker!: make batched-walker! [					;-- template that visits all values i
 					[foreach key keys-of node [push :node/:key]]
 			;; while map can be iterated without keys-of, keys will become set-words, which isn't great
 			;; also maps are case-sensitive, so without iteration select/case has to be used
-			map!	[foreach [key value] node [push select/case node :key]]
+			;; another reason to use keys-of is to avoid loops when keys themselves are modified by the visitor
+			map!	[foreach key keys-of node [push select/case node :key]]
 			image!	[xyloop key node [push node/:key]]			;@@ use for-each
 			event!	[foreach key system/catalog/accessors/event! [push node/:key]]
 		]
