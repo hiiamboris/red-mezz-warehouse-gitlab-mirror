@@ -1,8 +1,3 @@
----
-gitea: none
-include_toc: true
----
-
 Official URL of this project: [https://codeberg.org/hiiamboris/red-common](https://codeberg.org/hiiamboris/red-common)
 
 # A collection of my Red mezzanines & macros
@@ -117,11 +112,12 @@ These functions mainly help one follow design-by-contract guidelines in one's co
 | [ERROR macro](error-macro.red)     | Shortcut for raising an error using string interpolation for the message. [Read more](https://gitlab.com/hiiamboris/red-mezz-warehouse/-/blob/master/composite.md#error-macro) |
 | [#print macro](print-macro.red)    | Shortcut for `print #composite` |
 
-### Filesystem related
+### Filesystem and I/O related
 | Source file                          | Description |
 | ---                                  | --- |
 | [glob](glob.red)                     | Allows you to recursively list files. [Read more](glob.md). [Run tests](glob-test.red) |
 | [data-store context](data-store.red) | Standardized zero-fuss loading and saving of data, config and other state (documented in the header) |
+| [http-client](http-client.red)       | Automate everything a typical HTTP API client may require |
 
 ### Graphics & Reactivity
 | Source file                              | Description |

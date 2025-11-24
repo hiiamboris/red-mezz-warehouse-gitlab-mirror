@@ -4,7 +4,7 @@
 	author:   @hiiamboris
 	license:  BSD-3
 	provides: http-client
-	depends:  [tree-hopping advanced-function print error log reshape hide charsets from-latin-1]	;@@ xml json csv
+	depends:  [tree-hopping advanced-function classy-object print error log reshape hide charsets from-latin-1]	;@@ xml json csv
 	notes: {
 		GOALS
 		
