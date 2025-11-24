@@ -1,3 +1,8 @@
+---
+gitea: none
+include_toc: true
+---
+
 Official URL of this project: [https://codeberg.org/hiiamboris/red-common](https://codeberg.org/hiiamboris/red-common)
 
 # A collection of my Red mezzanines & macros
