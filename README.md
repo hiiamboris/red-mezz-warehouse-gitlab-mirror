@@ -122,7 +122,7 @@ These functions mainly help one follow design-by-contract guidelines in one's co
 | ---                                  | --- |
 | [glob](glob.red)                     | Allows you to recursively list files. [Read more](glob.md). [Run tests](glob-test.red) |
 | [data-store context](data-store.red) | Standardized zero-fuss loading and saving of data, config and other state (documented in the header) |
-| [http-client](http-client.red)       | Automate everything a typical HTTP API client may require |
+| [http-client](http-client.red)       | Automate everything a typical HTTP API client may require. [Read more](http-client.md) |
 
 ### Graphics & Reactivity
 | Source file                              | Description |
