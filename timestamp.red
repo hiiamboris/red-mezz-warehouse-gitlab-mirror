@@ -3,13 +3,26 @@ Red [
 	purpose:  "Ready-to-use and simple timestamp formatter for naming files"
 	author:   @hiiamboris
 	license:  BSD-3
-	provides: timestamp
+	provides: [timestamp format-date]
 	depends:  [format-number stepwise-macro]
 ]
 
 
 #include %stepwise-macro.red
 #include %format-number.red
+
+format-date: function [
+	"Format date/time using a custom template"
+	date     [date!]
+	template [string!] {E.g. "(month)-(day)/(hour):(minute)"}
+][
+	also result: clear copy template
+	parse template [collect after result any [
+		keep to #"(" #"(" copy word to #")" #")" keep (
+			format-number date/(to word! word) 2 -3
+		)
+	]]
+]
 
 ;@@ should it have a /utc refinement? if so, how will it work with /from?
 timestamp: function [

@@ -77,6 +77,7 @@ do/expand [												;-- without this trick, inclusion of this file from anoth
 #include %timestamp.red
 #include %color-models.red
 #include %contrast-with.red
+#include %log-macro.red
 
 #include %shallow-trace.red
 #include %show-trace.red
@@ -86,6 +87,7 @@ do/expand [												;-- without this trick, inclusion of this file from anoth
 #include %expect.red
 #include %show-deep-trace.red
 
+#include %http-client.red	
 #include %timers.red	
 #include %leak-check.red
 #include %prettify.red
