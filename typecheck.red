@@ -95,13 +95,20 @@ typechecking: context [
 		parse types [any [
 			copy words some word! (append typeset words)
 			opt [
-				set check paren! #debug [(
+				set check paren! (
 					mask: to block! make typeset! words	;-- break typesets into type names
 					append/only append options mask check
-				)]
+				)
 			]
 		]]
 		reduce [typeset options]						;-- no copy needed, temporary blocks
+	]
+	
+	#assert [
+		[
+			[number! string!]
+			[integer! float! percent! (i > 0) string! (not empty? s)]
+		] = extract-value-checks [number! (i > 0) string! (not empty? s)]
 	]
 
 	
