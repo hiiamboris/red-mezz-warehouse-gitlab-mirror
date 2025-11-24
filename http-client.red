@@ -6,12 +6,16 @@
 	provides: http-client
 	depends:  [tree-hopping advanced-function classy-object print error log reshape hide charsets from-latin-1]	;@@ xml json csv
 	notes: {
-		GOALS
+		USAGE
+		
+		See %http-client.md
+		
+		DESIGN GOALS
 		
 		To use any HTTP API declaratively and easily.
 		`endpoint/post 'sub/path data` - nothing more needed.
 		
-		REQUIREMENTS
+		DESIGN REQUIREMENTS
 		
 		I had to work with a lot of API endpoints, which all have their own standards (or lack of any),
 		and it is not easy to produce a one-size-fits-all solution in this space.
@@ -174,7 +178,6 @@ as-map: function [
 
 ;; high-level interface for HTTP(S) works
 http: context [
-
 
 	;; ============================================== ;;
 	;;      NECESSARY CONSTANTS, LISTS AND CHECKS     ;;
@@ -399,6 +402,17 @@ http: context [
 	;;                  RATE CONTROL                  ;;
 	;; ============================================== ;;
 	
+	make-rate-limit: function [
+		"Define a new rate limit"
+		rate   [integer!] "Number of requests allowed per single period" 
+		period [time!]    "Rate enforcement period"
+	][
+		limit: make classy-object! rate-limit!
+		limit/rate:   rate
+		limit/period: period
+		limit
+	]
+	
 	wait-for-rate: function [
 		"Pass time until GROUP is ready for a new request of given WEIGHT"
 		group  [object!]
@@ -433,12 +447,15 @@ http: context [
 	
 	send: function [
 		"Send METHOD request to the PATH within GROUP's URL"
-		method [word!]
-		group  [object!]
-		path   [word! path! string!]
-		/data    data'         [map! block! string! binary! none!]
-		/headers headers': #[] [map! none!]
-		/weight  weight':  1   [integer!]
+		method [word!]   "HTTP verb"
+		group  [object!] "API endpoint group"
+		path   [word! path! string!] "Subpath within the GROUP's base URL"
+		/data    "Attach data to the request"
+			data'         [map! block! string! binary! none!]
+		/headers "Add custom headers to the request"
+			headers': #[] [map! none!]
+		/weight  "Change request's weight towards rate control limits"
+		    weight':  1   [integer!] (weight' > 0)
 		return: [object!] "A response! object"
 	][
 		request: copy request!
