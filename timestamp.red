@@ -10,18 +10,41 @@ Red [
 
 #include %stepwise-macro.red
 #include %format-number.red
+#include %composite.red
 
-format-date: function [
+;@@ use lazy evaluation to reduce the number of allocations and computations?
+format-date: function compose [
 	"Format date/time using a custom template"
-	date     [date!]
+	datetime [date!]
 	template [string!] {E.g. "(month)-(day)/(hour):(minute)"}
-][
-	also result: clear copy template
-	parse template [collect after result any [
-		keep to #"(" #"(" copy word to #")" #")" keep (
-			format-number date/(to word! word) 2 -3
-		)
-	]]
+	/local
+		(exclude system/catalog/accessors/date! [date])			;-- common accessors aren't enough, so:
+		millis micros											;-- 3-milliseconds and 6-microseconds accessors
+		integer													;-- seconds since unix epoch
+] compose/only [
+	words: (copy system/catalog/accessors/date!)
+	foreach word words [set word datetime/:word]
+	;; provide custom accessors:
+	micros:  to integer! second * 1e6 % 1e6						;-- extract micros before modifying seconds
+	millis:  to integer! micros / 1000
+	second:  to integer! second									;-- default /second is a float - we need an integer
+	integer: to integer! datetime - multiply 0:0.001 millis		;-- has to be done without millis, otherwise is rounded
+	;; ensure proper padding:
+	foreach word [month day hour minute second] [
+		set word pad/left/with get word 2 #"0"
+	]
+	millis: pad/left/with millis 3 #"0"
+	micros: pad/left/with micros 6 #"0"
+	year:   format-number year 4 0
+	composite['local] template
+]
+
+assert [
+	"2025/11/25 06:03:14"     = format-date 25-Nov-2025/6:3:14.6    "(year)/(month)/(day) (hour):(minute):(second)"
+	"2025/11/25 06:03:14.999" = format-date 25-Nov-2025/6:3:14.9999 "(year)/(month)/(day) (hour):(minute):(second).(millis)"
+	"06:03:14.999800"         = format-date 25-Nov-2025/6:3:14.9998 "(hour):(minute):(second).(micros)"
+	"-0005/11/25 06:03:14"    = format-date 25-Nov--5/6:3:14        "(year)/(month)/(day) (hour):(minute):(second)"
+	"1764050594.567"          = format-date 25-Nov-2025/6:3:14.5678 "(integer).(millis)"
 ]
 
 ;@@ should it have a /utc refinement? if so, how will it work with /from?
