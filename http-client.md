@@ -175,9 +175,10 @@ http/authenticate test-api 'Bearer my-secret-key
 E.g. to add a SHA1 signature of the data:
 ```
 append test-api/on-send function [request] [
-	request/headers/signature: checksum request/formed/data 'sha1
+	request/formed/headers/signature: checksum request/formed/data 'sha1
 ]
-```  
+```
+The hooks should **not modify** the request itself (it is assumed unchanged, so that on retry it can be formed again), but only the `/formed` field of it. `/formed` is a map: `#[url method headers data]`.
    
 ## Error handling
 
