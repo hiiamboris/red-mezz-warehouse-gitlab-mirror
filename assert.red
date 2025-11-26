@@ -19,6 +19,8 @@ Red [
 	}
 ]
 
+;@@ TODO: eventually, `assert` scope should isolate leaked words (what's currently done with #hide), but currently that would incur an unacceptable peformance hit for cases where assertions are inlined in function body
+
 
 #macro [#assert 'on]  func [s e] [assertions: on  []]
 #macro [#assert 'off] func [s e] [assertions: off []]
