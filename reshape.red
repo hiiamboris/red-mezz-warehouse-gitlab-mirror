@@ -40,8 +40,8 @@ context [
 	] bind [
 		either with [swap 'grammar 'block][grammar: [@ /if]]
 		unless :do-sub [do-sub: :do]
-		=sub=:	any [grammar/1 =fail=]
-		=if=:	any [grammar/2 =fail=]
+		=sub=:	any [grammar/1 [fail]]
+		=if=:	any [grammar/2 [fail]]
 		parse/case result: copy/deep block =block=: [
 			at-line: opt =if-section= 
 			any [p:
@@ -62,7 +62,6 @@ context [
 		result
 	] rules: context [									;-- rules are out for faster operation
 		lines:			make [] 4
-		=fail=:			[end skip]
 		=do-cond=:		[p: (succ?: do/next p 'p) :p]
 		=rem-if=:		[p: remove at-if]
 		=rem-line=:		[p: remove at-line]
