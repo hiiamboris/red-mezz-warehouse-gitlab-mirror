@@ -322,7 +322,7 @@ http: context [
 		on-form:     copy []		#type [block!]  "Hooks evaluated before the request is formed"
 		;; on-send hooks: func [request [object!]], modifications (except /formed) will persist across attempts
 		on-send:     copy []		#type [block!]  "Hooks evaluated before the request is sent"
-		;; on-receive hooks: func [response [object!]], modify the response (before a retry/return)
+		;; on-receive hooks: func [request [object!] response [object!]], modify the response (before a retry/return)
 		on-receive:  copy []		#type [block!]  "Hooks evaluated once the response is received"
 		
 		get:     func [path]      [send      'GET     self path]
@@ -345,6 +345,7 @@ http: context [
 		
 		;; encoded part:
 		formed:  none									;-- #[url method headers data (binary)]
+		time:    none									;-- time right before request is sent
 	]
 	
 	response!: object [
@@ -352,6 +353,7 @@ http: context [
 		status:  none									;-- HTTP status code of the response
 		headers: none									;-- response headers received
 		binary:  none									;-- raw binary data received
+		time:    none									;-- time right after response is received
 		
 		;; decoded part:
 		content: none									;-- decoded Content-Type header (map!): type, charset ...
@@ -472,7 +474,7 @@ http: context [
 			form-request request
 			foreach hook group/on-send [hook request]
 			response: decode-response dispatch-request request
-			foreach hook group/on-receive [hook response]
+			foreach hook group/on-receive [hook request response]
 			response											;-- retry tests response/code
 		][
 			;; an unrecoverable error must be extensively logged for further analysis
@@ -494,11 +496,13 @@ http: context [
 	][
 		#assert [request/formed]
 		f: request/formed
+		request/time: now/precise
 		response: send-raw f/method f/url f/headers f/data
 		make response! [
 			status:  response/status
 			headers: response/headers
 			binary:  response/data
+			time:    if status > 0 [now/precise]
 			errors:  copy []
 		]
 	]

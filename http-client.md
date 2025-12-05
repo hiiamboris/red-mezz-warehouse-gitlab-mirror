@@ -168,9 +168,9 @@ http/authenticate test-api 'Bearer my-secret-key
 ```
 
 **Dynamic** authentication header can be injected using one of the hooks:
-- `/on-form` - before the request is formed
-- `/on-send` - before the request is sent *&lt;-- normally here*
-- `/on-receive` - after the response is received
+- `/on-form` - before the request is formed (as `func [request [object!]]`)
+- `/on-send` - before the request is sent (as `func [request [object!]]`) *&lt;-- normally here*
+- `/on-receive` - after the response is received (as `func [request [object!] response [object!]]`)
 
 E.g. to add a SHA1 signature of the data:
 ```
@@ -178,7 +178,7 @@ append test-api/on-send function [request] [
 	request/formed/headers/signature: checksum request/formed/data 'sha1
 ]
 ```
-The hooks should **not modify** the request itself (it is assumed unchanged, so that on retry it can be formed again), but only the `/formed` field of it. `/formed` is a map: `#[url method headers data]`.
+If hooks modify the request itself, modification will **persist across retries**, except `request/formed` part which is regenerated before every `on-send` hook. `/formed` is a map: `#[url method headers data]`. Request may be retried or returned after `on-receive` hooks complete, depending on its status code and retry mask.
    
 ## Error handling
 
