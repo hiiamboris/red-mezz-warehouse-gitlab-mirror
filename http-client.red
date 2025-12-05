@@ -318,10 +318,11 @@ http: context [
 		retry-on:    retry-codes	#type [bitset!] "Status codes that allow retrying"
 		rate-limits: copy []		#type [block!]  "Rate limits affecting this group"
 		
-		;; on-form/on-send hooks: func [request [object!]], and may modify its /formed value only
+		;; on-form hooks: func [request [object!]], modifications will persist across attempts, but /formed will be replaced
 		on-form:     copy []		#type [block!]  "Hooks evaluated before the request is formed"
+		;; on-send hooks: func [request [object!]], modifications (except /formed) will persist across attempts
 		on-send:     copy []		#type [block!]  "Hooks evaluated before the request is sent"
-		;; on-receive hooks: func [response [object!]], may modify freely
+		;; on-receive hooks: func [response [object!]], modify the response (before a retry/return)
 		on-receive:  copy []		#type [block!]  "Hooks evaluated once the response is received"
 		
 		get:     func [path]      [send      'GET     self path]
