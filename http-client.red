@@ -325,13 +325,13 @@ http: context [
 		;; on-receive hooks: func [request [object!] response [object!]], modify the response (before a retry/return)
 		on-receive:  copy []		#type [block!]  "Hooks evaluated once the response is received"
 		
-		get:     func [path]      [send      'GET     self path]
-		delete:  func [path]      [send      'DELETE  self path]
-		head:    func [path]      [send      'HEAD    self path]
-		options: func [path]      [send      'OPTIONS self path]
-		post:    func [path data] [send/data 'POST    self path data]
-		put:     func [path data] [send/data 'PUT     self path data]
-		patch:   func [path data] [send/data 'PATCH   self path data]
+		get:     func [path /with data] [send/:data 'GET     self path data]
+		delete:  func [path /with data] [send/:data 'DELETE  self path data]
+		head:    func [path /with data] [send/:data 'HEAD    self path data]
+		options: func [path]            [send       'OPTIONS self path]
+		post:    func [path data]       [send/data  'POST    self path data]
+		put:     func [path data]       [send/data  'PUT     self path data]
+		patch:   func [path data]       [send/data  'PATCH   self path data]
 	]
 	
 	request!: object [
