@@ -638,7 +638,7 @@ http: context [
 	]
 	
 	json-walker: make-series-walker/unordered/unsafe [block! map!]
-	convertible-value!: make typeset! [integer! tuple! date! time!]
+	convertible-value!: make typeset! [integer! float! tuple! date! time!]
 	convertible-key!:   make typeset! [convertible-value! word!]
 	
 	load-convertible: function [
@@ -749,6 +749,6 @@ http: context [
 			]
 		response
 	]
-	
+ 	
 ]
 
