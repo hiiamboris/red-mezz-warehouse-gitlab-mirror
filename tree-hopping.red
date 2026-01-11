@@ -217,7 +217,8 @@ batched-walker!: make walker! [							;-- GC-smarter basic template
 series-walker!: make batched-walker! [					;-- template that visits all values in all series
 	;; NOTE: given a container, visitor MUST return new (or old) container to branch into it
 	
-	walkable: make typeset! [any-block! any-object! any-string! vector! binary! map! image! event!]
+	walkable: make typeset! [any-block! any-object! any-string! vector! binary! map! image!]
+	if datatype? :event! [walkable: union walkable make typeset! [event!]]	;-- only exists in View module
 	
 	;; avoids deadlocks and double visiting by keeping track of visits
 	history: make hash! []
