@@ -3,6 +3,7 @@ Red [
 	purpose: "Shows how to use the style"
 	author:  @hiiamboris
 	license: BSD-3
+	needs:   view
 ]
 
 #include %assert.red
